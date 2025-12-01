@@ -11,7 +11,6 @@ class Package extends Model
 
     protected $table = 'packages';
 
-    // Mass assignable fields
     protected $fillable = [
         'package_type_id',
         'package_category_id',
@@ -31,12 +30,12 @@ class Package extends Model
         'content',
     ];
 
-    // Cast JSON field
     protected $casts = [
         'other_images' => 'array',
     ];
 
     // Relationships
+
     public function packageType()
     {
         return $this->belongsTo(PackageType::class);
@@ -50,5 +49,23 @@ class Package extends Model
     public function difficultyType()
     {
         return $this->belongsTo(DifficultyType::class);
+    }
+
+    public function cars()
+    {
+        return $this->belongsToMany(Car::class, 'package_car', 'package_id', 'car_id')
+                    ->withTimestamps();
+    }
+
+    public function hotels()
+    {
+        return $this->belongsToMany(Hotel::class, 'package_hotel', 'package_id', 'hotel_id')
+                    ->withTimestamps();
+    }
+
+    // Example: If you later have pickup points as a table
+    public function pickupPoints()
+    {
+        return $this->hasMany(PickupPoint::class); // assuming one-to-many
     }
 }

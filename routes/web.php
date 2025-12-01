@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CarController;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 use App\Http\Controllers\UserController;
@@ -7,6 +8,7 @@ use Livewire\Volt\Volt;
 use App\Http\Controllers\PackageTypeController;
 use App\Http\Controllers\PackageCategoryController;
 use App\Http\Controllers\DifficultyTypeController;
+use App\Http\Controllers\HotelController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\PackageController;
 Route::get('/', function () {
@@ -31,8 +33,15 @@ Route::middleware(['auth'])->group(function () {
 
 Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified'])->group(function () {
     Route::resource('users', UserController::class);
-
+    Route::resource('cars', CarController::class);
+    Route::resource('hotels',HotelController::class);
     Route::resource('packages', PackageController::class);
+    Route::prefix('packages')->group(function () {
+        Route::get('{package}', [PackageController::class, 'show'])->name('packages.show');
+        Route::get('{package}/edit-relations', [PackageController::class, 'editRelations'])->name('packages.edit-relations');
+        Route::post('{package}/update-relations', [PackageController::class, 'updateRelations'])->name('packages.update-relations');
+    });
+    Route::resource('pickup-points', \App\Http\Controllers\PickupPointController::class);
 
     Route::resource('package-types', PackageTypeController::class);
     Route::resource('package-categories', PackageCategoryController::class);

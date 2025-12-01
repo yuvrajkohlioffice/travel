@@ -1,106 +1,106 @@
-<div class="h-screen w-64 bg-gray-900 text-gray-200 flex flex-col fixed left-0 top-0 shadow-lg z-50">
+<div class="h-screen w-64 bg-gray-900 text-gray-200 flex flex-col fixed left-0 top-0 shadow-xl z-50">
 
-    <!-- Logo / Brand -->
-    <div class="p-6 text-2xl font-bold border-b border-gray-800 tracking-wide">
-        TRAVEL
+    <!-- Logo -->
+    <div class="p-6 text-2xl font-bold border-b border-gray-800 tracking-wide flex items-center space-x-2">
+        <i class="fas fa-route text-blue-400"></i>
+        <span>TRAVEL</span>
     </div>
 
-    <!-- Navigation -->
-    <nav class="flex-1 p-4 space-y-1">
+    <nav class="flex-1 p-4 space-y-2">
 
         <!-- Dashboard -->
-        <a href="{{ route('dashboard') }}"
-            class="flex items-center px-4 py-3 rounded-lg font-medium transition-all duration-200
-            {{ request()->routeIs('dashboard')
-                ? 'bg-gray-800 text-white shadow-inner'
-                : 'hover:bg-gray-800 hover:text-white' }}">
-            <svg class="w-6 h-6 mr-3 opacity-90" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"
-                stroke-linecap="round" stroke-linejoin="round">
-                <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0h4" />
-            </svg>
+        <a href="{{ route('dashboard') }}" class="sidebar-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
+            <i class="fas fa-home w-6 text-lg"></i>
             Dashboard
         </a>
 
         <!-- Profile -->
-        <a href="{{ route('profile.show') }}"
-            class="flex items-center px-4 py-3 rounded-lg font-medium transition-all duration-200
-            {{ request()->routeIs('profile.*')
-                ? 'bg-gray-800 text-white shadow-inner'
-                : 'hover:bg-gray-800 hover:text-white' }}">
-            <svg class="w-6 h-6 mr-3 opacity-90" fill="none" stroke="currentColor" stroke-width="2"
-                viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87M12 12a4 4 0 100-8 4 4 0 000 8z" />
-            </svg>
+        <a href="{{ route('profile.show') }}" class="sidebar-link {{ request()->routeIs('profile.*') ? 'active' : '' }}">
+            <i class="fas fa-user text-lg w-6"></i>
             Profile
-        </a>
-        <a href="{{ route('packages.index') }}"
-            class="flex items-center px-4 py-3 rounded-lg font-medium transition-all duration-200
-            {{ request()->routeIs('packages.*')
-                ? 'bg-gray-800 text-white shadow-inner'
-                : 'hover:bg-gray-800 hover:text-white' }}">
-            <svg class="w-6 h-6 mr-3 opacity-90" fill="none" stroke="currentColor" stroke-width="2"
-                viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87M12 12a4 4 0 100-8 4 4 0 000 8z" />
-            </svg>
-            Packages
         </a>
 
         <!-- Users -->
-        <a href="{{ route('users.index') }}"
-            class="flex items-center px-4 py-3 rounded-lg font-medium transition-all duration-200
-            {{ request()->routeIs('users.*')
-                ? 'bg-gray-800 text-white shadow-inner'
-                : 'hover:bg-gray-800 hover:text-white' }}">
-            <svg class="w-6 h-6 mr-3 opacity-90" fill="none" stroke="currentColor" stroke-width="2"
-                viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87M12 12a4 4 0 100-8 4 4 0 000 8z" />
-            </svg>
+        <a href="{{ route('users.index') }}" class="sidebar-link {{ request()->routeIs('users.*') ? 'active' : '' }}">
+            <i class="fas fa-users text-lg w-6"></i>
             Users
         </a>
 
-        <!-- Master Dropdown -->
-        <div x-data="{ open: {{ request()->is('package-*') || request()->is('difficulty-types*') || request()->is('package-types*') || request()->is('roles*') ? 'true' : 'false' }} }" class="space-y-1">
-            <button @click="open = !open"
-                class="flex items-center w-full px-4 py-3 rounded-lg font-medium transition-all duration-200
-                    {{ request()->is('package-*') ? 'bg-gray-800 text-white shadow-inner' : 'hover:bg-gray-800 hover:text-white' }}">
-                <svg class="w-6 h-6 mr-3 opacity-90" fill="none" stroke="currentColor" stroke-width="2"
-                    viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-                Master
-                <svg :class="{ 'rotate-180': open }" class="w-4 h-4 ml-auto transition-transform duration-200"
-                    fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round"
-                    stroke-linejoin="round">
-                    <path d="M19 9l-7 7-7-7" />
-                </svg>
-            </button>
+        <!-- Packages -->
+        <a href="{{ route('packages.index') }}"
+            class="sidebar-link {{ request()->routeIs('packages.*') ? 'active' : '' }}">
+            <i class="fas fa-briefcase text-lg w-6"></i>
+            Packages
+        </a>
 
-            <div x-show="open" class="pl-8 mt-1 space-y-1" x-cloak>
-                <a href="{{ route('roles.index') }}"
-                    class="block px-4 py-2 rounded-lg font-medium transition-all duration-200
-                   {{ request()->routeIs('roles.*') ? 'bg-gray-700 text-white' : 'hover:bg-gray-700 hover:text-white' }}">
-                    Roles
-                </a>
-                <a href="{{ route('package-categories.index') }}"
-                    class="block px-4 py-2 rounded-lg font-medium transition-all duration-200
-                   {{ request()->routeIs('package-categories.*') ? 'bg-gray-700 text-white' : 'hover:bg-gray-700 hover:text-white' }}">
-                    Package Categories
-                </a>
+        <div x-data="{ open: {{ request()->is('package-*') || request()->is('difficulty-types*') || request()->is('package-types*') || request()->is('pickup-points*') || request()->is('roles*') || request()->is('package-categories*') || request()->is('cars*') || request()->is('hotels*') ? 'true' : 'false' }} }">
 
-                <!-- Add other master links here -->
-                <a href="{{ route('package-types.index') }}"
-                    class="block px-4 py-2 rounded-lg font-medium transition-all duration-200
-                   {{ request()->routeIs('package-types.*') ? 'bg-gray-700 text-white' : 'hover:bg-gray-700 hover:text-white' }}">
-                    Package Types
-                </a>
+    <button @click="open = !open"
+        class="sidebar-link w-full {{ request()->is('package-*') || request()->is('difficulty-types*') || request()->is('package-types*') || request()->is('pickup-points*') || request()->is('roles*') || request()->is('package-categories*') || request()->is('cars*') || request()->is('hotels*') ? 'active' : '' }}">
+        <i class="fas fa-cogs text-lg w-6"></i>
+        Master
+        <i :class="{ 'rotate-180': open }"
+           class="fas fa-chevron-down ml-auto transition-transform duration-200"></i>
+    </button>
 
-                <a href="{{ route('difficulty-types.index') }}"
-                    class="block px-4 py-2 rounded-lg font-medium transition-all duration-200
-                   {{ request()->routeIs('difficulty-types.*') ? 'bg-gray-700 text-white' : 'hover:bg-gray-700 hover:text-white' }}">
-                    Difficulty Types
-                </a>
-            </div>
-        </div>
+    <div x-show="open" x-cloak class="ml-8 mt-2 space-y-1">
+
+        <!-- Pickup Points -->
+        <a href="{{ route('pickup-points.index') }}"
+           class="sidebar-link {{ request()->routeIs('pickup-points.*') ? 'active' : '' }}">
+            <i class="fas fa-map-pin text-lg w-6"></i>
+            Pickup Points
+        </a>
+
+        <!-- Roles -->
+        <a href="{{ route('roles.index') }}"
+           class="sidebar-link {{ request()->routeIs('roles.*') ? 'active' : '' }}">
+            <i class="fas fa-user-shield text-lg w-6"></i>
+            Roles
+        </a>
+
+        <!-- Package Categories -->
+        <a href="{{ route('package-categories.index') }}"
+           class="sidebar-link {{ request()->routeIs('package-categories.*') ? 'active' : '' }}">
+            <i class="fas fa-layer-group text-lg w-6"></i>
+            Package Categories
+        </a>
+
+        <!-- Package Types -->
+        <a href="{{ route('package-types.index') }}"
+           class="sidebar-link {{ request()->routeIs('package-types.*') ? 'active' : '' }}">
+            <i class="fas fa-tags text-lg w-6"></i>
+            Package Types
+        </a>
+
+        <!-- Cars -->
+        <a href="{{ route('cars.index') }}"
+           class="sidebar-link {{ request()->routeIs('cars.*') ? 'active' : '' }}">
+            <i class="fas fa-car text-lg w-6"></i>
+            Cars / Cabs
+        </a>
+
+        <!-- Hotels -->
+        <a href="{{ route('hotels.index') }}"
+           class="sidebar-link {{ request()->routeIs('hotels.*') ? 'active' : '' }}">
+            <i class="fas fa-hotel text-lg w-6"></i>
+            Hotels
+        </a>
+
+        <!-- Difficulty Types -->
+        <a href="{{ route('difficulty-types.index') }}"
+           class="sidebar-link {{ request()->routeIs('difficulty-types.*') ? 'active' : '' }}">
+            <i class="fas fa-mountain text-lg w-6"></i>
+            Difficulty Types
+        </a>
+
+    </div>
+</div>
+
+
 
     </nav>
 </div>
+<style>
+
+</style>

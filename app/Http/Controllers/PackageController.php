@@ -6,6 +6,8 @@ use App\Models\Package;
 use App\Models\PackageType;
 use App\Models\PackageCategory;
 use App\Models\DifficultyType;
+use App\Models\Car;
+use App\Models\Hotel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -166,5 +168,34 @@ class PackageController extends Controller
 {
     return view('packages.show', compact('package'));
 }
+ public function editRelations(Package $package)
+    {
+        $package->load(['cars', 'hotels']);
 
+        $allCars = Car::all();
+        $allHotels = Hotel::all();
+
+        return view('packages.edit-relations', compact('package', 'allCars', 'allHotels'));
+    }
+
+    /**
+     * Update package's cars and hotels
+     */
+    public function updateRelations(Request $request, Package $package)
+    {
+        // Validate input
+        $data = $request->validate([
+            'cars' => 'nullable|array',
+            'cars.*' => 'exists:cars,id',
+            'hotels' => 'nullable|array',
+            'hotels.*' => 'exists:hotels,id',
+        ]);
+
+        // Sync many-to-many relationships
+        $package->cars()->sync($data['cars'] ?? []);
+        $package->hotels()->sync($data['hotels'] ?? []);
+
+        return redirect()->route('packages.show', $package->id)
+                         ->with('success', 'Cars and Hotels updated successfully!');
+    }
 }
