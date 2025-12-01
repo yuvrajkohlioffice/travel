@@ -33,6 +33,17 @@
             </svg>
             Profile
         </a>
+        <a href="{{ route('packages.index') }}"
+            class="flex items-center px-4 py-3 rounded-lg font-medium transition-all duration-200
+            {{ request()->routeIs('packages.*')
+                ? 'bg-gray-800 text-white shadow-inner'
+                : 'hover:bg-gray-800 hover:text-white' }}">
+            <svg class="w-6 h-6 mr-3 opacity-90" fill="none" stroke="currentColor" stroke-width="2"
+                viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87M12 12a4 4 0 100-8 4 4 0 000 8z" />
+            </svg>
+            Packages
+        </a>
 
         <!-- Users -->
         <a href="{{ route('users.index') }}"

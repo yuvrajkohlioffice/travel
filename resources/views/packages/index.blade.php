@@ -38,7 +38,7 @@
                     <td class="text-center">
                         <a href="{{ route('packages.edit', $package->id) }}" class="px-2 py-1 bg-yellow-500 text-white rounded">Edit</a>
 
-                        <a href="{{ route('packages.show', $package->id) }}" class="px-2 py-1 bg-yellow-500 text-white rounded">Edit</a>
+                        <a href="{{ route('packages.show', $package->id) }}" class="px-2 py-1 bg-yellow-500 text-white rounded">Show</a>
 
                         <form action="{{ route('packages.destroy', $package->id) }}" method="POST" class="inline" onsubmit="return confirm('Delete this package?')">
                             @csrf
