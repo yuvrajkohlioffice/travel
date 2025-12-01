@@ -7,6 +7,7 @@ use Livewire\Volt\Volt;
 use App\Http\Controllers\PackageTypeController;
 use App\Http\Controllers\PackageCategoryController;
 use App\Http\Controllers\DifficultyTypeController;
+use App\Http\Controllers\RoleController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -33,6 +34,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     Route::resource('package-types', PackageTypeController::class);
     Route::resource('package-categories', PackageCategoryController::class);
     Route::resource('difficulty-types', DifficultyTypeController::class);
+    Route::resource('roles', RoleController::class);
 
     Route::get('/dashboard', function () {
         return view('dashboard');
