@@ -23,7 +23,6 @@
             Dashboard
         </a>
 
-
         <!-- Profile -->
         <a 
             href="{{ route('profile.show') }}"
@@ -38,7 +37,9 @@
             </svg>
             Profile
         </a>
-         <a 
+
+        <!-- Users -->
+        <a 
             href="{{ route('users.index') }}"
             class="flex items-center px-4 py-3 rounded-lg font-medium transition-all duration-200
             {{ request()->routeIs('users.index') 
@@ -52,8 +53,42 @@
             Users
         </a>
 
-        <!-- Settings -->
-        
+        <!-- Master Dropdown -->
+        <div x-data="{ open: {{ request()->is('package-*') || request()->is('difficulty-types*') || request()->is('package-types*') ? 'true' : 'false' }} }" class="space-y-1">
+            <button @click="open = !open" 
+                    class="flex items-center w-full px-4 py-3 rounded-lg font-medium transition-all duration-200
+                    {{ request()->is('package-*') ? 'bg-gray-800 text-white shadow-inner' : 'hover:bg-gray-800 hover:text-white' }}">
+                <svg class="w-6 h-6 mr-3 opacity-90" fill="none" stroke="currentColor" stroke-width="2"
+                     viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 6h16M4 12h16M4 18h16"/>
+                </svg>
+                Master
+                <svg :class="{'rotate-180': open}" class="w-4 h-4 ml-auto transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 9l-7 7-7-7"/>
+                </svg>
+            </button>
+
+            <div x-show="open" class="pl-8 mt-1 space-y-1" x-cloak>
+                <a href="{{ route('package-categories.index') }}"
+                   class="block px-4 py-2 rounded-lg font-medium transition-all duration-200
+                   {{ request()->routeIs('package-categories.*') ? 'bg-gray-700 text-white' : 'hover:bg-gray-700 hover:text-white' }}">
+                    Package Categories
+                </a>
+
+                <!-- Add other master links here -->
+                <a href="{{ route('package-types.index') }}"
+                   class="block px-4 py-2 rounded-lg font-medium transition-all duration-200
+                   {{ request()->routeIs('package-types.*') ? 'bg-gray-700 text-white' : 'hover:bg-gray-700 hover:text-white' }}">
+                    Package Types
+                </a>
+
+                <a href="{{ route('difficulty-types.index') }}"
+                   class="block px-4 py-2 rounded-lg font-medium transition-all duration-200
+                   {{ request()->routeIs('difficulty-types.*') ? 'bg-gray-700 text-white' : 'hover:bg-gray-700 hover:text-white' }}">
+                    Difficulty Types
+                </a>
+            </div>
+        </div>
 
     </nav>
 </div>
