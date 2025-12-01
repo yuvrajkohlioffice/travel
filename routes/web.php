@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
+use App\Http\Controllers\UserController;
 use Livewire\Volt\Volt;
 
 Route::get('/', function () {
@@ -36,6 +37,8 @@ Route::middleware([
     config('jetstream.auth_session'),
     'verified',
 ])->group(function () {
+    Route::resource('users', UserController::class);
+
     Route::get('/dashboard', function () {
         return view('dashboard');
     })->name('dashboard');
