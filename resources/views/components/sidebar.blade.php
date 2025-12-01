@@ -24,7 +24,7 @@
         <!-- Profile -->
         <a href="{{ route('profile.show') }}"
             class="flex items-center px-4 py-3 rounded-lg font-medium transition-all duration-200
-            {{ request()->routeIs('profile.show')
+            {{ request()->routeIs('profile.*')
                 ? 'bg-gray-800 text-white shadow-inner'
                 : 'hover:bg-gray-800 hover:text-white' }}">
             <svg class="w-6 h-6 mr-3 opacity-90" fill="none" stroke="currentColor" stroke-width="2"
@@ -37,7 +37,7 @@
         <!-- Users -->
         <a href="{{ route('users.index') }}"
             class="flex items-center px-4 py-3 rounded-lg font-medium transition-all duration-200
-            {{ request()->routeIs('users.index')
+            {{ request()->routeIs('users.*')
                 ? 'bg-gray-800 text-white shadow-inner'
                 : 'hover:bg-gray-800 hover:text-white' }}">
             <svg class="w-6 h-6 mr-3 opacity-90" fill="none" stroke="currentColor" stroke-width="2"

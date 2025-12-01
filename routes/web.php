@@ -8,7 +8,7 @@ use App\Http\Controllers\PackageTypeController;
 use App\Http\Controllers\PackageCategoryController;
 use App\Http\Controllers\DifficultyTypeController;
 use App\Http\Controllers\RoleController;
-
+use App\Http\Controllers\PackageController;
 Route::get('/', function () {
     return view('welcome');
 })->name('home');
@@ -31,6 +31,9 @@ Route::middleware(['auth'])->group(function () {
 
 Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified'])->group(function () {
     Route::resource('users', UserController::class);
+
+    Route::resource('packages', PackageController::class);
+
     Route::resource('package-types', PackageTypeController::class);
     Route::resource('package-categories', PackageCategoryController::class);
     Route::resource('difficulty-types', DifficultyTypeController::class);
