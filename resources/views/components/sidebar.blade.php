@@ -1,8 +1,8 @@
-<div class="h-screen w-64 bg-gray-900 text-gray-200 flex flex-col fixed left-0 top-0 shadow-xl z-50">
+<div class="h-screen w-64 bg-white text-gray-800 flex flex-col fixed left-0 top-0 shadow-lg z-50">
 
     <!-- Logo -->
-    <div class="p-6 text-2xl font-bold border-b border-gray-800 tracking-wide flex items-center space-x-2">
-        <i class="fas fa-route text-blue-400"></i>
+    <div class="p-6 text-2xl font-bold border-b border-gray-200 tracking-wide flex items-center space-x-2">
+        <i class="fas fa-route text-blue-500"></i>
         <span>TRAVEL</span>
     </div>
 
@@ -35,72 +35,67 @@
 
         <div x-data="{ open: {{ request()->is('package-*') || request()->is('difficulty-types*') || request()->is('package-types*') || request()->is('pickup-points*') || request()->is('roles*') || request()->is('package-categories*') || request()->is('cars*') || request()->is('hotels*') ? 'true' : 'false' }} }">
 
-    <button @click="open = !open"
-        class="sidebar-link w-full {{ request()->is('package-*') || request()->is('difficulty-types*') || request()->is('package-types*') || request()->is('pickup-points*') || request()->is('roles*') || request()->is('package-categories*') || request()->is('cars*') || request()->is('hotels*') ? 'active' : '' }}">
-        <i class="fas fa-cogs text-lg w-6"></i>
-        Master
-        <i :class="{ 'rotate-180': open }"
-           class="fas fa-chevron-down ml-auto transition-transform duration-200"></i>
-    </button>
+            <button @click="open = !open"
+                class="sidebar-link w-full {{ request()->is('package-*') || request()->is('difficulty-types*') || request()->is('package-types*') || request()->is('pickup-points*') || request()->is('roles*') || request()->is('package-categories*') || request()->is('cars*') || request()->is('hotels*') ? 'active' : '' }}">
+                <i class="fas fa-cogs text-lg w-6"></i>
+                Master
+                <i :class="{ 'rotate-180': open }"
+                    class="fas fa-chevron-down ml-auto transition-transform duration-200"></i>
+            </button>
 
-    <div x-show="open" x-cloak class="ml-8 mt-2 space-y-1">
+            <div x-show="open" x-cloak class="ml-8 mt-2 space-y-1">
 
-        <!-- Pickup Points -->
-        <a href="{{ route('pickup-points.index') }}"
-           class="sidebar-link {{ request()->routeIs('pickup-points.*') ? 'active' : '' }}">
-            <i class="fas fa-map-pin text-lg w-6"></i>
-            Pickup Points
-        </a>
+                <!-- Pickup Points -->
+                <a href="{{ route('pickup-points.index') }}"
+                    class="sidebar-link {{ request()->routeIs('pickup-points.*') ? 'active' : '' }}">
+                    <i class="fas fa-map-pin text-lg w-6"></i>
+                    Pickup Points
+                </a>
 
-        <!-- Roles -->
-        <a href="{{ route('roles.index') }}"
-           class="sidebar-link {{ request()->routeIs('roles.*') ? 'active' : '' }}">
-            <i class="fas fa-user-shield text-lg w-6"></i>
-            Roles
-        </a>
+                <!-- Roles -->
+                <a href="{{ route('roles.index') }}"
+                    class="sidebar-link {{ request()->routeIs('roles.*') ? 'active' : '' }}">
+                    <i class="fas fa-user-shield text-lg w-6"></i>
+                    Roles
+                </a>
 
-        <!-- Package Categories -->
-        <a href="{{ route('package-categories.index') }}"
-           class="sidebar-link {{ request()->routeIs('package-categories.*') ? 'active' : '' }}">
-            <i class="fas fa-layer-group text-lg w-6"></i>
-            Package Categories
-        </a>
+                <!-- Package Categories -->
+                <a href="{{ route('package-categories.index') }}"
+                    class="sidebar-link {{ request()->routeIs('package-categories.*') ? 'active' : '' }}">
+                    <i class="fas fa-layer-group text-lg w-6"></i>
+                    Package Categories
+                </a>
 
-        <!-- Package Types -->
-        <a href="{{ route('package-types.index') }}"
-           class="sidebar-link {{ request()->routeIs('package-types.*') ? 'active' : '' }}">
-            <i class="fas fa-tags text-lg w-6"></i>
-            Package Types
-        </a>
+                <!-- Package Types -->
+                <a href="{{ route('package-types.index') }}"
+                    class="sidebar-link {{ request()->routeIs('package-types.*') ? 'active' : '' }}">
+                    <i class="fas fa-tags text-lg w-6"></i>
+                    Package Types
+                </a>
 
-        <!-- Cars -->
-        <a href="{{ route('cars.index') }}"
-           class="sidebar-link {{ request()->routeIs('cars.*') ? 'active' : '' }}">
-            <i class="fas fa-car text-lg w-6"></i>
-            Cars / Cabs
-        </a>
+                <!-- Cars -->
+                <a href="{{ route('cars.index') }}"
+                    class="sidebar-link {{ request()->routeIs('cars.*') ? 'active' : '' }}">
+                    <i class="fas fa-car text-lg w-6"></i>
+                    Cars / Cabs
+                </a>
 
-        <!-- Hotels -->
-        <a href="{{ route('hotels.index') }}"
-           class="sidebar-link {{ request()->routeIs('hotels.*') ? 'active' : '' }}">
-            <i class="fas fa-hotel text-lg w-6"></i>
-            Hotels
-        </a>
+                <!-- Hotels -->
+                <a href="{{ route('hotels.index') }}"
+                    class="sidebar-link {{ request()->routeIs('hotels.*') ? 'active' : '' }}">
+                    <i class="fas fa-hotel text-lg w-6"></i>
+                    Hotels
+                </a>
 
-        <!-- Difficulty Types -->
-        <a href="{{ route('difficulty-types.index') }}"
-           class="sidebar-link {{ request()->routeIs('difficulty-types.*') ? 'active' : '' }}">
-            <i class="fas fa-mountain text-lg w-6"></i>
-            Difficulty Types
-        </a>
+                <!-- Difficulty Types -->
+                <a href="{{ route('difficulty-types.index') }}"
+                    class="sidebar-link {{ request()->routeIs('difficulty-types.*') ? 'active' : '' }}">
+                    <i class="fas fa-mountain text-lg w-6"></i>
+                    Difficulty Types
+                </a>
 
-    </div>
-</div>
-
-
-
+            </div>
+        </div>
     </nav>
 </div>
-<style>
 
-</style>

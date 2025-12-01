@@ -11,45 +11,38 @@ class Car extends Model
 
     protected $table = 'cars';
 
-    // Only fillable fields that exist in the table
     protected $fillable = [
         'name',
         'type',
         'capacity',
-        'price', // JSON column
+        'price',
     ];
 
     protected $casts = [
         'capacity' => 'integer',
-        'price' => 'array', // automatically cast JSON to array
+        'price' => 'array',
     ];
 
     /**
-     * Many-to-Many relationship with Package
+     * Many-to-Many relationship with Package through package_items
      */
     public function packages()
     {
-        return $this->belongsToMany(Package::class, 'package_car', 'car_id', 'package_id')
+        return $this->belongsToMany(Package::class, 'package_items', 'car_id', 'package_id')
+                    ->withPivot('custom_price', 'already_price')
                     ->withTimestamps();
     }
 
-    /**
-     * Helper method to get price per km
-     */
     public function getPricePerKmAttribute()
     {
         return $this->price['per_km'] ?? 0;
     }
 
-    // Accessor for price_per_day
     public function getPricePerDayAttribute()
     {
         return $this->price['per_day'] ?? 0;
     }
 
-    /**
-     * Example helper method
-     */
     public function isAvailable()
     {
         return true; // placeholder

@@ -24,7 +24,7 @@
 
     <div class="min-h-screen bg-gray-100">
         <x-sidebar />
-<x-navigation-menu/>
+        <x-navigation-menu />
 
         <!-- Page Heading -->
 

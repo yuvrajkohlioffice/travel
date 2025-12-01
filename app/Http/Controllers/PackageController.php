@@ -10,7 +10,7 @@ use App\Models\Car;
 use App\Models\Hotel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-
+use Illuminate\Support\Facades\DB;
 class PackageController extends Controller
 {
     public function index()
@@ -165,37 +165,60 @@ class PackageController extends Controller
     }
 
     public function show(Package $package)
-{
-    return view('packages.show', compact('package'));
-}
- public function editRelations(Package $package)
     {
-        $package->load(['cars', 'hotels']);
-
-        $allCars = Car::all();
-        $allHotels = Hotel::all();
-
-        return view('packages.edit-relations', compact('package', 'allCars', 'allHotels'));
+        return view('packages.show', compact('package'));
     }
+
+    public function editRelations(Package $package)
+{
+    // Load actual package items with related car and hotel
+    $package->load(['packageItems.car', 'packageItems.hotel']);
+
+    $allCars = Car::all();
+    $allHotels = Hotel::all();
+
+    return view('packages.edit-relations', compact('package', 'allCars', 'allHotels'));
+}
 
     /**
-     * Update package's cars and hotels
+     * Update package's cars and hotels with custom_price and already_price
      */
-    public function updateRelations(Request $request, Package $package)
-    {
-        // Validate input
-        $data = $request->validate([
-            'cars' => 'nullable|array',
-            'cars.*' => 'exists:cars,id',
-            'hotels' => 'nullable|array',
-            'hotels.*' => 'exists:hotels,id',
-        ]);
 
-        // Sync many-to-many relationships
-        $package->cars()->sync($data['cars'] ?? []);
-        $package->hotels()->sync($data['hotels'] ?? []);
+public function updateRelations(Request $request, Package $package)
+{
+    $data = $request->validate([
+        'items' => 'nullable|array',
+        'items.*.car_id' => 'required|exists:cars,id',
+        'items.*.hotel_id' => 'required|exists:hotels,id',
+        'items.*.custom_price' => 'nullable|numeric|min:0',
+        'items.*.already_price' => 'nullable|boolean',
+    ]);
 
-        return redirect()->route('packages.show', $package->id)
-                         ->with('success', 'Cars and Hotels updated successfully!');
+   DB::table('package_items')->where('package_id', $package->id)->delete();
+    // Insert all new combinations
+    $insertData = [];
+    foreach ($data['items'] ?? [] as $item) {
+        if (!empty($item['car_id']) && !empty($item['hotel_id'])) {
+            $insertData[] = [
+                'package_id' => $package->id,
+                'car_id' => $item['car_id'],
+                'hotel_id' => $item['hotel_id'],
+                'custom_price' => $item['custom_price'] ?? null,
+                'already_price' => !empty($item['already_price']),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+        }
     }
+
+    if (!empty($insertData)) {
+        DB::table('package_items')->insert($insertData);
+    }
+
+    return redirect()->route('packages.show', $package->id)
+                     ->with('success', 'Package items updated successfully!');
+}
+
+
+
 }

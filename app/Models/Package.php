@@ -35,7 +35,6 @@ class Package extends Model
     ];
 
     // Relationships
-
     public function packageType()
     {
         return $this->belongsTo(PackageType::class);
@@ -53,19 +52,25 @@ class Package extends Model
 
     public function cars()
     {
-        return $this->belongsToMany(Car::class, 'package_car', 'package_id', 'car_id')
+        return $this->belongsToMany(Car::class, 'package_items', 'package_id', 'car_id')
+                    ->withPivot('custom_price', 'already_price')
                     ->withTimestamps();
     }
 
     public function hotels()
     {
-        return $this->belongsToMany(Hotel::class, 'package_hotel', 'package_id', 'hotel_id')
+        return $this->belongsToMany(Hotel::class, 'package_items', 'package_id', 'hotel_id')
+                    ->withPivot('custom_price', 'already_price')
                     ->withTimestamps();
     }
 
-    // Example: If you later have pickup points as a table
     public function pickupPoints()
     {
-        return $this->hasMany(PickupPoint::class); // assuming one-to-many
+        return $this->hasMany(PickupPoint::class);
     }
+    public function packageItems()
+{
+    return $this->hasMany(PackageItem::class);
+}
+
 }
