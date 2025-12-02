@@ -4,7 +4,10 @@
             <div class="bg-white dark:bg-gray-800 shadow-lg rounded-lg overflow-hidden">
                 <!-- Header -->
                 <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                    <h2 class="text-xl font-semibold text-gray-800 dark:text-white">Leads</h2>
+                    <h2 class="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                        <i class="fa-solid fa-people-group text-blue-600"></i>
+                        Leads
+                    </h2>
                     <a href="{{ route('leads.create') }}"
                         class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
                         + Add Lead
@@ -34,16 +37,17 @@
                                 <td class="p-3 flex gap-2">
                                     <a href="{{ route('leads.show', $lead->id) }}"
                                         class="inline-flex items-center gap-1 px-3 py-1 bg-blue-500 text-white 
-                                              rounded-lg hover:bg-blue-600 shadow-sm">
+                                              rounded-lg hover:bg-blue-600 shadow-sm transition-colors duration-500 ease-in-out">
                                         <i class="fa-solid fa-eye"></i>View</a>
                                     <a href="{{ route('leads.assign.form', $lead->id) }}"
-                                        class="px-3 py-1 bg-purple-600 text-white rounded">
-                                        Assign
+                                        class="inline-flex items-center gap-1 px-3 py-1 bg-purple-500 text-white 
+                                              rounded-lg hover:bg-purple-600 shadow-sm transition-colors duration-500 ease-in-out">
+                                        <i class="fa-solid fa-people-arrows"></i>Assign
                                     </a>
                                     <a href="{{ route('leads.edit', $lead->id) }}"
-                                        class="inline-flex items-center gap-1 px-3 py-1 bg-yellow-500 text-white 
-                                              rounded-lg hover:bg-yellow-600 shadow-sm">
-                                        <i class="fa-solid fa-pen-to-square"></i>Edit</a>
+                                        class="inline-flex items-center gap-1 px-3 py-1 bg-yellow-500 text-white  rounded-lg shadow-sm hover:bg-yellow-600 transition-colors duration-500 ease-in-out">
+                                        <i class="fa-solid fa-pen-to-square"></i>Edit
+                                    </a>
 
                                     <form action="{{ route('leads.destroy', $lead->id) }}" method="POST"
                                         onsubmit="return confirm('Delete this lead?')">
@@ -51,7 +55,7 @@
                                         @method('DELETE')
                                         <button
                                             class="inline-flex items-center gap-1 px-3 py-1 bg-red-600 text-white 
-                                                   rounded-lg hover:bg-red-700 shadow-sm">
+                                                   rounded-lg hover:bg-red-700 shadow-sm transition-colors duration-500 ease-in-out">
                                             <i class="fa-solid fa-trash"></i> Delete
                                         </button>
                                     </form>

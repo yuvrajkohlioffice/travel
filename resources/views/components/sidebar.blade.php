@@ -30,7 +30,7 @@
         <!-- Packages -->
         <a href="{{ route('packages.index') }}"
             class="sidebar-link {{ request()->routeIs('packages.*') ? 'active' : '' }}">
-            <i class="fas fa-briefcase text-lg w-6"></i>
+            <i class="fas fa-box-open text-lg w-6"></i>
             Packages
         </a>
         <a href="{{ route('users.index') }}" class="sidebar-link {{ request()->routeIs('users.*') ? 'active' : '' }}">
