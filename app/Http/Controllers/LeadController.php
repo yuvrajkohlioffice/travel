@@ -4,43 +4,46 @@ namespace App\Http\Controllers;
 
 use App\Models\Lead;
 use App\Models\Package;
-use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\LeadUser;
+use Illuminate\Http\Request;
+
 class LeadController extends Controller
 {
     public function index()
     {
-        $leads = Lead::with('package')
+        $leads = Lead::with(['package'])
             ->orderByRaw(
                 "
-            CASE
-                WHEN lead_status = 'Hot' THEN 1
-                WHEN lead_status = 'Warm' THEN 2
-                WHEN lead_status = 'Cold' THEN 3
-                ELSE 4
-            END
-        ",
+                CASE
+                    WHEN lead_status = 'Hot' THEN 1
+                    WHEN lead_status = 'Warm' THEN 2
+                    WHEN lead_status = 'Cold' THEN 3
+                    ELSE 4
+                END
+            ",
             )
-            ->latest() // optional: newest inside each group
-            ->get();
+            ->latest()
+            ->paginate(20); // Paging improves performance
 
         return view('leads.index', compact('leads'));
     }
 
     public function create()
     {
-        $packages = Package::all();
+        $packages = Package::select('id', 'package_name')->orderBy('package_name')->get();
         return view('leads.create', compact('packages'));
     }
 
     public function store(Request $request)
     {
-        $request->validate([
-            'name' => 'required',
+        $validated = $request->validate([
+            'name' => 'required|max:255',
+            'email' => 'nullable|email',
+            'phone_number' => 'nullable|max:15',
         ]);
 
-        Lead::create($request->all());
+        Lead::create($validated + $request->only(['company_name', 'district', 'country', 'phone_code', 'city', 'client_category', 'lead_status', 'lead_source', 'website', 'package_id', 'inquiry_text']));
 
         return redirect()->route('leads.index')->with('success', 'Lead created successfully.');
     }
@@ -52,55 +55,59 @@ class LeadController extends Controller
 
     public function edit(Lead $lead)
     {
-        $packages = Package::all();
+        $packages = Package::select('id', 'package_name')->get();
         return view('leads.edit', compact('lead', 'packages'));
     }
 
     public function update(Request $request, Lead $lead)
     {
-        $request->validate([
-            'name' => 'required',
+        $validated = $request->validate([
+            'name' => 'required|max:255',
+            'email' => 'nullable|email',
+            'phone_number' => 'nullable|max:15',
         ]);
 
-        $lead->update($request->all());
+        $lead->update($validated + $request->only(['company_name', 'district', 'country', 'phone_code', 'city', 'client_category', 'lead_status', 'lead_source', 'website', 'package_id', 'inquiry_text']));
 
         return redirect()->route('leads.index')->with('success', 'Lead updated successfully.');
     }
 
     public function destroy(Lead $lead)
     {
+        $lead->assignedUsers()->delete(); // delete related assignments
         $lead->delete();
+
         return redirect()->route('leads.index')->with('success', 'Lead deleted successfully.');
     }
+
     public function assignForm(Lead $lead)
     {
-        // Users already assigned
-        $assignedUsers = $lead->assignedUsers()->with('user', 'assignedBy')->get();
+        $assignedUsers = $lead->assignedUsers()->with('user:id,name', 'assignedBy:id,name')->get();
 
-        // Get IDs of already assigned users
         $assignedUserIds = $assignedUsers->pluck('user_id');
 
-        // Get users who are NOT already assigned AND whose role_id is NOT 1
-        $users = User::whereNotIn('id', $assignedUserIds)->where('role_id', '!=', 1)->get();
+        $users = User::select('id', 'name', 'email')->whereNotIn('id', $assignedUserIds)->where('role_id', '!=', 1)->orderBy('name')->get();
 
         return view('leads.assign', compact('lead', 'users', 'assignedUsers'));
     }
 
     public function deleteAssignment($id)
     {
-        $assignment = LeadUser::findOrFail($id);
-        $assignment->delete();
-
+        LeadUser::destroy($id);
         return redirect()->back()->with('success', 'Assignment removed successfully!');
     }
 
     public function assignStore(Request $request, Lead $lead)
     {
         $request->validate([
-            'user_ids' => 'required|array',
+            'user_ids' => 'required|array|min:1',
         ]);
 
-        foreach ($request->user_ids as $userId) {
+        $existing = $lead->assignedUsers()->whereIn('user_id', $request->user_ids)->pluck('user_id')->toArray();
+
+        $newAssignments = array_diff($request->user_ids, $existing);
+
+        foreach ($newAssignments as $userId) {
             LeadUser::create([
                 'lead_id' => $lead->id,
                 'user_id' => $userId,

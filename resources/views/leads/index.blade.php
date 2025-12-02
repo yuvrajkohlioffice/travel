@@ -23,15 +23,52 @@
 
                 <!-- Users Table -->
                 <div class="p-6 overflow-x-auto">
-                    <x-data-table id="Leads-table" :headers="['ID', 'Name', 'Phone Number', 'Email', 'Inquiry For', 'Status', 'Action']" :excel="true" :print="true" title="Leads"
+                    <x-data-table id="Leads-table" :headers="['ID', 'Client Infor', 'Country', 'Reminder', 'Inquiry For', 'Status', 'Action']" :excel="true" :print="true" title="Leads"
                         resourceName="Leads">
                         @foreach ($leads as $lead)
                             <tr class="border-t">
                                 <td class="p-3">{{ $loop->iteration }}</td>
-                                <td class="p-3">{{ $lead->name }}</td>
-                                <td class="p-3">+{{ $lead->phone_code }} {{ $lead->phone_number }}</td>
-                                <td class="p-3">{{ $lead->email }}</td>
-                                <td class="p-3">{{ $lead->package->package_name ?? 'Custom Inquiry' }}</td>
+                                <td class="p-3">
+                                    {{ $lead->name }}
+                                    <hr>
+                                    <a href="mailto:{{ $lead->email }}" class="text-blue-600">
+                                        {{ $lead->email }}
+                                    </a>
+                                    <hr>
+         @php
+                                     $masked = str_repeat('*', strlen($lead->phone_number) - 4) . substr($lead->phone_number, -4);
+                                        $created_type = is_object($lead->created_at)
+                                            ? get_class($lead->created_at)
+                                            : gettype($lead->created_at);
+                                        $created = \Carbon\Carbon::parse($lead->created_at);
+                                        $daysFloor = (int) floor($created->diffInRealDays());
+                                        $daysFromSeconds = (int) floor($created->diffInSeconds() / 86400);
+                                    @endphp
+
+<a target="_blank" class="text-green-600 hover:underline">
+    +{{ $lead->phone_code }} {{ $masked }}
+</a>
+                                    <br>
+                                  
+                                    {{ $lead->created_at->format('d-M-y') }}
+                                    <a class="bg-blue-600 p-1 rounded text-white">
+                                        {{ $daysFloor }} days old
+
+                                    </a>
+                                </td>
+
+                                <td class="p-3">
+                                    {{ $lead->country }}<br>
+                                    {{ $lead->district }}<br>
+                                    {{ $lead->city }}<br>
+                                </td>
+                                <td class="p-3">
+                                    Last Reminder
+                                </td>
+                                <td class="p-3" title="{{ $lead->package->package_name ?? $lead->inquiry_text }}">
+                                    {{ $lead->package->package_name ?? \Illuminate\Support\Str::limit($lead->inquiry_text, 16) }}
+                                </td>
+
                                 <td class="p-3">{{ $lead->lead_status }}</td>
 
                                 <td class="p-3 flex gap-2">

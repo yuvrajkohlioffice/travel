@@ -13,10 +13,10 @@
 
 <div class="w-full overflow-x-auto  ">
     <table id="{{ $id }}" class="min-w-full border border-gray-200">
-        <thead class="bg-green-600 text-white">
+        <thead class="bg-blue-600 text-white">
             <tr>
                 @foreach ($headers as $header)
-                    <th class="px-4 py-2 text-center font-semibold border border-green-700">
+                    <th class="px-4 py-2 text-center font-semibold border border-white-700">
                         {{ $header }}
                     </th>
                 @endforeach
@@ -34,6 +34,7 @@
 <link href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css" rel="stylesheet">
 
 <style>
+    
     /* Remove Bootstrap interference */
     table.dataTable.no-footer {
         border-bottom: 1px solid #e5e7eb !important;
