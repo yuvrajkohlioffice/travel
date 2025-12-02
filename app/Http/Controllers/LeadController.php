@@ -7,6 +7,8 @@ use App\Models\Package;
 use App\Models\User;
 use App\Models\LeadUser;
 use Illuminate\Http\Request;
+use App\Imports\LeadsImport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class LeadController extends Controller
 {
@@ -56,15 +58,12 @@ class LeadController extends Controller
             'email' => 'nullable|email',
             'phone_number' => 'nullable|max:15',
         ]);
-
-        // Create the lead
         $lead = Lead::create($validated + $request->only(['company_name', 'district', 'country', 'phone_code', 'city', 'client_category', 'lead_status', 'lead_source', 'website', 'package_id', 'inquiry_text']) + ['user_id' => auth()->id()]);
 
-        // 🔥 Automatically assign the lead to the creator
         LeadUser::create([
             'lead_id' => $lead->id,
-            'user_id' => auth()->id(), // assigned to the creator
-            'assigned_by' => auth()->id(), // assigned by the creator
+            'user_id' => auth()->id(), 
+            'assigned_by' => auth()->id(), 
         ]);
 
         return redirect()->route('leads.index')->with('success', 'Lead created successfully.');
@@ -96,7 +95,7 @@ class LeadController extends Controller
 
     public function destroy(Lead $lead)
     {
-        $lead->assignedUsers()->delete(); // delete related assignments
+        $lead->assignedUsers()->delete();
         $lead->delete();
 
         return redirect()->route('leads.index')->with('success', 'Lead deleted successfully.');
@@ -108,12 +107,12 @@ class LeadController extends Controller
 
         $assignedUserIds = $assignedUsers->pluck('user_id');
 
-        $currentUserId = auth()->id(); // Get logged-in user ID
+        $currentUserId = auth()->id();
 
         $users = User::select('id', 'name', 'email')
-            ->whereNotIn('id', $assignedUserIds) // Exclude already assigned users
-            ->where('id', '!=', $currentUserId) // Exclude current user
-            ->where('role_id', '!=', 1) // Exclude admin
+            ->whereNotIn('id', $assignedUserIds) 
+            ->where('id', '!=', $currentUserId) 
+            ->where('role_id', '!=', 1) 
             ->orderBy('name')
             ->get();
 
@@ -145,5 +144,18 @@ class LeadController extends Controller
         }
 
         return redirect()->route('leads.index')->with('success', 'Lead assigned successfully.');
+    }
+
+    public function importLeads(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|mimes:xlsx,csv',
+        ]);
+
+        $userId = auth()->id();
+
+        Excel::import(new LeadsImport($userId), $request->file('file'));
+
+        return back()->with('success', 'Leads imported successfully!');
     }
 }

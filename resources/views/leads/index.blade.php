@@ -1,152 +1,167 @@
 <x-app-layout>
+    <div x-data="followupModal()" x-cloak class="min-h-screen bg-gradient-to-br from-gray-100 via-white to-gray-200">
 
-    <div x-data="followupModal()" x-cloak>
-        <div class="ml-64 flex justify-center items-start min-h-screen p-6 bg-gray-100 dark:bg-gray-900">
-            <div class="w-full max-w-7xl">
-                <div class="bg-white dark:bg-gray-800 shadow-lg rounded-lg overflow-hidden">
+        <div class="ml-64 flex justify-center items-start min-h-screen p-6">
+            <div class="w-full max-w-7xl space-y-6">
 
-                    <!-- Header -->
-                    <div
-                        class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                        <h2 class="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
-                            <i class="fa-solid fa-people-group text-blue-600"></i>
-                            Leads
-                        </h2>
+                <!-- Header -->
+                <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-6 rounded-xl shadow-lg">
 
-                        <a href="{{ route('leads.create') }}"
-                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                            + Add Lead
-                        </a>
+    <!-- Title -->
+    <h2 class="text-3xl font-bold flex items-center gap-3">
+        <i class="fa-solid fa-people-group"></i> Leads
+    </h2>
+
+    <!-- Actions -->
+    <div class="flex flex-col md:flex-row items-center gap-3 w-full md:w-auto">
+
+        <!-- Import Template -->
+        <a href="/Example-Import-Leads.xlsx"
+            class="px-4 py-2 bg-white text-blue-600 font-semibold rounded-lg shadow hover:bg-gray-100 transition">
+            Import Template
+        </a>
+
+        <!-- Import File Form -->
+        <form action="{{ route('leads.import') }}" method="POST" enctype="multipart/form-data"
+            class="flex items-center gap-2">
+            @csrf
+            <input type="file" name="file" accept=".xlsx,.csv" required
+                class="text-sm text-white file:bg-blue-600 file:border-0 file:rounded-lg file:px-3 file:py-1 file:font-semibold file:hover:bg-blue-700 cursor-pointer" />
+            <button type="submit"
+                class="px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition">
+                Import Leads
+            </button>
+        </form>
+
+        <!-- Add Lead Button -->
+        <a href="{{ route('leads.create') }}"
+            class="px-5 py-2 bg-white text-blue-600 font-semibold rounded-lg shadow hover:bg-gray-100 transition">
+            + Add Lead
+        </a>
+
+    </div>
+</div>
+
+
+                <!-- Success Message -->
+                @if (session('success'))
+                    <div class="p-4 bg-green-500 text-white rounded-lg shadow">
+                        {{ session('success') }}
                     </div>
+                @endif
 
-                    <!-- Success message -->
-                    @if (session('success'))
-                        <div class="m-6 p-4 bg-green-500 text-white rounded">
-                            {{ session('success') }}
-                        </div>
-                    @endif
+                <!-- Leads Table -->
+                <div class="bg-white rounded-xl shadow overflow-x-auto p-4">
+                    <x-data-table id="Leads-table" :headers="['ID', 'Client Info', 'Country', 'Reminder', 'Inquiry For', 'Status', 'Action']" :excel="true" :print="true" title="Leads"
+                        resourceName="Leads">
+                        @foreach ($leads as $lead)
+                            <tr class="border-b hover:bg-gray-50 transition-colors">
 
-                    <!-- Users Table -->
-                    <div class="p-6 overflow-x-auto">
-                        <x-data-table id="Leads-table" :headers="['ID', 'Client Info', 'Country', 'Reminder', 'Inquiry For', 'Status', 'Action']" :excel="true" :print="true"
-                            title="Leads" resourceName="Leads">
-                            @foreach ($leads as $lead)
-                                <tr class="border-t">
+                                <!-- Serial -->
+                                <td class="p-3 text-center font-medium">{{ $loop->iteration }}</td>
 
-                                    <!-- Serial -->
-                                    <td class="p-3">{{ $loop->iteration }}</td>
+                                <!-- Client Info -->
+                                <td class="p-3 space-y-1">
+                                    <div class="font-semibold text-gray-800">{{ $lead->name }}</div>
+                                    <a href="mailto:{{ $lead->email }}"
+                                        class="text-blue-600 hover:underline">{{ $lead->email }}</a>
 
-                                    <!-- Client Info -->
-                                    <td class="p-3">
-                                        {{ $lead->name }}
-                                        <hr>
+                                    @php
+                                        $masked =
+                                            str_repeat('*', strlen($lead->phone_number) - 4) .
+                                            substr($lead->phone_number, -4);
+                                        $created = \Carbon\Carbon::parse($lead->created_at);
+                                        $daysFloor = floor($created->diffInRealDays());
+                                    @endphp
 
-                                        <a href="mailto:{{ $lead->email }}" class="text-blue-600">
-                                            {{ $lead->email }}
-                                        </a>
-                                        <hr>
+                                    <div class="text-green-600 font-mono">+{{ $lead->phone_code }} {{ $masked }}
+                                    </div>
+                                    <div class="text-gray-500 text-sm">{{ $lead->created_at->format('d-M-y') }} • <span
+                                            class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded">{{ $daysFloor }}
+                                            days old</span></div>
+                                </td>
 
-                                        @php
-                                            $masked =
-                                                str_repeat('*', strlen($lead->phone_number) - 4) .
-                                                substr($lead->phone_number, -4);
-                                            $created = \Carbon\Carbon::parse($lead->created_at);
-                                            $daysFloor = floor($created->diffInRealDays());
-                                        @endphp
+                                <!-- Country -->
+                                <td class="p-3 text-sm text-gray-700 space-y-1">
+                                    <div>{{ $lead->country }}</div>
+                                    <div>{{ $lead->district }}</div>
+                                    <div>{{ $lead->city }}</div>
+                                </td>
 
-                                        <a class="text-green-600 hover:underline">
-                                            +{{ $lead->phone_code }} {{ $masked }}
-                                        </a>
+                                <!-- Reminder -->
+                                <td class="p-3 text-center">
+                                    <button @click="openFollowModal({{ $lead->id }}, '{{ $lead->name }}')"
+                                        class="bg-green-500 text-white px-4 py-1 rounded-lg hover:bg-green-600 shadow-sm transition duration-300">
+                                        <i class="fa-solid fa-phone-volume mr-1"></i> Followup
+                                    </button>
+                                </td>
 
-                                        <br>
+                                <!-- Package / Inquiry -->
+                                <td class="p-3 text-gray-800"
+                                    title="{{ $lead->package->package_name ?? $lead->inquiry_text }}">
+                                    {{ $lead->package->package_name ?? \Illuminate\Support\Str::limit($lead->inquiry_text, 20) }}
+                                </td>
 
-                                        {{ $lead->created_at->format('d-M-y') }}
+                                <!-- Status -->
+                                <td class="p-3 text-center">
+                                    @php
+                                        $statusColors = [
+                                            'Hot' => 'bg-red-500',
+                                            'Warm' => 'bg-yellow-400',
+                                            'Cold' => 'bg-gray-400',
+                                            'Interested' => 'bg-green-500',
+                                        ];
+                                        $statusClass = $statusColors[$lead->lead_status] ?? 'bg-gray-300';
+                                    @endphp
+                                    <span
+                                        class="px-3 py-1 rounded-full text-white {{ $statusClass }}">{{ $lead->lead_status }}</span>
+                                </td>
 
-                                        <a class="bg-blue-600 p-1 rounded text-white">
-                                            {{ $daysFloor }} days old
-                                        </a>
-                                    </td>
+                                <!-- Actions -->
+                                <td class="p-3  flex items-center gap-5">
+                                    <a href="{{ route('leads.show', $lead->id) }}" class="btn-view">
+                                        <i class="fa-solid fa-eye"></i> View
+                                    </a>
 
-                                    <!-- Country -->
-                                    <td class="p-3">
-                                        {{ $lead->country }}<br>
-                                        {{ $lead->district }}<br>
-                                        {{ $lead->city }}<br>
-                                    </td>
+                                    <!-- Assign -->
+                                    <a href="{{ route('leads.assign.form', $lead->id) }}" class="btn-assign">
+                                        <i class="fa-solid fa-user-plus"></i> Assign
+                                    </a>
 
-                                    <!-- Reminder (Followup Button) -->
-                                    <td class="p-3">
-                                        <button @click="openFollowModal({{ $lead->id }}, '{{ $lead->name }}')"
-                                            class="inline-flex items-center gap-1 px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 shadow-sm transition-colors duration-300">
-                                            <i class="fa-solid fa-phone-volume"></i> Followup
+                                    <!-- Edit -->
+                                    <a href="{{ route('leads.edit', $lead->id) }}" class="btn-edit">
+                                        <i class="fa-solid fa-pen-to-square"></i> Edit
+                                    </a>
+
+                                    <!-- Delete -->
+                                    <form action="{{ route('leads.destroy', $lead->id) }}" method="POST"
+                                        onsubmit="return confirm('Delete this lead?')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn-delete">
+                                            <i class="fa-solid fa-trash"></i> Delete
                                         </button>
+                                    </form>
+                                </td>
 
-                                    </td>
-
-                                    <!-- Package -->
-                                    <td class="p-3"
-                                        title="{{ $lead->package->package_name ?? $lead->inquiry_text }}">
-                                        {{ $lead->package->package_name ?? \Illuminate\Support\Str::limit($lead->inquiry_text, 16) }}
-                                    </td>
-
-                                    <!-- Status -->
-                                    <td class="p-3">{{ $lead->lead_status }}</td>
-
-                                    <!-- Actions -->
-                                    <td class="p-3 flex gap-2">
-                                        <a href="{{ route('leads.show', $lead->id) }}"
-                                            class="inline-flex items-center gap-1 px-3 py-1 bg-blue-500 text-white 
-                                              rounded-lg hover:bg-blue-600 shadow-sm transition-colors duration-300">
-                                            <i class="fa-solid fa-eye"></i>View
-                                        </a>
-
-                                        <a href="{{ route('leads.assign.form', $lead->id) }}"
-                                            class="inline-flex items-center gap-1 px-3 py-1 bg-purple-500 text-white 
-                                              rounded-lg hover:bg-purple-600 shadow-sm transition-colors duration-300">
-                                            <i class="fa-solid fa-people-arrows"></i>Assign
-                                        </a>
-
-                                        <a href="{{ route('leads.edit', $lead->id) }}"
-                                            class="inline-flex items-center gap-1 px-3 py-1 bg-yellow-500 text-white  
-                                               rounded-lg shadow-sm hover:bg-yellow-600 transition-colors duration-300">
-                                            <i class="fa-solid fa-pen-to-square"></i>Edit
-                                        </a>
-
-                                        <form action="{{ route('leads.destroy', $lead->id) }}" method="POST"
-                                            onsubmit="return confirm('Delete this lead?')">
-                                            @csrf
-                                            @method('DELETE')
-
-                                            <button
-                                                class="inline-flex items-center gap-1 px-3 py-1 bg-red-600 text-white 
-                                                   rounded-lg hover:bg-red-700 shadow-sm transition-colors duration-300">
-                                                <i class="fa-solid fa-trash"></i> Delete
-                                            </button>
-                                        </form>
-                                    </td>
-
-                                </tr>
-                            @endforeach
-                        </x-data-table>
-                    </div>
+                            </tr>
+                        @endforeach
+                    </x-data-table>
                 </div>
+
             </div>
         </div>
 
-
-        <div x-show="open" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0"
-            x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200"
-            x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+        <!-- Follow-up Modal -->
+        <div x-show="open" x-transition.opacity
             class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-start justify-center overflow-auto p-4">
-
             <div @click.outside="close"
-                class="bg-white dark:bg-gray-800 w-full max-w-6xl mt-16 rounded-xl shadow-xl p-6">
+                class="bg-white dark:bg-gray-800 w-full max-w-6xl mt-16 rounded-2xl shadow-xl p-6">
 
-                <!-- Header -->
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-bold text-gray-800 dark:text-white">
-                        Follow-Up for:
-                        <span class="text-blue-600" x-text="leadName"></span>
+                <!-- Modal Header -->
+                <div class="flex justify-between items-center mb-4 border-b pb-2">
+                    <h2 class="text-2xl font-bold text-gray-800 dark:text-white">
+                        Follow-Up: <span class="text-blue-600" x-text="leadName"></span>
                         <span class="text-green-600 ml-2" x-text="phoneNumber ? '(' + phoneNumber + ')' : ''"></span>
                     </h2>
                     <button @click="close" class="text-gray-500 hover:text-gray-700">
@@ -155,44 +170,41 @@
                 </div>
 
                 <div class="grid grid-cols-12 gap-6">
-                    <div class="col-span-4 border rounded p-4 space-y-4">
+                    <!-- Form -->
+                    <div class="col-span-4 border rounded-xl p-6 space-y-4 shadow-sm bg-gray-50">
                         <form action="{{ route('followup.store') }}" method="POST" class="space-y-4">
                             @csrf
                             <input type="hidden" name="lead_id" x-model="leadId">
+
                             <div class="space-y-2">
-                                <label class="font-semibold text-gray-700 dark:text-gray-300">Followup Reason</label>
+                                <label class="font-semibold text-gray-700">Followup Reason</label>
                                 <template x-for="reason in reasons" :key="reason">
                                     <div class="flex items-center gap-2">
                                         <input type="radio" :value="reason" name="reason"
                                             x-model="selectedReason" class="h-4 w-4">
-                                        <span x-text="reason" class="text-gray-700 dark:text-gray-300"></span>
+                                        <span x-text="reason" class="text-gray-700"></span>
                                     </div>
                                 </template>
                             </div>
+
                             <div>
-                                <label class="block text-sm font-semibold mb-1 text-gray-700 dark:text-gray-300">
-                                    Remark
-                                </label>
-                                <textarea name="remark" rows="3" class="w-full p-3 rounded-lg border dark:bg-gray-700 dark:border-gray-600"
-                                    placeholder="Write remark here..."></textarea>
+                                <label class="block font-semibold text-gray-700 mb-1">Remark</label>
+                                <textarea name="remark" rows="3" class="w-full p-3 rounded-lg border" placeholder="Write remark here..."></textarea>
                             </div>
+
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label
-                                        class="block text-sm font-semibold mb-1 text-gray-700 dark:text-gray-300">Next
-                                        Followup Date</label>
+                                    <label class="block font-semibold mb-1">Next Followup Date</label>
                                     <input type="date" name="next_followup_date"
-                                        class="w-full p-3 rounded-lg border dark:bg-gray-700 dark:border-gray-600">
+                                        class="w-full p-3 rounded-lg border">
                                 </div>
                                 <div>
-                                    <label
-                                        class="block text-sm font-semibold mb-1 text-gray-700 dark:text-gray-300">Time</label>
+                                    <label class="block font-semibold mb-1">Time</label>
                                     <input type="time" name="next_followup_time"
-                                        class="w-full p-3 rounded-lg border dark:bg-gray-700 dark:border-gray-600">
+                                        class="w-full p-3 rounded-lg border">
                                 </div>
                             </div>
 
-                            <!-- Buttons -->
                             <div class="flex justify-end gap-3 mt-4">
                                 <button type="button" @click="close"
                                     class="px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500">Cancel</button>
@@ -202,16 +214,16 @@
                         </form>
                     </div>
 
-                    <!-- Followup Table Right Column -->
-                    <div class="col-span-8  overflow-x-auto border rounded p-4">
+                    <!-- Followups Table -->
+                    <div class="col-span-8 overflow-x-auto border rounded-xl p-4 shadow-sm bg-white">
                         <table class="table-auto w-full border-collapse border border-gray-300">
-                            <thead class="bg-gray-100 dark:bg-gray-700">
+                            <thead class="bg-gray-100">
                                 <tr>
-                                    <th class="border p-2">Date</th>
-                                    <th class="border p-2">Reason</th>
-                                    <th class="border p-2">Remark</th>
-                                    <th class="border p-2">Next Followup Date</th>
-                                    <th class="border p-2">Record By</th>
+                                    <th class="border p-2 text-left">Date</th>
+                                    <th class="border p-2 text-left">Reason</th>
+                                    <th class="border p-2 text-left">Remark</th>
+                                    <th class="border p-2 text-left">Next Followup Date</th>
+                                    <th class="border p-2 text-left">Record By</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -222,7 +234,7 @@
                                     </tr>
                                 </template>
                                 <template x-for="(f, index) in followups" :key="index">
-                                    <tr class="border-b">
+                                    <tr class="border-b hover:bg-gray-50 transition">
                                         <td class="p-2 border" x-text="f.created_at"></td>
                                         <td class="p-2 border" x-text="f.reason"></td>
                                         <td class="p-2 border" x-text="f.remark"></td>
@@ -237,7 +249,10 @@
 
             </div>
         </div>
+
     </div>
+
+    <!-- Alpine JS -->
     <script>
         function followupModal() {
             return {
@@ -260,17 +275,12 @@
                     this.leadName = name;
                     this.open = true;
 
-                    // Fetch merged API
                     fetch(`/leads/${id}/details`)
                         .then(res => res.json())
                         .then(data => {
-
-                            // Phone Numbers
                             this.phoneNumber = data.phone.phone_number;
                             this.phoneCode = data.phone.phone_code;
                             this.fullNumber = data.phone.full_number;
-
-                            // Followups
                             this.followups = data.followups.map(f => ({
                                 ...f,
                                 created_at: f.created_at,
@@ -289,4 +299,5 @@
             }
         }
     </script>
+
 </x-app-layout>
