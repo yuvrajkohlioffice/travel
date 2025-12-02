@@ -46,4 +46,9 @@ public function followups()
     {
         return $this->belongsTo(User::class, 'user_id');
     }
+    public function views()
+{
+    return $this->hasMany(LeadView::class);
+}
+
 }

@@ -91,6 +91,54 @@
                         </tbody>
                     </table>
                 </div>
+           <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+    <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-2">Phone Views</h3>
+    <table class="w-full text-left border-collapse">
+        <thead>
+            <tr class="bg-gray-100 dark:bg-gray-700">
+                <th class="p-2 border">User</th>
+                <th class="p-2 border">Count</th>
+                <th class="p-2 border">View Timeline</th>
+            </tr>
+        </thead>
+        <tbody>
+            @php
+                $groupedViews = $lead->views->groupBy('user_id');
+            @endphp
+
+            @foreach ($groupedViews as $userId => $userViews)
+                @php
+                    $viewer = $userViews->first()->user;
+                @endphp
+
+                @if ($user->role_id == 1 || $userId == $user->id)
+                    <tr class="border-b">
+                        <td class="p-2 border">{{ $viewer->name }}</td>
+                        <td class="p-2 border">{{ $userViews->count() }}</td>
+                        <td class="p-2 border">
+                            @php
+                                // Sort views by time ascending
+                                $sortedViews = $userViews->sortBy('viewed_at');
+                            @endphp
+                            <ul class="list-disc pl-5">
+                                @foreach ($sortedViews as $view)
+                                    <li>{{ \Carbon\Carbon::parse($view->viewed_at)->format('d-M-Y H:i') }}</li>
+                                @endforeach
+                            </ul>
+                        </td>
+                    </tr>
+                @endif
+            @endforeach
+
+            @if ($lead->views->isEmpty())
+                <tr>
+                    <td class="p-2 border text-gray-500 text-center" colspan="3">No views found.</td>
+                </tr>
+            @endif
+        </tbody>
+    </table>
+</div>
+
 
             </div>
         </div>
