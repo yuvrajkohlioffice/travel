@@ -12,6 +12,7 @@ use App\Http\Controllers\HotelController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\PackageController;
 use App\Http\Controllers\LeadController;
+use App\Http\Controllers\FollowupController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -41,6 +42,8 @@ Route::get('/hotels', function () {
 });
 
 Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified'])->group(function () {
+    Route::post('/followup/store', [FollowupController::class, 'store'])->name('followup.store');
+
     Route::resource('users', UserController::class);
     Route::resource('cars', CarController::class);
     Route::resource('hotels', HotelController::class);

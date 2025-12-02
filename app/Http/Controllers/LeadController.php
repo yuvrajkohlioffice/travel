@@ -12,7 +12,21 @@ class LeadController extends Controller
 {
     public function index()
     {
-        $leads = Lead::with(['package'])
+        $user = auth()->user();
+
+        $query = Lead::with('package');
+
+        // If not admin, filter leads
+        if ($user->role_id != 1) {
+            $query->where(function ($q) use ($user) {
+                $q->where('user_id', $user->id) // Leads created by this user
+                    ->orWhereHas('assignedUsers', function ($q2) use ($user) {
+                        $q2->where('user_id', $user->id); // Leads assigned to this user
+                    });
+            });
+        }
+
+        $leads = $query
             ->orderByRaw(
                 "
                 CASE
@@ -24,7 +38,7 @@ class LeadController extends Controller
             ",
             )
             ->latest()
-            ->paginate(20); // Paging improves performance
+            ->get(); // You can paginate with ->paginate(10) for better performance
 
         return view('leads.index', compact('leads'));
     }
@@ -43,7 +57,15 @@ class LeadController extends Controller
             'phone_number' => 'nullable|max:15',
         ]);
 
-        Lead::create($validated + $request->only(['company_name', 'district', 'country', 'phone_code', 'city', 'client_category', 'lead_status', 'lead_source', 'website', 'package_id', 'inquiry_text']));
+        // Create the lead
+        $lead = Lead::create($validated + $request->only(['company_name', 'district', 'country', 'phone_code', 'city', 'client_category', 'lead_status', 'lead_source', 'website', 'package_id', 'inquiry_text']) + ['user_id' => auth()->id()]);
+
+        // 🔥 Automatically assign the lead to the creator
+        LeadUser::create([
+            'lead_id' => $lead->id,
+            'user_id' => auth()->id(), // assigned to the creator
+            'assigned_by' => auth()->id(), // assigned by the creator
+        ]);
 
         return redirect()->route('leads.index')->with('success', 'Lead created successfully.');
     }
@@ -86,7 +108,14 @@ class LeadController extends Controller
 
         $assignedUserIds = $assignedUsers->pluck('user_id');
 
-        $users = User::select('id', 'name', 'email')->whereNotIn('id', $assignedUserIds)->where('role_id', '!=', 1)->orderBy('name')->get();
+        $currentUserId = auth()->id(); // Get logged-in user ID
+
+        $users = User::select('id', 'name', 'email')
+            ->whereNotIn('id', $assignedUserIds) // Exclude already assigned users
+            ->where('id', '!=', $currentUserId) // Exclude current user
+            ->where('role_id', '!=', 1) // Exclude admin
+            ->orderBy('name')
+            ->get();
 
         return view('leads.assign', compact('lead', 'users', 'assignedUsers'));
     }

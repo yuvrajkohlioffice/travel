@@ -164,91 +164,91 @@
                         </div>
                     </form>
                     <!-- Load tables -->
-<div class="mt-6 flex gap-4">
-    <button type="button"
-            class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
-            @click="loadCars()">
-        View All Cars
-    </button>
+                    <div class="mt-6 flex gap-4">
+                        <button type="button" class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
+                            @click="loadCars()">
+                            View All Cars
+                        </button>
 
-    <button type="button"
-            class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
-            @click="loadHotels()">
-        View All Hotels
-    </button>
-</div>
-<div x-data="detailsTable()" x-cloak>
-    <!-- Car Table Modal -->
-    <div x-show="carModal" 
-         class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg w-full max-w-3xl shadow-xl overflow-auto max-h-[90vh]">
+                        <button type="button" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+                            @click="loadHotels()">
+                            View All Hotels
+                        </button>
+                    </div>
+                    <div x-data="detailsTable()" x-cloak>
+                        <!-- Car Table Modal -->
+                        <div x-show="carModal"
+                            class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                            <div
+                                class="bg-white dark:bg-gray-800 p-6 rounded-lg w-full max-w-3xl shadow-xl overflow-auto max-h-[90vh]">
 
-            <h2 class="text-xl font-bold mb-4 text-gray-800 dark:text-white">All Cars</h2>
+                                <h2 class="text-xl font-bold mb-4 text-gray-800 dark:text-white">All Cars</h2>
 
-            <table class="w-full text-left text-sm">
-                <thead class="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200">
-                    <tr>
-                        <th class="p-2">Name</th>
-                        <th class="p-2">Type</th>
-                        <th class="p-2">Capacity</th>
-                        <th class="p-2">Price/km</th>
-                        <th class="p-2">Price/day</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <template x-for="car in cars" :key="car.id">
-                        <tr class="border-b dark:border-gray-700">
-                            <td class="p-2" x-text="car.name"></td>
-                            <td class="p-2" x-text="car.type"></td>
-                            <td class="p-2" x-text="car.capacity"></td>
-                            <td class="p-2">₹<span x-text="car.price.per_km"></span></td>
-                            <td class="p-2">₹<span x-text="car.price.per_day"></span></td>
-                        </tr>
-                    </template>
-                </tbody>
-            </table>
+                                <table class="w-full text-left text-sm">
+                                    <thead class="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200">
+                                        <tr>
+                                            <th class="p-2">Name</th>
+                                            <th class="p-2">Type</th>
+                                            <th class="p-2">Capacity</th>
+                                            <th class="p-2">Price/km</th>
+                                            <th class="p-2">Price/day</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <template x-for="car in cars" :key="car.id">
+                                            <tr class="border-b dark:border-gray-700">
+                                                <td class="p-2" x-text="car.name"></td>
+                                                <td class="p-2" x-text="car.type"></td>
+                                                <td class="p-2" x-text="car.capacity"></td>
+                                                <td class="p-2">₹<span x-text="car.price.per_km"></span></td>
+                                                <td class="p-2">₹<span x-text="car.price.per_day"></span></td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
 
-            <button class="mt-4 px-4 py-2 bg-red-500 text-white rounded" 
-                    @click="carModal = false">Close</button>
-        </div>
-    </div>
+                                <button class="mt-4 px-4 py-2 bg-red-500 text-white rounded"
+                                    @click="carModal = false">Close</button>
+                            </div>
+                        </div>
 
-    <!-- Hotel Table Modal -->
-    <div x-show="hotelModal"
-         class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg w-full max-w-3xl shadow-xl overflow-auto max-h-[90vh]">
+                        <!-- Hotel Table Modal -->
+                        <div x-show="hotelModal"
+                            class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                            <div
+                                class="bg-white dark:bg-gray-800 p-6 rounded-lg w-full max-w-3xl shadow-xl overflow-auto max-h-[90vh]">
 
-            <h2 class="text-xl font-bold mb-4 text-gray-800 dark:text-white">All Hotels</h2>
+                                <h2 class="text-xl font-bold mb-4 text-gray-800 dark:text-white">All Hotels</h2>
 
-            <table class="w-full text-left text-sm">
-                <thead class="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200">
-                    <tr>
-                        <th class="p-2">Name</th>
-                        <th class="p-2">Type</th>
-                        <th class="p-2">Meal Included</th>
-                        <th class="p-2">Meal Type</th>
-                        <th class="p-2">Price</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <template x-for="hotel in hotels" :key="hotel.id">
-                        <tr class="border-b dark:border-gray-700">
-                            <td class="p-2" x-text="hotel.name"></td>
-                            <td class="p-2" x-text="hotel.type"></td>
-                            <td class="p-2" x-text="hotel.meal_included ? 'Yes' : 'No'"></td>
-                            <td class="p-2" x-text="hotel.meal_type"></td>
-                            <td class="p-2">₹<span x-text="hotel.price"></span></td>
-                        </tr>
-                    </template>
-                </tbody>
-            </table>
+                                <table class="w-full text-left text-sm">
+                                    <thead class="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200">
+                                        <tr>
+                                            <th class="p-2">Name</th>
+                                            <th class="p-2">Type</th>
+                                            <th class="p-2">Meal Included</th>
+                                            <th class="p-2">Meal Type</th>
+                                            <th class="p-2">Price</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <template x-for="hotel in hotels" :key="hotel.id">
+                                            <tr class="border-b dark:border-gray-700">
+                                                <td class="p-2" x-text="hotel.name"></td>
+                                                <td class="p-2" x-text="hotel.type"></td>
+                                                <td class="p-2" x-text="hotel.meal_included ? 'Yes' : 'No'"></td>
+                                                <td class="p-2" x-text="hotel.meal_type"></td>
+                                                <td class="p-2">₹<span x-text="hotel.price"></span></td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
 
-            <button class="mt-4 px-4 py-2 bg-red-500 text-white rounded"
-                    @click="hotelModal = false">Close</button>
-        </div>
-    </div>
-</div>
-<script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+                                <button class="mt-4 px-4 py-2 bg-red-500 text-white rounded"
+                                    @click="hotelModal = false">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 
                 </div>
             </div>
@@ -280,26 +280,26 @@
         }
     </script>
     <script>
-function detailsTable() {
-    return {
-        carModal: false,
-        hotelModal: false,
-        cars: [],
-        hotels: [],
+        function detailsTable() {
+            return {
+                carModal: false,
+                hotelModal: false,
+                cars: [],
+                hotels: [],
 
-        async loadCars() {
-            let res = await fetch('/api/cars');
-            this.cars = await res.json();
-            this.carModal = true;
-        },
+                async loadCars() {
+                    let res = await fetch('/api/cars');
+                    this.cars = await res.json();
+                    this.carModal = true;
+                },
 
-        async loadHotels() {
-            let res = await fetch('/api/hotels');
-            this.hotels = await res.json();
-            this.hotelModal = true;
+                async loadHotels() {
+                    let res = await fetch('/api/hotels');
+                    this.hotels = await res.json();
+                    this.hotelModal = true;
+                }
+            }
         }
-    }
-}
-</script>
+    </script>
 
 </x-app-layout>
