@@ -11,6 +11,8 @@ use App\Http\Controllers\DifficultyTypeController;
 use App\Http\Controllers\HotelController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\PackageController;
+use App\Http\Controllers\LeadController;
+
 Route::get('/', function () {
     return view('welcome');
 })->name('home');
@@ -41,7 +43,7 @@ Route::get('/hotels', function () {
 Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified'])->group(function () {
     Route::resource('users', UserController::class);
     Route::resource('cars', CarController::class);
-    Route::resource('hotels',HotelController::class);
+    Route::resource('hotels', HotelController::class);
     Route::resource('packages', PackageController::class);
     Route::prefix('packages')->group(function () {
         Route::get('{package}', [PackageController::class, 'show'])->name('packages.show');
@@ -49,7 +51,11 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         Route::post('{package}/update-relations', [PackageController::class, 'updateRelations'])->name('packages.update-relations');
     });
     Route::resource('pickup-points', \App\Http\Controllers\PickupPointController::class);
+    Route::get('/leads/{lead}/assign', [LeadController::class, 'assignForm'])->name('leads.assign.form');
+    Route::post('/leads/{lead}/assign', [LeadController::class, 'assignStore'])->name('leads.assign.store');
+    Route::delete('/leads/assignment/{id}/delete', [LeadController::class, 'deleteAssignment'])->name('leads.assign.delete');
 
+    Route::resource('leads', LeadController::class);
     Route::resource('package-types', PackageTypeController::class);
     Route::resource('package-categories', PackageCategoryController::class);
     Route::resource('difficulty-types', DifficultyTypeController::class);
