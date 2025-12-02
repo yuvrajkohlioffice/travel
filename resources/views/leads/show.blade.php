@@ -9,7 +9,7 @@
                         Lead Details: {{ $lead->name }}
                     </h2>
                     <a href="{{ route('leads.index') }}"
-                       class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600">
+                        class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600">
                         Back
                     </a>
                 </div>
@@ -39,15 +39,16 @@
                     <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-2">Assigned Users</h3>
                     <ul class="list-disc pl-5 space-y-1 text-gray-700 dark:text-gray-300">
                         @php $user = auth()->user(); @endphp
-                        @foreach($lead->assignedUsers as $assignment)
-                            @if($user->role_id == 1 || $assignment->assigned_by == $user->id || $assignment->user_id == $user->id)
+                        @foreach ($lead->assignedUsers as $assignment)
+                            @if ($user->role_id == 1 || $assignment->assigned_by == $user->id || $assignment->user_id == $user->id)
                                 <li>
                                     {{ $assignment->user->name ?? 'N/A' }}
-                                    <span class="text-sm text-gray-500">(Assigned By {{ $assignment->assignedBy->name ?? 'N/A' }})</span>
+                                    <span class="text-sm text-gray-500">(Assigned By
+                                        {{ $assignment->assignedBy->name ?? 'N/A' }})</span>
                                 </li>
                             @endif
                         @endforeach
-                        @if($lead->assignedUsers->isEmpty())
+                        @if ($lead->assignedUsers->isEmpty())
                             <li class="text-gray-500">No assignments found.</li>
                         @endif
                     </ul>
@@ -67,23 +68,24 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach($lead->followups as $follow)
-                                @if($user->role_id == 1 || $follow->user_id == $user->id)
-                                <tr class="border-b">
-                                    <td class="p-2 border">{{ $follow->created_at->format('d-M-Y H:i') }}</td>
-                                    <td class="p-2 border">{{ $follow->reason }}</td>
-                                    <td class="p-2 border">{{ $follow->remark }}</td>
-                                    <td class="p-2 border">
-    {{ $follow->next_followup_date ? \Carbon\Carbon::parse($follow->next_followup_date)->format('d-M-Y') : '-' }}
-</td>
+                            @foreach ($lead->followups as $follow)
+                                @if ($user->role_id == 1 || $follow->user_id == $user->id)
+                                    <tr class="border-b">
+                                        <td class="p-2 border">{{ $follow->created_at->format('d-M-Y H:i') }}</td>
+                                        <td class="p-2 border">{{ $follow->reason }}</td>
+                                        <td class="p-2 border">{{ $follow->remark }}</td>
+                                        <td class="p-2 border">
+                                            {{ $follow->next_followup_date ? \Carbon\Carbon::parse($follow->next_followup_date)->format('d-M-Y') : '-' }}
+                                        </td>
 
-<td class="p-2 border">{{ $follow->user->name ?? 'N/A' }}</td>
-                                </tr>
+                                        <td class="p-2 border">{{ $follow->user->name ?? 'N/A' }}</td>
+                                    </tr>
                                 @endif
                             @endforeach
-                            @if($lead->followups->isEmpty())
+                            @if ($lead->followups->isEmpty())
                                 <tr>
-                                    <td class="p-2 border text-gray-500 text-center" colspan="5">No follow-ups found.</td>
+                                    <td class="p-2 border text-gray-500 text-center" colspan="5">No follow-ups found.
+                                    </td>
                                 </tr>
                             @endif
                         </tbody>

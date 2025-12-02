@@ -58,6 +58,8 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     Route::post('/leads/{lead}/assign', [LeadController::class, 'assignStore'])->name('leads.assign.store');
     Route::delete('/leads/assignment/{id}/delete', [LeadController::class, 'deleteAssignment'])->name('leads.assign.delete');
 
+Route::get('/leads/{lead}/details', [FollowupController::class, 'getLeadDetails']);
+
     Route::resource('leads', LeadController::class);
     Route::resource('package-types', PackageTypeController::class);
     Route::resource('package-categories', PackageCategoryController::class);

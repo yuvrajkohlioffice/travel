@@ -1,12 +1,12 @@
-<div class="h-screen w-64 bg-white text-gray-800 flex flex-col fixed left-0 top-0 shadow-lg z-50">
+<div class="h-screen w-64 bg-white text-gray-800 flex flex-col fixed left-0 top-0  z-50">
 
     <!-- Logo -->
-    <div class="p-6 text-2xl font-bold border-b border-gray-200 tracking-wide flex items-center space-x-2">
+    <div class="p-4 text-2xl font-bold border-b border-gray-200 tracking-wide flex items-center space-x-2">
         <i class="fas fa-route text-blue-500"></i>
         <span>TRAVEL</span>
     </div>
 
-    <nav class="flex-1 p-4 space-y-2">
+    <nav class="flex-1 p-4 space-y-2 shadow-lg ">
 
         <!-- Dashboard -->
         <a href="{{ route('dashboard') }}" class="sidebar-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">

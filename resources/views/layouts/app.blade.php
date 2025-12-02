@@ -30,7 +30,7 @@
 
 
         <!-- Page Content -->
-        <main>
+        <main class="mt-[60px]">
             {{ $slot }}
         </main>
     </div>
