@@ -30,6 +30,13 @@ Route::middleware(['auth'])->group(function () {
         ->middleware(when(Features::canManageTwoFactorAuthentication() && Features::optionEnabled(Features::twoFactorAuthentication(), 'confirmPassword'), ['password.confirm'], []))
         ->name('two-factor.show');
 });
+Route::get('/cars', function () {
+    return \App\Models\Car::all();
+});
+
+Route::get('/hotels', function () {
+    return \App\Models\Hotel::all();
+});
 
 Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified'])->group(function () {
     Route::resource('users', UserController::class);
