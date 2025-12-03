@@ -27,7 +27,7 @@
                             class="flex items-center gap-2">
                             @csrf
                             <input type="file" name="file" accept=".xlsx,.csv" required
-                                class="text-sm text-white file:bg-blue-600 file:border-0 file:rounded-lg file:px-3 file:py-1 file:font-semibold file:hover:bg-blue-700 cursor-pointer" />
+                                class="text-sm text-white file:bg-white file:border-0 file:rounded-lg file:px-3 file:py-1 file:font-semibold file:hover:bg-white cursor-pointer" />
                             <button type="submit"
                                 class="px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition">
                                 Import Leads
@@ -113,10 +113,13 @@
                                 </td>
                                 <td class="p-3 text-center flex gap-2 justify-center">
                                     <!-- Send Details -->
-                                    <button @click="openDetailsModal({{ $lead->id }}, '{{ $lead->name }}')"
-                                        class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">
+                                    <button
+                                        @click="handleShare({{ $lead->id }}, '{{ $lead->name }}', '{{ $lead->package->id ?? '' }}')"
+                                        class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 transition">
                                         <i class="fa-solid fa-share"></i>
                                     </button>
+
+
 
                                     <!-- Generate Invoice (only for Hot/Interested leads) -->
                                     @if (in_array($lead->lead_status, ['Hot', 'Interested']))
@@ -279,13 +282,79 @@
 
             </div>
         </div>
+        <!-- Share Details Modal -->
+        <!-- Share Modal -->
+        <div x-show="shareOpen" x-transition.opacity
+            class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+            <div x-transition class="bg-white w-full max-w-md rounded-2xl p-6 shadow-xl space-y-4">
+                <!-- Header -->
+                <div class="flex justify-between items-center border-b pb-3">
+                    <h2 class="text-xl font-bold text-gray-800">
+                        Share Lead – <span x-text="shareLeadName"></span>
+                    </h2>
+                    <button @click="closeShare" class="text-gray-500 hover:text-black text-xl">
+                        &times;
+                    </button>
+                </div>
+
+                <div class="space-y-4">
+
+                    <!-- Package Dropdown -->
+                    <div x-show="showDropdown" x-transition>
+                        <label class="block font-semibold text-gray-700 mb-1">
+                            Select Package
+                        </label>
+
+                        <select x-model="selectedPackage"
+                            class="w-full p-3 rounded-lg border bg-gray-50 focus:ring focus:ring-blue-300 transition">
+                            <template x-for="pkg in allPackages" :key="pkg.id">
+                                <option :value="pkg.id" x-text="pkg.package_name"></option>
+                            </template>
+                        </select>
+                    </div>
+<!-- Show Selected Package (instead of dropdown) -->
+<div 
+    x-show="showSelectedPackage"
+    x-transition
+    class="p-3 bg-green-50 border border-green-300 rounded-lg text-green-800 font-medium"
+>
+    Selected Package:
+    <span class="font-semibold" x-text="selectedPackageName"></span>
+</div>
+
+                    <!-- Share Buttons -->
+                    <div class="grid grid-cols-2 gap-4 pt-2">
+
+                        <!-- Email -->
+                        <button @click="sendEmail()"
+                            class="flex items-center justify-center gap-2 px-4 py-3
+                    bg-blue-600 text-white rounded-xl shadow
+                    hover:bg-blue-700 hover:shadow-xl transition">
+                            <i class="fa-solid fa-envelope"></i> Email
+                        </button>
+
+                        <!-- WhatsApp -->
+                        <button @click="sendWhatsApp()"
+                            class="flex items-center justify-center gap-2 px-4 py-3
+                    bg-green-600 text-white rounded-xl shadow
+                    hover:bg-green-700 hover:shadow-xl transition">
+                            <i class="fa-brands fa-whatsapp"></i> WhatsApp
+                        </button>
+
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
 
     </div>
 
-    <!-- Alpine JS -->
     <script>
         function followupModal() {
             return {
+
+                /* ---------------- FOLLOW-UP MODAL ---------------- */
                 open: false,
                 leadId: '',
                 leadName: '',
@@ -296,8 +365,8 @@
                 followups: [],
                 reasons: [
                     'Call Back Later', 'Call Me Tomorrow', 'Payment Tomorrow', 'Talk With My Partner',
-                    'Work with other company', 'Not Interested', 'Interested', 'Wrong Information', 'Not Pickup',
-                    'Other'
+                    'Work with other company', 'Not Interested', 'Interested', 'Wrong Information',
+                    'Not Pickup', 'Other'
                 ],
 
                 openFollowModal(id, name) {
@@ -311,6 +380,7 @@
                             this.phoneNumber = data.phone.phone_number;
                             this.phoneCode = data.phone.phone_code;
                             this.fullNumber = data.phone.full_number;
+
                             this.followups = data.followups.map(f => ({
                                 ...f,
                                 created_at: f.created_at,
@@ -322,12 +392,55 @@
 
                 close() {
                     this.open = false;
-                    this.followups = [];
-                    this.phoneNumber = '';
-                    this.fullNumber = '';
-                }
+                },
+
+                /* ---------------- SHARE MODAL ---------------- */
+               shareOpen: false,
+shareLeadId: '',
+shareLeadName: '',
+selectedPackage: '',
+showDropdown: false,
+showSelectedPackage: false, // NEW
+selectedPackageName: '', // NEW
+allPackages: @json($packages),
+
+handleShare(id, name, packageId = null) {
+    this.shareLeadId = id;
+    this.shareLeadName = name;
+
+    // Lead already has package
+    if (packageId) {
+        this.selectedPackage = packageId;
+        this.showDropdown = false;
+        this.showSelectedPackage = true;
+
+        // Find package name
+        const pkg = this.allPackages.find(p => p.id == packageId);
+        this.selectedPackageName = pkg ? pkg.package_name : 'Unknown Package';
+
+        this.shareOpen = true;
+        return;
+    }
+
+    // Lead has NO package
+    this.showSelectedPackage = false;
+    this.showDropdown = true;
+    this.shareOpen = true;
+
+    // Auto-select first package
+    if (this.allPackages.length > 0) {
+        this.selectedPackage = this.allPackages[0].id;
+    }
+},
+
+closeShare() {
+    this.shareOpen = false;
+},
+
+
+
+
             }
         }
     </script>
-
 </x-app-layout>
