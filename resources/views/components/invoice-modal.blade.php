@@ -1,7 +1,8 @@
 <!-- INVOICE MODAL -->
 <div x-show="invoiceOpen" 
      x-transition.opacity
-     class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+
 
     <div @click.outside="closeInvoice"
          class="bg-white rounded-xl p-6 w-full max-w-3xl shadow-lg relative">

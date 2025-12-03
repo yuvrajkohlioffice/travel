@@ -11,12 +11,12 @@
     'resourceName' => 'entries',
 ])
 
-<div class="w-full overflow-x-auto  ">
+<div class="w-full overflow-x-auto  relative z-10">
     <table id="{{ $id }}" class="min-w-full border border-gray-200">
         <thead class="bg-blue-600 text-white">
             <tr>
                 @foreach ($headers as $header)
-                    <th class="px-4 py-2 text-center font-semibold border border-white-700">
+                    <th class="px-4 py-2 text-center font-semibold" style="border: 0.2px solid black !important;">
                         {{ $header }}
                     </th>
                 @endforeach
@@ -34,10 +34,15 @@
 <link href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css" rel="stylesheet">
 
 <style>
-    
     /* Remove Bootstrap interference */
     table.dataTable.no-footer {
         border-bottom: 1px solid #e5e7eb !important;
+    }
+
+    table.dataTable tbody th,
+    table.dataTable tbody td {
+        border: 0.2px solid black !important;
+       
     }
 
     /* Tailwind Pagination Buttons */
@@ -95,43 +100,45 @@
 
 
 <script>
-$(document).ready(function () {
-    let actionColumnIndex = -1;
+    $(document).ready(function() {
+        let actionColumnIndex = -1;
 
-    $('#{{ $id }} thead th').each(function (index) {
-        if ($(this).text().trim().toLowerCase() === 'action') {
-            actionColumnIndex = index;
-        }
-    });
+        $('#{{ $id }} thead th').each(function(index) {
+            if ($(this).text().trim().toLowerCase() === 'action') {
+                actionColumnIndex = index;
+            }
+        });
 
-    const buttons = [];
+        const buttons = [];
 
-    @if ($excel)
-    buttons.push({
-        extend: "excelHtml5",
-        text: "Excel",
-        className: "dt-button",
-        title: "{{ $title }}",
-        exportOptions: {
-            columns: actionColumnIndex === -1 ? ':visible' : ':not(:eq(' + actionColumnIndex + '))'
-        }
-    });
-    @endif
+        @if ($excel)
+            buttons.push({
+                extend: "excelHtml5",
+                text: "Excel",
+                className: "dt-button",
+                title: "{{ $title }}",
+                exportOptions: {
+                    columns: actionColumnIndex === -1 ? ':visible' : ':not(:eq(' + actionColumnIndex +
+                        '))'
+                }
+            });
+        @endif
 
-    @if ($print)
-    buttons.push({
-        extend: "print",
-        text: "Print",
-        className: "dt-button",
-        title: "{{ $title }}",
-        exportOptions: {
-            columns: actionColumnIndex === -1 ? ':visible' : ':not(:eq(' + actionColumnIndex + '))'
-        }
-    });
-    @endif
+        @if ($print)
+            buttons.push({
+                extend: "print",
+                text: "Print",
+                className: "dt-button",
+                title: "{{ $title }}",
+                exportOptions: {
+                    columns: actionColumnIndex === -1 ? ':visible' : ':not(:eq(' + actionColumnIndex +
+                        '))'
+                }
+            });
+        @endif
 
-    $('#{{ $id }}').DataTable({
-        dom: `
+        $('#{{ $id }}').DataTable({
+            dom: `
             <"flex flex-col md:flex-row justify-between items-center mb-4"
                 <"mb-2 md:mb-0"l>
                 <"mb-2 md:mb-0"f>
@@ -143,23 +150,21 @@ $(document).ready(function () {
                 <"mb-2 md:mb-0" p>
             >
         `,
-        buttons: buttons,
-        responsive: true,
-        pageLength: {{ $pageLength }},
-        lengthMenu: [@json($lengthMenu), @json($lengthMenuLabels)],
-        language: {
-            search: "_INPUT_",
-            searchPlaceholder: "{{ $searchPlaceholder }}",
-            lengthMenu: "Show _MENU_ {{ $resourceName }}",
-        },
-        columnDefs: [
-            {
+            buttons: buttons,
+            responsive: true,
+            pageLength: {{ $pageLength }},
+            lengthMenu: [@json($lengthMenu), @json($lengthMenuLabels)],
+            language: {
+                search: "_INPUT_",
+                searchPlaceholder: "{{ $searchPlaceholder }}",
+                lengthMenu: "Show _MENU_ {{ $resourceName }}",
+            },
+            columnDefs: [{
                 targets: actionColumnIndex,
                 orderable: false,
                 className: 'text-center'
-            }
-        ],
-    });
+            }],
+        });
 
-});
+    });
 </script>

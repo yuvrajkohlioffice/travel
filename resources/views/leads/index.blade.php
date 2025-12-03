@@ -72,6 +72,7 @@
                         resourceName="Leads">
 
                         @foreach ($leads as $lead)
+                        
                             @php
                                 // Lead Status Colors
                                 $statusColors = [

@@ -53,7 +53,7 @@
 
                                 <!-- Edit -->
                                 <a href="{{ route('packages.edit', $package->id) }}"
-                                    class="btn-edit px-3 py-1 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 shadow flex items-center gap-1">
+                                    class="btn-edit">
                                     <i class="fa-solid fa-pen-to-square"></i> Edit
                                 </a>
 

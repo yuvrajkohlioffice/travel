@@ -1,6 +1,7 @@
 <!-- Follow-Up Modal -->
 <div x-show="followOpen" x-transition.opacity
-     class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-start justify-center overflow-auto p-4">
+    class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+
      
     <div @click.outside="closeFollow"
          class="bg-white dark:bg-gray-800 w-full max-w-6xl mt-16 rounded-2xl shadow-xl p-6">
