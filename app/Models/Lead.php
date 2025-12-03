@@ -10,9 +10,22 @@ class Lead extends Model
     use HasFactory;
 
     protected $fillable = [
-        'name','company_name','email','district','country','phone_code',
-        'phone_number','city','client_category','lead_status','lead_source',
-        'website','package_id','inquiry_text','user_id'  // Added user_id
+        'name',
+        'company_name',
+        'email',
+        'district',
+        'country',
+        'phone_code',
+        'phone_number',
+        'city',
+        'client_category',
+        'lead_status',
+        'lead_source',
+        'website',
+        'package_id',
+        'inquiry_text',
+        'status',
+        'user_id', // Added user_id
     ];
 
     protected $casts = [
@@ -26,10 +39,10 @@ class Lead extends Model
     {
         return $this->belongsTo(Package::class, 'package_id');
     }
-public function followups()
-{
-    return $this->hasMany(Followup::class);
-}
+    public function followups()
+    {
+        return $this->hasMany(Followup::class);
+    }
 
     /**
      * Relationship with LeadUser (multiple assigned users)
@@ -47,8 +60,7 @@ public function followups()
         return $this->belongsTo(User::class, 'user_id');
     }
     public function views()
-{
-    return $this->hasMany(LeadView::class);
-}
-
+    {
+        return $this->hasMany(LeadView::class);
+    }
 }

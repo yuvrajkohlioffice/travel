@@ -1,6 +1,5 @@
 <x-app-layout>
     <div x-data="followupModal()" x-cloak class="min-h-screen bg-gradient-to-br from-gray-100 via-white to-gray-200">
-
         <div class="ml-64 flex justify-center items-start min-h-screen p-6">
             <div class="w-full max-w-7xl space-y-6">
 
@@ -50,6 +49,69 @@
                         {{ session('success') }}
                     </div>
                 @endif
+user List 
+
+<div class="relative inline-block text-left">
+  <div>
+    <button
+      type="button"
+      class="inline-flex justify-center w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+      id="menu-button"
+      aria-expanded="true"
+      aria-haspopup="true"
+      onclick="toggleDropdown()"
+    >
+      Options
+      <!-- Heroicon name: solid/chevron-down -->
+      <svg
+        class="-mr-1 ml-2 h-5 w-5"
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 20 20"
+        fill="currentColor"
+        aria-hidden="true"
+      >
+        <path
+          fill-rule="evenodd"
+          d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+          clip-rule="evenodd"
+        />
+      </svg>
+    </button>
+  </div>
+
+  <div
+    class="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none hidden"
+    role="menu"
+    aria-orientation="vertical"
+    aria-labelledby="menu-button"
+    tabindex="-1"
+    id="dropdown-menu"
+  >
+    <div class="py-1" role="none">
+        @foreach ($users as $user )
+      <a
+        href="#"
+        class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100"
+        role="menuitem"
+        tabindex="-1"
+        id="menu-item-0"
+        value="{{ $user->id }}"
+        >{{ $user->name }}</a
+      >
+      @endforeach
+    </div>
+  </div>
+</div>
+
+<script>
+  function toggleDropdown() {
+    const dropdown = document.getElementById('dropdown-menu');
+    dropdown.classList.toggle('hidden');
+  }
+</script>
+
+
+    
 
                 <!-- Leads Table -->
                 <div class="bg-white rounded-xl shadow overflow-x-auto p-4">
@@ -121,13 +183,12 @@
 
 
 
-                                    <!-- Generate Invoice (only for Hot/Interested leads) -->
-                                    @if (in_array($lead->lead_status, ['Hot', 'Interested']))
-                                        <button @click="openInvoiceModal({{ $lead->id }}, '{{ $lead->name }}')"
-                                            class="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600">
-                                            <i class="fa-solid fa-file-invoice"></i>
-                                        </button>
-                                    @endif
+                                    <button @click="openInvoiceModal({{ $lead->id }}, '{{ $lead->name }}')"
+                                        class="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600">
+                                        <i class="fa-solid fa-file-invoice"></i>
+                                    </button>
+
+
 
                                     <!-- Other Action -->
                                     <button @click="openOtherModal({{ $lead->id }}, '{{ $lead->name }}')"
@@ -184,169 +245,30 @@
 
             </div>
         </div>
-
-        <!-- Follow-up Modal -->
-        <div x-show="open" x-transition.opacity
-            class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-start justify-center overflow-auto p-4">
-            <div @click.outside="close"
-                class="bg-white dark:bg-gray-800 w-full max-w-6xl mt-16 rounded-2xl shadow-xl p-6">
-
-                <!-- Modal Header -->
-                <div class="flex justify-between items-center mb-4 border-b pb-2">
-                    <h2 class="text-2xl font-bold text-gray-800 dark:text-white">
-                        Follow-Up: <span class="text-blue-600" x-text="leadName"></span>
-                        <span class="text-green-600 ml-2" x-text="phoneNumber ? '(' + phoneNumber + ')' : ''"></span>
-                    </h2>
-                    <button @click="close" class="text-gray-500 hover:text-gray-700">
-                        <i class="fa-solid fa-xmark text-2xl"></i>
-                    </button>
-                </div>
-
-                <div class="grid grid-cols-12 gap-6">
-                    <!-- Form -->
-                    <div class="col-span-4 border rounded-xl p-6 space-y-4 shadow-sm bg-gray-50">
-                        <form action="{{ route('followup.store') }}" method="POST" class="space-y-4">
-                            @csrf
-                            <input type="hidden" name="lead_id" x-model="leadId">
-
-                            <div class="space-y-2">
-                                <label class="font-semibold text-gray-700">Followup Reason</label>
-                                <template x-for="reason in reasons" :key="reason">
-                                    <div class="flex items-center gap-2">
-                                        <input type="radio" :value="reason" name="reason"
-                                            x-model="selectedReason" class="h-4 w-4">
-                                        <span x-text="reason" class="text-gray-700"></span>
-                                    </div>
-                                </template>
-                            </div>
-
-                            <div>
-                                <label class="block font-semibold text-gray-700 mb-1">Remark</label>
-                                <textarea name="remark" rows="3" class="w-full p-3 rounded-lg border" placeholder="Write remark here..."></textarea>
-                            </div>
-
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block font-semibold mb-1">Next Followup Date</label>
-                                    <input type="date" name="next_followup_date"
-                                        class="w-full p-3 rounded-lg border">
-                                </div>
-                                <div>
-                                    <label class="block font-semibold mb-1">Time</label>
-                                    <input type="time" name="next_followup_time"
-                                        class="w-full p-3 rounded-lg border">
-                                </div>
-                            </div>
-
-                            <div class="flex justify-end gap-3 mt-4">
-                                <button type="button" @click="close"
-                                    class="px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500">Cancel</button>
-                                <button type="submit"
-                                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Submit</button>
-                            </div>
-                        </form>
-                    </div>
-
-                    <!-- Followups Table -->
-                    <div class="col-span-8 overflow-x-auto border rounded-xl p-4 shadow-sm bg-white">
-                        <table class="table-auto w-full border-collapse border border-gray-300">
-                            <thead class="bg-gray-100">
-                                <tr>
-                                    <th class="border p-2 text-left">Date</th>
-                                    <th class="border p-2 text-left">Reason</th>
-                                    <th class="border p-2 text-left">Remark</th>
-                                    <th class="border p-2 text-left">Next Followup Date</th>
-                                    <th class="border p-2 text-left">Record By</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <template x-if="followups.length === 0">
-                                    <tr>
-                                        <td colspan="5" class="text-center p-4 text-gray-500">No follow-ups found.
-                                        </td>
-                                    </tr>
-                                </template>
-                                <template x-for="(f, index) in followups" :key="index">
-                                    <tr class="border-b hover:bg-gray-50 transition">
-                                        <td class="p-2 border" x-text="f.created_at"></td>
-                                        <td class="p-2 border" x-text="f.reason"></td>
-                                        <td class="p-2 border" x-text="f.remark"></td>
-                                        <td class="p-2 border" x-text="f.next_followup_date ?? '-'"></td>
-                                        <td class="p-2 border" x-text="f.user_name ?? 'N/A'"></td>
-                                    </tr>
-                                </template>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-        <!-- Share Details Modal -->
-        <!-- Share Modal -->
-        <div x-show="shareOpen" x-transition.opacity
-            class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-            <div x-transition class="bg-white w-full max-w-md rounded-2xl p-6 shadow-xl space-y-4">
-                <!-- Header -->
-                <div class="flex justify-between items-center border-b pb-3">
-                    <h2 class="text-xl font-bold text-gray-800">
-                        Share Lead – <span x-text="shareLeadName"></span>
-                    </h2>
-                    <button @click="closeShare" class="text-gray-500 hover:text-black text-xl">
-                        &times;
-                    </button>
-                </div>
-
-                <div class="space-y-4">
-
-                    <!-- Package Dropdown -->
-                    <div x-show="showDropdown" x-transition>
-                        <label class="block font-semibold text-gray-700 mb-1">
-                            Select Package
-                        </label>
-
-                        <select x-model="selectedPackage"
-                            class="w-full p-3 rounded-lg border bg-gray-50 focus:ring focus:ring-blue-300 transition">
-                            <template x-for="pkg in allPackages" :key="pkg.id">
-                                <option :value="pkg.id" x-text="pkg.package_name"></option>
-                            </template>
-                        </select>
-                    </div>
-                    <!-- Show Selected Package (instead of dropdown) -->
-                    <div x-show="showSelectedPackage" x-transition
-                        class="p-3 bg-green-50 border border-green-300 rounded-lg text-green-800 font-medium">
-                        Selected Package:
-                        <span class="font-semibold" x-text="selectedPackageName"></span>
-                    </div>
-
-                    <!-- Share Buttons -->
-                    <div class="grid grid-cols-2 gap-4 pt-2">
-
-                        <!-- Email -->
-                        <button @click="sendEmail()"
-                            class="flex items-center justify-center gap-2 px-4 py-3
-                    bg-blue-600 text-white rounded-xl shadow
-                    hover:bg-blue-700 hover:shadow-xl transition">
-                            <i class="fa-solid fa-envelope"></i> Email
-                        </button>
-
-                        <!-- WhatsApp -->
-                        <button @click="sendWhatsApp()"
-                            class="flex items-center justify-center gap-2 px-4 py-3
-                    bg-green-600 text-white rounded-xl shadow
-                    hover:bg-green-700 hover:shadow-xl transition">
-                            <i class="fa-brands fa-whatsapp"></i> WhatsApp
-                        </button>
-
-                    </div>
-
-                </div>
-            </div>
-        </div>
-
-
+        <x-followup-modal :packgaes="$packages" />
+        <x-share-modal :packgaes="$packages" />
+        <x-invoice-modal :packgaes="$packages" />
     </div>
+    <script>
+        function invoiceModal() {
+            return {
+                open: false,
+                leadId: "",
+                leadName: "",
+                packages: @json($packages),
+                selectedPackage: "",
+                packageData: null,
 
+                openInvoiceModal(id, name) {
+                    this.leadId = id;
+                    this.leadName = name;
+                    this.open = true;
+                },
+
+
+            }
+        }
+    </script>
     <script>
         function followupModal() {
             return {
@@ -433,8 +355,6 @@
                 closeShare() {
                     this.shareOpen = false;
                 },
-
-
 
 
             }

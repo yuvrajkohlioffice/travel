@@ -12,25 +12,26 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class LeadController extends Controller
 {
-        public function index()
-        {
-            $user = auth()->user();
-            $packages = Package::all();
-            $query = Lead::with('package');
+    public function index()
+    {
+        $user = auth()->user();
+        $users = User::all();
+        $packages = Package::all();
+        $query = Lead::with('package');
 
-            // If not admin, filter leads
-            if ($user->role_id != 1) {
-                $query->where(function ($q) use ($user) {
-                    $q->where('user_id', $user->id) // Leads created by this user
-                        ->orWhereHas('assignedUsers', function ($q2) use ($user) {
-                            $q2->where('user_id', $user->id); // Leads assigned to this user
-                        });
-                });
-            }
+        // If not admin, filter leads
+        if ($user->role_id != 1) {
+            $query->where(function ($q) use ($user) {
+                $q->where('user_id', $user->id) // Leads created by this user
+                    ->orWhereHas('assignedUsers', function ($q2) use ($user) {
+                        $q2->where('user_id', $user->id); // Leads assigned to this user
+                    });
+            });
+        }
 
-            $leads = $query
-                ->orderByRaw(
-                    "
+        $leads = $query
+            ->orderByRaw(
+                "
                     CASE
                         WHEN lead_status = 'Hot' THEN 1
                         WHEN lead_status = 'Warm' THEN 2
@@ -38,12 +39,12 @@ class LeadController extends Controller
                         ELSE 4
                     END
                 ",
-                )
-                ->latest()
-                ->get(); // You can paginate with ->paginate(10) for better performance
+            )
+            ->latest()
+            ->get(); // You can paginate with ->paginate(10) for better performance
 
-            return view('leads.index', compact('leads','packages'));
-        }
+        return view('leads.index', compact('leads', 'packages','users'));
+    }
 
     public function create()
     {
