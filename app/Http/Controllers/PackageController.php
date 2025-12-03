@@ -7,6 +7,8 @@ use App\Models\PackageType;
 use App\Models\PackageCategory;
 use App\Models\DifficultyType;
 use App\Models\Car;
+use App\Mail\SharePackageMail;
+use Illuminate\Support\Facades\Mail;
 use App\Models\Hotel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -170,55 +172,122 @@ class PackageController extends Controller
     }
 
     public function editRelations(Package $package)
-{
-    // Load actual package items with related car and hotel
-    $package->load(['packageItems.car', 'packageItems.hotel']);
+    {
+        // Load actual package items with related car and hotel
+        $package->load(['packageItems.car', 'packageItems.hotel']);
 
-    $allCars = Car::all();
-    $allHotels = Hotel::all();
+        $allCars = Car::all();
+        $allHotels = Hotel::all();
 
-    return view('packages.edit-relations', compact('package', 'allCars', 'allHotels'));
-}
+        return view('packages.edit-relations', compact('package', 'allCars', 'allHotels'));
+    }
 
     /**
      * Update package's cars and hotels with custom_price and already_price
      */
 
-public function updateRelations(Request $request, Package $package)
+    public function updateRelations(Request $request, Package $package)
+    {
+        $data = $request->validate([
+            'items' => 'nullable|array',
+            'items.*.car_id' => 'required|exists:cars,id',
+            'items.*.hotel_id' => 'required|exists:hotels,id',
+            'items.*.custom_price' => 'nullable|numeric|min:0',
+            'items.*.already_price' => 'nullable|boolean',
+        ]);
+
+        DB::table('package_items')->where('package_id', $package->id)->delete();
+        // Insert all new combinations
+        $insertData = [];
+        foreach ($data['items'] ?? [] as $item) {
+            if (!empty($item['car_id']) && !empty($item['hotel_id'])) {
+                $insertData[] = [
+                    'package_id' => $package->id,
+                    'car_id' => $item['car_id'],
+                    'hotel_id' => $item['hotel_id'],
+                    'custom_price' => $item['custom_price'] ?? null,
+                    'already_price' => !empty($item['already_price']),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            }
+        }
+
+        if (!empty($insertData)) {
+            DB::table('package_items')->insert($insertData);
+        }
+
+        return redirect()->route('packages.show', $package->id)->with('success', 'Package items updated successfully!');
+    }
+    public function apiShow(Package $package)
+    {
+        $package->load(['packageType', 'packageCategory', 'difficultyType', 'packageItems.car', 'packageItems.hotel']);
+
+        // Build custom response structure
+        $response = [
+            'id' => $package->id,
+            'package_name' => $package->package_name,
+            'package_days' => $package->package_days,
+            'package_nights' => $package->package_nights,
+            'package_price' => $package->package_price,
+            'pickup_points' => $package->pickup_points,
+
+            'package_banner_url' => $package->package_banner ? asset('storage/' . $package->package_banner) : null,
+
+            'package_docs_url' => $package->package_docs ? asset('storage/' . $package->package_docs) : null,
+
+            'other_images_url' => collect($package->other_images ?? [])
+                ->map(fn($img) => asset('storage/' . $img))
+                ->toArray(),
+
+            'packageType' => $package->packageType,
+            'packageCategory' => $package->packageCategory,
+            'difficultyType' => $package->difficultyType,
+            'packageItems' => $package->packageItems,
+        ];
+
+        return response()->json([
+            'success' => true,
+            'package' => $response,
+        ]);
+    }
+
+    public function sendPackageEmail(Request $request)
 {
-    $data = $request->validate([
-        'items' => 'nullable|array',
-        'items.*.car_id' => 'required|exists:cars,id',
-        'items.*.hotel_id' => 'required|exists:hotels,id',
-        'items.*.custom_price' => 'nullable|numeric|min:0',
-        'items.*.already_price' => 'nullable|boolean',
+    $request->validate([
+        'lead_name' => 'required|string',
+        'package_id' => 'required|exists:packages,id',
+        'email' => 'required|email',
+        'documents' => 'nullable|array',
     ]);
 
-   DB::table('package_items')->where('package_id', $package->id)->delete();
-    // Insert all new combinations
-    $insertData = [];
-    foreach ($data['items'] ?? [] as $item) {
-        if (!empty($item['car_id']) && !empty($item['hotel_id'])) {
-            $insertData[] = [
-                'package_id' => $package->id,
-                'car_id' => $item['car_id'],
-                'hotel_id' => $item['hotel_id'],
-                'custom_price' => $item['custom_price'] ?? null,
-                'already_price' => !empty($item['already_price']),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ];
+    $package = Package::findOrFail($request->package_id);
+
+    // Use selected documents or all package docs
+    $docs = $request->documents ?? $package->package_docs;
+
+    // Resolve full paths and filter out invalid files
+    $validDocs = [];
+    foreach ($docs as $doc) {
+        // If it's already a full URL from storage, convert to storage path
+        if (str_starts_with($doc, asset('storage'))) {
+            $docPath = str_replace(asset('storage'), storage_path('app/public'), $doc);
+        } else {
+            // Otherwise, assume relative to public folder
+            $docPath = public_path($doc);
+        }
+
+        if (file_exists($docPath) && is_readable($docPath)) {
+            $validDocs[] = $docPath;
         }
     }
 
-    if (!empty($insertData)) {
-        DB::table('package_items')->insert($insertData);
-    }
+    Mail::to($request->email)->send(new SharePackageMail($request->lead_name, $package->package_name, $validDocs));
 
-    return redirect()->route('packages.show', $package->id)
-                     ->with('success', 'Package items updated successfully!');
+    return response()->json([
+        'success' => true,
+        'message' => 'Package email sent successfully!',
+    ]);
 }
-
-
 
 }

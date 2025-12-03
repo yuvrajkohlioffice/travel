@@ -13,10 +13,10 @@
 
 <div class="w-full overflow-x-auto  relative z-10">
     <table id="{{ $id }}" class="min-w-full border border-gray-200">
-        <thead class="bg-blue-600 text-white">
+        <thead>
             <tr>
                 @foreach ($headers as $header)
-                    <th class="px-4 py-2 text-center font-semibold" style="border: 0.2px solid black !important;">
+                    <th class="px-4 py-2 text-center font-extrabold" style="border: 0.2px solid rgb(136, 136, 136) !important;">
                         {{ $header }}
                     </th>
                 @endforeach
@@ -41,8 +41,8 @@
 
     table.dataTable tbody th,
     table.dataTable tbody td {
-        border: 0.2px solid black !important;
-       
+        border: 0.2px solid rgb(136, 136, 136) !important;
+
     }
 
     /* Tailwind Pagination Buttons */

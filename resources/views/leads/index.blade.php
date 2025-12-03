@@ -4,7 +4,7 @@
             <div class="w-full max-w-7xl space-y-6">
                 <!-- Header -->
                 <div
-                    class="flex flex-col md:flex-row md:justify-between md:items-center gap-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-6 rounded-xl shadow-lg">
+                    class="flex flex-col md:flex-row md:justify-between md:items-center gap-4  from-blue-500 to-indigo-600  p-6 rounded-xl shadow-lg">
                     <!-- Title -->
                     <h2 class="text-3xl font-bold flex items-center gap-3">
                         <i class="fa-solid fa-people-group"></i> Leads
@@ -72,7 +72,6 @@
                         resourceName="Leads">
 
                         @foreach ($leads as $lead)
-                        
                             @php
                                 // Lead Status Colors
                                 $statusColors = [
@@ -107,11 +106,15 @@
                                 <td class="p-3 text-center">{{ $loop->iteration }}</td>
 
                                 <!-- Client Info -->
-                                <td class="p-3 text-center">
-                                    <div class="font-semibold text-gray-800">{{ $lead->name }}</div>
-                                    <span class="px-3 py-1 rounded-full text-white text-xs {{ $statusClass }}">
-                                        {{ $lead->lead_status ?? 'N/A' }}
-                                    </span>
+                                <td class="p-3 ">
+                                    <div class="font-semibold text-gray-800">{{ $lead->name }} <span
+                                            class="px-3 py-1 rounded-full text-white text-xs {{ $statusClass }}">
+                                            {{ $lead->lead_status ?? 'N/A' }}
+                                        </span> <button @click="openEditModal({{ $lead->id }})"
+                                            class="btn-edit mx-1" title="Update  ({{ $lead->name }})">
+                                            <i class="fa-solid fa-pen-to-square"></i>
+                                        </button></div>
+
                                     <hr>
                                     <a href="mailto:{{ $lead->email }}"
                                         class="text-blue-600 hover:underline">{{ $lead->email }}</a>
@@ -124,10 +127,7 @@
                                     @endphp
                                     <div class="text-green-600 font-mono">+{{ $lead->phone_code }} {{ $masked }}
                                     </div>
-                                    <button @click="openEditModal({{ $lead->id }})" class="btn-edit"
-                                        title="Update  ({{ $lead->name }})">
-                                        <i class="fa-solid fa-pen-to-square"></i>
-                                    </button>
+
                                     <div class="text-gray-500 text-sm">
                                         {{ $lead->created_at->format('d-M-y') }} •
                                         <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded">{{ $daysFloor }}
@@ -162,46 +162,46 @@
                                 <<td class="p-3 text-center"
                                     title="{{ $lead->package->package_name ?? $lead->inquiry_text }}">
                                     {{ $lead->package->package_name ?? \Illuminate\Support\Str::limit($lead->inquiry_text, 20) }}
-                                </td>
+                                    </td>
 
-                                <!-- Proposal Buttons -->
-                                <td class="p-3 text-center">
-                                    <button
-                                        @click="handleShare({{ $lead->id }}, '{{ $lead->name }}', '{{ $lead->package->id ?? '' }}')"
-                                        class="border-2 border-green-500 text-green-500 px-4 py-1 rounded-lg hover:bg-green-500 hover:text-white transition duration-300">
-                                        <i class="fa-solid fa-share"></i>
-                                    </button>
-                                    <button @click="openInvoiceModal({{ $lead->id }}, '{{ $lead->name }}')"
-                                        class="border-2 border-green-500 text-green-500 px-4 py-1 rounded-lg hover:bg-green-500 hover:text-white transition duration-300">
-                                        <i class="fa-solid fa-file-invoice"></i>
-                                    </button>
-                                    <button @click="openOtherModal({{ $lead->id }}, '{{ $lead->name }}')"
-                                        class="border-2 border-green-500 text-green-500 px-4 py-1 rounded-lg hover:bg-green-500 hover:text-white transition duration-300">
-                                        Other
-                                    </button>
-                                </td>
+                                    <!-- Proposal Buttons -->
+                                    <td class="p-3 text-center">
+                                        <button
+                                            @click="handleShare({{ $lead->id }}, '{{ $lead->name }}', '{{ $lead->package->id ?? '' }}','{{ $lead->email }}')"
+                                            class="border-2 border-green-500 text-green-500 px-4 py-1 rounded-lg hover:bg-green-500 hover:text-white transition duration-300">
+                                            <i class="fa-solid fa-share"></i>
+                                        </button>
+                                        <button @click="openInvoiceModal({{ $lead->id }}, '{{ $lead->name }}')"
+                                            class="border-2 border-green-500 text-green-500 px-4 py-1 rounded-lg hover:bg-green-500 hover:text-white transition duration-300">
+                                            <i class="fa-solid fa-file-invoice"></i>
+                                        </button>
+                                        <button @click="openOtherModal({{ $lead->id }}, '{{ $lead->name }}')"
+                                            class="border-2 border-green-500 text-green-500 px-4 py-1 rounded-lg hover:bg-green-500 hover:text-white transition duration-300">
+                                            Other
+                                        </button>
+                                    </td>
 
-                                <!-- Status & Stage -->
-                                <td class="p-3 text-center">
-                                    <span class="px-3 py-1 rounded-full text-white {{ $stageClass }}">
-                                        {{ $lead->status ?? 'N/A' }}
-                                    </span>
-                                </td>
+                                    <!-- Status & Stage -->
+                                    <td class="p-3 text-center">
+                                        <span class="px-3 py-1 rounded-full text-white {{ $stageClass }}">
+                                            {{ $lead->status ?? 'N/A' }}
+                                        </span>
+                                    </td>
 
-                                <!-- Actions -->
-                                <td class="p-3 text-center">
-                                    <a href="{{ route('leads.show', $lead->id) }}" class="btn-view m-1"><i
-                                            class="fa-solid fa-eye"></i></a>
-                                    <a href="{{ route('leads.assign.form', $lead->id) }}" class="btn-assign m-1"><i
-                                            class="fa-solid fa-user-plus"></i></a>
-                                    <form action="{{ route('leads.destroy', $lead->id) }}" method="POST"
-                                        onsubmit="return confirm('Delete this lead?')">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn-delete m-1"><i
-                                                class="fa-solid fa-trash"></i></button>
-                                    </form>
-                                </td>
+                                    <!-- Actions -->
+                                    <td class="p-3 text-center">
+                                        <a href="{{ route('leads.show', $lead->id) }}" class="btn-view m-1"><i
+                                                class="fa-solid fa-eye"></i></a>
+                                        <a href="{{ route('leads.assign.form', $lead->id) }}" class="btn-assign m-1"><i
+                                                class="fa-solid fa-user-plus"></i></a>
+                                        <form action="{{ route('leads.destroy', $lead->id) }}" method="POST"
+                                            onsubmit="return confirm('Delete this lead?')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn-delete m-1"><i
+                                                    class="fa-solid fa-trash"></i></button>
+                                        </form>
+                                    </td>
                             </tr>
                         @endforeach
                     </x-data-table>
@@ -250,7 +250,7 @@
                 showSelectedPackage: false,
                 selectedPackageName: '',
                 allPackages: @json($packages),
-
+                leadEmail: '', // set this when opening modal
                 // Edit
                 editForm: {},
 
@@ -287,23 +287,94 @@
                     this.followOpen = false;
                 },
 
-                handleShare(id, name, packageId = null) {
+
+
+
+                handleShare(id, name, packageId = null, email = '') {
                     this.shareLeadId = id;
                     this.shareLeadName = name;
+                    this.leadEmail = email;
+
+                    // Always show dropdown
+                    this.showDropdown = true;
+
+                    // Select package
                     if (packageId) {
                         this.selectedPackage = packageId;
-                        this.showDropdown = false;
-                        this.showSelectedPackage = true;
-                        const pkg = this.allPackages.find(p => p.id == packageId);
-                        this.selectedPackageName = pkg ? pkg.package_name : 'Unknown Package';
-                        this.shareOpen = true;
-                        return;
+                    } else if (this.allPackages.length > 0) {
+                        this.selectedPackage = this.allPackages[0].id;
                     }
-                    this.showSelectedPackage = false;
-                    this.showDropdown = true;
-                    this.selectedPackage = this.allPackages.length > 0 ? this.allPackages[0].id : '';
+
+                    // Fetch package data
+                    this.fetchPackageDocs(this.selectedPackage);
+
+                    this.showSelectedPackage = true;
                     this.shareOpen = true;
                 },
+
+                fetchPackageDocs(packageId) {
+                    fetch(`/packages/${packageId}/json`)
+                        .then(res => res.json())
+                        .then(data => {
+                            this.selectedPackageDocs = data.package.package_docs_url || [];
+                            this.selectedPackagePdf = this.selectedPackageDocs[0] || null;
+                            this.selectedDocs = [...this.selectedPackageDocs];
+                            this.selectedPackageName = data.package.package_name;
+                        })
+                        .catch(err => {
+                            console.error("Error fetching package docs:", err);
+                            this.selectedPackageDocs = [];
+                            this.selectedPackagePdf = null;
+                            this.selectedDocs = [];
+                        });
+                },
+
+                sendEmail() {
+                    if (this.selectedDocs.length === 0) {
+                        alert('Select at least one document!');
+                        return;
+                    }
+                    fetch("{{ route('leads.sendPackageEmail') }}", {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            },
+                            body: JSON.stringify({
+                                lead_name: this.shareLeadName,
+                                package_id: this.selectedPackage,
+                                email: this.leadEmail,
+                                documents: this.selectedDocs
+                            })
+                        })
+                        .then(res => res.json())
+                        .then(resp => {
+                            if (resp.success) {
+                                alert(resp.message);
+                                this.closeShare();
+                            } else alert('Failed to send email!');
+                        })
+                        .catch(err => console.error(err));
+                },
+
+                sendWhatsApp() {
+                    console.log("Send WhatsApp with docs:", this.selectedDocs);
+                },
+
+                sendBoth() {
+                    this.sendEmail();
+                    this.sendWhatsApp();
+                },
+
+                closeShare() {
+                    this.shareOpen = false;
+                    this.selectedPackageDocs = [];
+                    this.selectedDocs = [];
+                    this.selectedPackagePdf = null;
+                },
+
+
+
                 closeShare() {
                     this.shareOpen = false;
                 },

@@ -38,7 +38,8 @@ class LeadController extends Controller
     {
         $user = auth()->user();
         $users = User::all();
-        $packages = Package::all();
+        $packages = Package::select('id','package_name','package_docs')->get();
+
 
         $query = Lead::with(['package', 'lastFollowup.user']);
 

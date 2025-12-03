@@ -72,5 +72,14 @@ class Package extends Model
 {
     return $this->hasMany(PackageItem::class);
 }
+public function getPackageDocsUrlAttribute()
+{
+    if (!$this->package_docs) return [];
+
+    return collect($this->package_docs)
+        ->map(fn($doc) => asset('storage/' . $doc))
+        ->toArray();
+}
+
 
 }

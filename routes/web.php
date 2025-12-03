@@ -58,16 +58,19 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     Route::post('/leads/{lead}/assign', [LeadController::class, 'assignStore'])->name('leads.assign.store');
     Route::delete('/leads/assignment/{id}/delete', [LeadController::class, 'deleteAssignment'])->name('leads.assign.delete');
 
-Route::get('/leads/{lead}/details', [FollowupController::class, 'getLeadDetails']);
-Route::post('/leads/import', [LeadController::class, 'importLeads'])->name('leads.import');
-Route::get('/leads/{lead}/json', [LeadController::class, 'showJson']);
-Route::post('/leads/bulk-assign', [LeadController::class, 'bulkAssign'])->name('leads.bulkAssign');
+    Route::get('/leads/{lead}/details', [FollowupController::class, 'getLeadDetails']);
+    Route::post('/leads/import', [LeadController::class, 'importLeads'])->name('leads.import');
+    Route::get('/leads/{lead}/json', [LeadController::class, 'showJson']);
+    Route::post('/leads/bulk-assign', [LeadController::class, 'bulkAssign'])->name('leads.bulkAssign');
 
     Route::resource('leads', LeadController::class);
     Route::resource('package-types', PackageTypeController::class);
     Route::resource('package-categories', PackageCategoryController::class);
     Route::resource('difficulty-types', DifficultyTypeController::class);
     Route::resource('roles', RoleController::class);
+    Route::get('/packages/{package}/json', [PackageController::class, 'apiShow']);
+
+    Route::post('/leads/send-package-email', [PackageController::class, 'sendPackageEmail'])->name('leads.sendPackageEmail');
 
     Route::get('/dashboard', function () {
         return view('dashboard');
