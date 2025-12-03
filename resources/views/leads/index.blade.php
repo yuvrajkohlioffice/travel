@@ -5,42 +5,43 @@
             <div class="w-full max-w-7xl space-y-6">
 
                 <!-- Header -->
-                <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-6 rounded-xl shadow-lg">
+                <div
+                    class="flex flex-col md:flex-row md:justify-between md:items-center gap-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-6 rounded-xl shadow-lg">
 
-    <!-- Title -->
-    <h2 class="text-3xl font-bold flex items-center gap-3">
-        <i class="fa-solid fa-people-group"></i> Leads
-    </h2>
+                    <!-- Title -->
+                    <h2 class="text-3xl font-bold flex items-center gap-3">
+                        <i class="fa-solid fa-people-group"></i> Leads
+                    </h2>
 
-    <!-- Actions -->
-    <div class="flex flex-col md:flex-row items-center gap-3 w-full md:w-auto">
+                    <!-- Actions -->
+                    <div class="flex flex-col md:flex-row items-center gap-3 w-full md:w-auto">
 
-        <!-- Import Template -->
-        <a href="/Example-Import-Leads.xlsx"
-            class="px-4 py-2 bg-white text-blue-600 font-semibold rounded-lg shadow hover:bg-gray-100 transition">
-            Import Template
-        </a>
+                        <!-- Import Template -->
+                        <a href="/Example-Import-Leads.xlsx"
+                            class="px-4 py-2 bg-white text-blue-600 font-semibold rounded-lg shadow hover:bg-gray-100 transition">
+                            Import Template
+                        </a>
 
-        <!-- Import File Form -->
-        <form action="{{ route('leads.import') }}" method="POST" enctype="multipart/form-data"
-            class="flex items-center gap-2">
-            @csrf
-            <input type="file" name="file" accept=".xlsx,.csv" required
-                class="text-sm text-white file:bg-blue-600 file:border-0 file:rounded-lg file:px-3 file:py-1 file:font-semibold file:hover:bg-blue-700 cursor-pointer" />
-            <button type="submit"
-                class="px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition">
-                Import Leads
-            </button>
-        </form>
+                        <!-- Import File Form -->
+                        <form action="{{ route('leads.import') }}" method="POST" enctype="multipart/form-data"
+                            class="flex items-center gap-2">
+                            @csrf
+                            <input type="file" name="file" accept=".xlsx,.csv" required
+                                class="text-sm text-white file:bg-blue-600 file:border-0 file:rounded-lg file:px-3 file:py-1 file:font-semibold file:hover:bg-blue-700 cursor-pointer" />
+                            <button type="submit"
+                                class="px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition">
+                                Import Leads
+                            </button>
+                        </form>
 
-        <!-- Add Lead Button -->
-        <a href="{{ route('leads.create') }}"
-            class="px-5 py-2 bg-white text-blue-600 font-semibold rounded-lg shadow hover:bg-gray-100 transition">
-            + Add Lead
-        </a>
+                        <!-- Add Lead Button -->
+                        <a href="{{ route('leads.create') }}"
+                            class="px-5 py-2 bg-white text-blue-600 font-semibold rounded-lg shadow hover:bg-gray-100 transition">
+                            + Add Lead
+                        </a>
 
-    </div>
-</div>
+                    </div>
+                </div>
 
 
                 <!-- Success Message -->
@@ -52,7 +53,16 @@
 
                 <!-- Leads Table -->
                 <div class="bg-white rounded-xl shadow overflow-x-auto p-4">
-                    <x-data-table id="Leads-table" :headers="['ID', 'Client Info', 'Country', 'Reminder', 'Inquiry For', 'Status', 'Action']" :excel="true" :print="true" title="Leads"
+                    <x-data-table id="Leads-table" :headers="[
+                        'ID',
+                        'Client Info',
+                        'Country',
+                        'Reminder',
+                        'Inquiry For',
+                        'Proposal',
+                        'Status',
+                        'Action',
+                    ]" :excel="true" :print="true" title="Leads"
                         resourceName="Leads">
                         @foreach ($leads as $lead)
                             <tr class="border-b hover:bg-gray-50 transition-colors">
@@ -101,6 +111,27 @@
                                     title="{{ $lead->package->package_name ?? $lead->inquiry_text }}">
                                     {{ $lead->package->package_name ?? \Illuminate\Support\Str::limit($lead->inquiry_text, 20) }}
                                 </td>
+                                <td class="p-3 text-center flex gap-2 justify-center">
+                                    <!-- Send Details -->
+                                    <button @click="openDetailsModal({{ $lead->id }}, '{{ $lead->name }}')"
+                                        class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">
+                                        <i class="fa-solid fa-share"></i>
+                                    </button>
+
+                                    <!-- Generate Invoice (only for Hot/Interested leads) -->
+                                    @if (in_array($lead->lead_status, ['Hot', 'Interested']))
+                                        <button @click="openInvoiceModal({{ $lead->id }}, '{{ $lead->name }}')"
+                                            class="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600">
+                                            <i class="fa-solid fa-file-invoice"></i>
+                                        </button>
+                                    @endif
+
+                                    <!-- Other Action -->
+                                    <button @click="openOtherModal({{ $lead->id }}, '{{ $lead->name }}')"
+                                        class="bg-gray-400 text-white px-2 py-1 rounded hover:bg-gray-500">
+                                        Other
+                                    </button>
+                                </td>
 
                                 <!-- Status -->
                                 <td class="p-3 text-center">
@@ -119,18 +150,18 @@
 
                                 <!-- Actions -->
                                 <td class="p-3  flex items-center gap-5">
-                                    <a href="{{ route('leads.show', $lead->id) }}" class="btn-view">
-                                        <i class="fa-solid fa-eye"></i> View
+                                    <a href="{{ route('leads.show', $lead->id) }}" class="btn-view p-1">
+                                        <i class="fa-solid fa-eye"></i>
                                     </a>
 
                                     <!-- Assign -->
-                                    <a href="{{ route('leads.assign.form', $lead->id) }}" class="btn-assign">
-                                        <i class="fa-solid fa-user-plus"></i> Assign
+                                    <a href="{{ route('leads.assign.form', $lead->id) }}" class="btn-assign p-1">
+                                        <i class="fa-solid fa-user-plus"></i>
                                     </a>
 
                                     <!-- Edit -->
-                                    <a href="{{ route('leads.edit', $lead->id) }}" class="btn-edit">
-                                        <i class="fa-solid fa-pen-to-square"></i> Edit
+                                    <a href="{{ route('leads.edit', $lead->id) }}" class="btn-edit p-1">
+                                        <i class="fa-solid fa-pen-to-square"></i>
                                     </a>
 
                                     <!-- Delete -->
@@ -138,12 +169,11 @@
                                         onsubmit="return confirm('Delete this lead?')">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="btn-delete">
-                                            <i class="fa-solid fa-trash"></i> Delete
+                                        <button type="submit" class="btn-delete p-1">
+                                            <i class="fa-solid fa-trash"></i>
                                         </button>
                                     </form>
                                 </td>
-
                             </tr>
                         @endforeach
                     </x-data-table>
