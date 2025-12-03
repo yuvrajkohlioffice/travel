@@ -64,8 +64,7 @@ class Lead extends Model
         return $this->hasMany(LeadView::class);
     }
     public function lastFollowup()
-{
-    return $this->hasOne(Followup::class)->latestOfMany();
-}
-
+    {
+        return $this->hasOne(Followup::class)->latestOfMany();
+    }
 }

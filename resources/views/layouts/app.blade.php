@@ -35,7 +35,7 @@
 
 
         <!-- Page Content -->
-        <main class="mt-[60px]">
+        <main class="mt-[60px] z-48">
             {{ $slot }}
         </main>
     </div>

@@ -100,6 +100,25 @@
                         <option value="Cold">Cold</option>
                     </select>
                 </div>
+                <div>
+    <label class="block text-sm font-medium text-gray-700 dark:text-gray-400">Lead Status</label>
+    <select x-model="editForm.status"
+        class="mt-1 block w-full rounded-lg border px-4 py-2 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
+        <option value="">Select Status</option>
+        <option value="Pending">Pending</option>
+        <option value="Approved">Approved</option>
+        <option value="Quotation Sent">Quotation Sent</option>
+        <option value="Follow-up Taken">Follow-up Taken</option>
+        <option value="Hot">Hot</option>
+        <option value="Warm">Warm</option>
+        <option value="Cold">Cold</option>
+        <option value="Lost">Lost</option>
+        <option value="Converted">Converted</option>
+        <option value="On Hold">On Hold</option>
+        <option value="Rejected">Rejected</option>
+    </select>
+</div>
+
 
                 <!-- Lead Source -->
                 <div>

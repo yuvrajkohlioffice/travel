@@ -29,6 +29,7 @@ class LeadController extends Controller
             'lead_status' => $lead->lead_status,
             'lead_source' => $lead->lead_source,
             'website' => $lead->website,
+            'status'=> $lead->status,
             'package_id' => $lead->package_id,
             'inquiry_text' => $lead->inquiry_text,
         ]);
@@ -109,7 +110,7 @@ class LeadController extends Controller
             'phone_number' => 'nullable|max:15',
         ]);
 
-        $lead->update($validated + $request->only(['company_name', 'district', 'country', 'phone_code', 'city', 'client_category', 'lead_status', 'lead_source', 'website', 'package_id', 'inquiry_text']));
+        $lead->update($validated + $request->only(['company_name', 'district', 'country', 'phone_code', 'city', 'client_category', 'lead_status', 'lead_source', 'website', 'package_id', 'inquiry_text','status']));
 
         // Return JSON response
         return response()->json([
@@ -178,5 +179,33 @@ class LeadController extends Controller
         Excel::import(new LeadsImport($userId), $request->file('file'));
 
         return back()->with('success', 'Leads imported successfully!');
+    }
+    public function bulkAssign(Request $request)
+    {
+        $request->validate([
+            'lead_ids' => 'required|array|min:1',
+            'user_id' => 'required|exists:users,id',
+        ]);
+
+        $leadIds = $request->lead_ids;
+        $userId = $request->user_id;
+        $assignedBy = auth()->id();
+
+        foreach ($leadIds as $leadId) {
+            // Check if already assigned
+            $exists = LeadUser::where('lead_id', $leadId)->where('user_id', $userId)->exists();
+            if (!$exists) {
+                LeadUser::create([
+                    'lead_id' => $leadId,
+                    'user_id' => $userId,
+                    'assigned_by' => $assignedBy,
+                ]);
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Selected leads assigned successfully!'
+        ]);
     }
 }
