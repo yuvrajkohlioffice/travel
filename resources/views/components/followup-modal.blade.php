@@ -1,8 +1,8 @@
 <!-- Follow-Up Modal -->
-<div x-show="open" x-transition.opacity
+<div x-show="followOpen" x-transition.opacity
      class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-start justify-center overflow-auto p-4">
      
-    <div @click.outside="close"
+    <div @click.outside="closeFollow"
          class="bg-white dark:bg-gray-800 w-full max-w-6xl mt-16 rounded-2xl shadow-xl p-6">
 
         <!-- Modal Header -->
@@ -11,7 +11,7 @@
                 Follow-Up: <span class="text-blue-600" x-text="leadName"></span>
                 <span class="text-green-600 ml-2" x-text="phoneNumber ? '(' + phoneNumber + ')' : ''"></span>
             </h2>
-            <button @click="close" class="text-gray-500 hover:text-gray-700">
+            <button @click="closeFollow" class="text-gray-500 hover:text-gray-700">
                 <i class="fa-solid fa-xmark text-2xl"></i>
             </button>
         </div>
@@ -55,7 +55,7 @@
 
                     <!-- Actions -->
                     <div class="flex justify-end gap-3 mt-4">
-                        <button type="button" @click="close" class="px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500">
+                        <button type="button" @click="closeFollow" class="px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500">
                             Cancel
                         </button>
                         <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">

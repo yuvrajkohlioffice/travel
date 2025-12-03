@@ -1,5 +1,4 @@
 <div class="grid grid-cols-2 gap-4">
-
     <!-- Name -->
     <div>
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-400">Name</label>
@@ -7,7 +6,6 @@
             class="mt-1 block w-full rounded-lg border border-gray-300 px-4 py-2 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
             value="{{ old('name', $lead->name ?? '') }}" required>
     </div>
-
     <!-- Company Name -->
     <div>
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-400">Company Name</label>
@@ -15,7 +13,6 @@
             class="mt-1 block w-full rounded-lg border border-gray-300 px-4 py-2 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
             value="{{ old('company_name', $lead->company_name ?? '') }}">
     </div>
-
     <!-- Email -->
     <div>
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-400">Email</label>
@@ -23,7 +20,6 @@
             class="mt-1 block w-full rounded-lg border border-gray-300 px-4 py-2 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
             value="{{ old('email', $lead->email ?? '') }}">
     </div>
-
     <!-- Country -->
     <div>
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-400">Country</label>
@@ -31,7 +27,6 @@
             class="mt-1 block w-full rounded-lg border border-gray-300 px-4 py-2 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
             value="{{ old('country', $lead->country ?? '') }}">
     </div>
-
     <!-- District -->
     <div>
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-400">District</label>
@@ -63,7 +58,6 @@
             class="mt-1 block w-full rounded-lg border border-gray-300 px-4 py-2 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
             value="{{ old('city', $lead->city ?? '') }}">
     </div>
-
     <!-- Client Category -->
     <div>
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-400">Client Category</label>
@@ -128,4 +122,3 @@
 </div>
 
 <!-- Submit Button -->
-

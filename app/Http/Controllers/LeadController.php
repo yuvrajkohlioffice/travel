@@ -12,38 +12,58 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class LeadController extends Controller
 {
+    public function showJson(Lead $lead)
+    {
+        // Include only the fields needed for the modal
+        return response()->json([
+            'id' => $lead->id,
+            'name' => $lead->name,
+            'company_name' => $lead->company_name,
+            'email' => $lead->email,
+            'country' => $lead->country,
+            'district' => $lead->district,
+            'phone_code' => $lead->phone_code,
+            'phone_number' => $lead->phone_number,
+            'city' => $lead->city,
+            'client_category' => $lead->client_category,
+            'lead_status' => $lead->lead_status,
+            'lead_source' => $lead->lead_source,
+            'website' => $lead->website,
+            'package_id' => $lead->package_id,
+            'inquiry_text' => $lead->inquiry_text,
+        ]);
+    }
     public function index()
     {
         $user = auth()->user();
         $users = User::all();
         $packages = Package::all();
-        $query = Lead::with('package');
 
-        // If not admin, filter leads
+        $query = Lead::with(['package', 'lastFollowup.user']);
+
         if ($user->role_id != 1) {
             $query->where(function ($q) use ($user) {
-                $q->where('user_id', $user->id) // Leads created by this user
-                    ->orWhereHas('assignedUsers', function ($q2) use ($user) {
-                        $q2->where('user_id', $user->id); // Leads assigned to this user
-                    });
+                $q->where('user_id', $user->id)->orWhereHas('assignedUsers', function ($q2) use ($user) {
+                    $q2->where('user_id', $user->id);
+                });
             });
         }
 
         $leads = $query
             ->orderByRaw(
                 "
-                    CASE
-                        WHEN lead_status = 'Hot' THEN 1
-                        WHEN lead_status = 'Warm' THEN 2
-                        WHEN lead_status = 'Cold' THEN 3
-                        ELSE 4
-                    END
-                ",
+            CASE
+                WHEN lead_status = 'Hot' THEN 1
+                WHEN lead_status = 'Warm' THEN 2
+                WHEN lead_status = 'Cold' THEN 3
+                ELSE 4
+            END
+        ",
             )
             ->latest()
-            ->get(); // You can paginate with ->paginate(10) for better performance
+            ->get();
 
-        return view('leads.index', compact('leads', 'packages','users'));
+        return view('leads.index', compact('leads', 'packages', 'users'));
     }
 
     public function create()
@@ -91,7 +111,12 @@ class LeadController extends Controller
 
         $lead->update($validated + $request->only(['company_name', 'district', 'country', 'phone_code', 'city', 'client_category', 'lead_status', 'lead_source', 'website', 'package_id', 'inquiry_text']));
 
-        return redirect()->route('leads.index')->with('success', 'Lead updated successfully.');
+        // Return JSON response
+        return response()->json([
+            'success' => true,
+            'message' => 'Lead updated successfully',
+            'lead' => $lead, // optional, in case you want to update frontend dynamically
+        ]);
     }
 
     public function destroy(Lead $lead)

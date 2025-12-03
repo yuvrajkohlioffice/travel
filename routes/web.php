@@ -60,6 +60,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
 
 Route::get('/leads/{lead}/details', [FollowupController::class, 'getLeadDetails']);
 Route::post('/leads/import', [LeadController::class, 'importLeads'])->name('leads.import');
+Route::get('/leads/{lead}/json', [LeadController::class, 'showJson']);
 
     Route::resource('leads', LeadController::class);
     Route::resource('package-types', PackageTypeController::class);

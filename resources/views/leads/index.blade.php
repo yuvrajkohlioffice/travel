@@ -1,5 +1,5 @@
 <x-app-layout>
-    <div x-data="followupModal()" x-cloak class="min-h-screen bg-gradient-to-br from-gray-100 via-white to-gray-200">
+    <div x-data="leadModals()" x-cloak class="min-h-screen bg-gradient-to-br from-gray-100 via-white to-gray-200">
         <div class="ml-64 flex justify-center items-start min-h-screen p-6">
             <div class="w-full max-w-7xl space-y-6">
                 <!-- Header -->
@@ -134,6 +134,16 @@
                                         class="bg-green-500 text-white px-4 py-1 rounded-lg hover:bg-green-600 shadow-sm transition duration-300">
                                         <i class="fa-solid fa-phone-volume mr-1"></i> Followup
                                     </button>
+                                    @if ($lead->lastFollowup)
+                                        <div class="text-sm text-gray-700">
+                                            <strong>Last:</strong> {{ $lead->lastFollowup->reason }}<br>
+                                            <strong>By:</strong> {{ $lead->lastFollowup->user->name ?? 'N/A' }}<br>
+                                            <span class="text-xs text-gray-500">
+                                                {{ $lead->lastFollowup->created_at->format('d M Y h:i A') }}
+                                            </span>
+                                        </div>
+                                    @else
+                                    @endif
                                 </td>
 
                                 <!-- Package / Inquiry -->
@@ -192,9 +202,14 @@
                                     </a>
 
                                     <!-- Edit -->
-                                    <a href="{{ route('leads.edit', $lead->id) }}" class="btn-edit p-1">
+                                    <button @click="openEditModal({{ $lead->id }})"
+                                        class="btn-edit p-1 bg-yellow-500 text-white rounded-lg px-2 py-1 hover:bg-yellow-600 transition">
                                         <i class="fa-solid fa-pen-to-square"></i>
-                                    </a>
+                                    </button>
+
+                                    <!-- EDIT LEAD MODAL -->
+
+
 
                                     <!-- Delete -->
                                     <form action="{{ route('leads.destroy', $lead->id) }}" method="POST"
@@ -212,53 +227,51 @@
                 </div>
             </div>
         </div>
+        <x-edit-lead />
         <x-followup-modal :packgaes="$packages" />
         <x-share-modal :packgaes="$packages" />
         <x-invoice-modal :packgaes="$packages" />
     </div>
     <script>
-        function invoiceModal() {
+        function leadModals() {
             return {
-                open: false,
+
+                /* ---------------- INVOICE MODAL ---------------- */
+                invoiceOpen: false,
                 leadId: "",
                 leadName: "",
                 packages: @json($packages),
-                selectedPackage: "",
+                selectedPackageInvoice: "",
                 packageData: null,
 
                 openInvoiceModal(id, name) {
                     this.leadId = id;
                     this.leadName = name;
-                    this.open = true;
+                    this.invoiceOpen = true;
+                },
+                closeInvoice() {
+                    this.invoiceOpen = false;
                 },
 
 
-            }
-        }
-    </script>
-    <script>
-        function followupModal() {
-            return {
-
                 /* ---------------- FOLLOW-UP MODAL ---------------- */
-                open: false,
-                leadId: '',
-                leadName: '',
+                followOpen: false,
                 phoneNumber: '',
                 phoneCode: '',
                 fullNumber: '',
                 selectedReason: '',
                 followups: [],
                 reasons: [
-                    'Call Back Later', 'Call Me Tomorrow', 'Payment Tomorrow', 'Talk With My Partner',
-                    'Work with other company', 'Not Interested', 'Interested', 'Wrong Information',
+                    'Call Back Later', 'Call Me Tomorrow', 'Payment Tomorrow',
+                    'Talk With My Partner', 'Work with other company',
+                    'Not Interested', 'Interested', 'Wrong Information',
                     'Not Pickup', 'Other'
                 ],
 
                 openFollowModal(id, name) {
                     this.leadId = id;
                     this.leadName = name;
-                    this.open = true;
+                    this.followOpen = true;
 
                     fetch(`/leads/${id}/details`)
                         .then(res => res.json())
@@ -276,9 +289,10 @@
                         });
                 },
 
-                close() {
-                    this.open = false;
+                closeFollow() {
+                    this.followOpen = false;
                 },
+
 
                 /* ---------------- SHARE MODAL ---------------- */
                 shareOpen: false,
@@ -286,21 +300,19 @@
                 shareLeadName: '',
                 selectedPackage: '',
                 showDropdown: false,
-                showSelectedPackage: false, // NEW
-                selectedPackageName: '', // NEW
+                showSelectedPackage: false,
+                selectedPackageName: '',
                 allPackages: @json($packages),
 
                 handleShare(id, name, packageId = null) {
                     this.shareLeadId = id;
                     this.shareLeadName = name;
 
-                    // Lead already has package
                     if (packageId) {
                         this.selectedPackage = packageId;
                         this.showDropdown = false;
                         this.showSelectedPackage = true;
 
-                        // Find package name
                         const pkg = this.allPackages.find(p => p.id == packageId);
                         this.selectedPackageName = pkg ? pkg.package_name : 'Unknown Package';
 
@@ -308,12 +320,10 @@
                         return;
                     }
 
-                    // Lead has NO package
                     this.showSelectedPackage = false;
                     this.showDropdown = true;
                     this.shareOpen = true;
 
-                    // Auto-select first package
                     if (this.allPackages.length > 0) {
                         this.selectedPackage = this.allPackages[0].id;
                     }
@@ -324,7 +334,79 @@
                 },
 
 
+                /* ---------------- EDIT LEAD MODAL ---------------- */
+                editOpen: false,
+                editForm: {
+                    id: '',
+                    name: '',
+                    company_name: '',
+                    email: '',
+                    country: '',
+                    district: '',
+                    phone_code: '',
+                    phone_number: '',
+                    city: '',
+                    client_category: '',
+                    lead_status: '',
+                    lead_source: '',
+                    website: '',
+                    package_id: '',
+                    inquiry_text: '',
+                },
+
+                openEditModal(id) {
+                    fetch(`/leads/${id}/json`)
+                        .then(res => res.json())
+                        .then(data => {
+                            this.editForm = {
+                                ...data
+                            }; // fill form with lead data
+                            this.editOpen = true;
+                        })
+                        .catch(err => console.error('Error fetching lead data:', err));
+                },
+
+                closeEditModal() {
+                    this.editOpen = false;
+                },
+
+                submitEdit() {
+                    // Use Laravel route helper via Blade
+                    const urlTemplate = `{{ route('leads.update', ':id') }}`;
+                    const url = urlTemplate.replace(':id', this.editForm.id);
+
+                    fetch(url, {
+                            method: 'POST', // Laravel expects POST with _method = PUT
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            },
+                            body: JSON.stringify({
+                                ...this.editForm,
+                                _method: 'PUT' // Laravel expects PUT
+                            })
+                        })
+                        .then(res => res.json())
+                        .then(resp => {
+                            if (resp.success) {
+                                this.editOpen = false;
+                                window.location.reload(); // optionally update table dynamically instead
+                            } else {
+                                console.error('Update failed:', resp);
+                            }
+                        })
+                        .catch(err => console.error('Error updating lead:', err));
+                },
+
+                /* ---------------- PACKAGE DATA FOR INVOICE ---------------- */
+                fetchPackageData() {
+                    this.packageData = this.packages.find(p => p.id == this.selectedPackageInvoice) || null;
+                }
+
+
             }
         }
     </script>
+
+
 </x-app-layout>
