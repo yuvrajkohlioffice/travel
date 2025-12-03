@@ -312,15 +312,12 @@
                             </template>
                         </select>
                     </div>
-<!-- Show Selected Package (instead of dropdown) -->
-<div 
-    x-show="showSelectedPackage"
-    x-transition
-    class="p-3 bg-green-50 border border-green-300 rounded-lg text-green-800 font-medium"
->
-    Selected Package:
-    <span class="font-semibold" x-text="selectedPackageName"></span>
-</div>
+                    <!-- Show Selected Package (instead of dropdown) -->
+                    <div x-show="showSelectedPackage" x-transition
+                        class="p-3 bg-green-50 border border-green-300 rounded-lg text-green-800 font-medium">
+                        Selected Package:
+                        <span class="font-semibold" x-text="selectedPackageName"></span>
+                    </div>
 
                     <!-- Share Buttons -->
                     <div class="grid grid-cols-2 gap-4 pt-2">
@@ -395,47 +392,47 @@
                 },
 
                 /* ---------------- SHARE MODAL ---------------- */
-               shareOpen: false,
-shareLeadId: '',
-shareLeadName: '',
-selectedPackage: '',
-showDropdown: false,
-showSelectedPackage: false, // NEW
-selectedPackageName: '', // NEW
-allPackages: @json($packages),
+                shareOpen: false,
+                shareLeadId: '',
+                shareLeadName: '',
+                selectedPackage: '',
+                showDropdown: false,
+                showSelectedPackage: false, // NEW
+                selectedPackageName: '', // NEW
+                allPackages: @json($packages),
 
-handleShare(id, name, packageId = null) {
-    this.shareLeadId = id;
-    this.shareLeadName = name;
+                handleShare(id, name, packageId = null) {
+                    this.shareLeadId = id;
+                    this.shareLeadName = name;
 
-    // Lead already has package
-    if (packageId) {
-        this.selectedPackage = packageId;
-        this.showDropdown = false;
-        this.showSelectedPackage = true;
+                    // Lead already has package
+                    if (packageId) {
+                        this.selectedPackage = packageId;
+                        this.showDropdown = false;
+                        this.showSelectedPackage = true;
 
-        // Find package name
-        const pkg = this.allPackages.find(p => p.id == packageId);
-        this.selectedPackageName = pkg ? pkg.package_name : 'Unknown Package';
+                        // Find package name
+                        const pkg = this.allPackages.find(p => p.id == packageId);
+                        this.selectedPackageName = pkg ? pkg.package_name : 'Unknown Package';
 
-        this.shareOpen = true;
-        return;
-    }
+                        this.shareOpen = true;
+                        return;
+                    }
 
-    // Lead has NO package
-    this.showSelectedPackage = false;
-    this.showDropdown = true;
-    this.shareOpen = true;
+                    // Lead has NO package
+                    this.showSelectedPackage = false;
+                    this.showDropdown = true;
+                    this.shareOpen = true;
 
-    // Auto-select first package
-    if (this.allPackages.length > 0) {
-        this.selectedPackage = this.allPackages[0].id;
-    }
-},
+                    // Auto-select first package
+                    if (this.allPackages.length > 0) {
+                        this.selectedPackage = this.allPackages[0].id;
+                    }
+                },
 
-closeShare() {
-    this.shareOpen = false;
-},
+                closeShare() {
+                    this.shareOpen = false;
+                },
 
 
 
