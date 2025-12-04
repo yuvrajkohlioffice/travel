@@ -174,7 +174,7 @@ class PackageController extends Controller
     public function editRelations(Package $package)
     {
         // Load actual package items with related car and hotel
-        $package->load(['packageItems.car', 'packageItems.hotel']);
+        $package->load(['packageItems.car']);
 
         $allCars = Car::all();
         $allHotels = Hotel::all();
@@ -185,40 +185,70 @@ class PackageController extends Controller
     /**
      * Update package's cars and hotels with custom_price and already_price
      */
+public function partialItemRow(Request $request)
+{
+    $index = $request->query('index', 1);
+
+    $allCars = Car::all();
+    $allHotels = Hotel::all();
+
+    // Empty item for new row
+    $item = null;
+
+    return view('packages.partials.package-item-row', compact(
+        'index', 'item', 'allCars', 'allHotels'
+    ));
+}
 
     public function updateRelations(Request $request, Package $package)
-    {
-        $data = $request->validate([
-            'items' => 'nullable|array',
-            'items.*.car_id' => 'required|exists:cars,id',
-            'items.*.hotel_id' => 'required|exists:hotels,id',
-            'items.*.custom_price' => 'nullable|numeric|min:0',
-            'items.*.already_price' => 'nullable|boolean',
-        ]);
+{
+    $data = $request->validate([
+        'items' => 'nullable|array',
 
-        DB::table('package_items')->where('package_id', $package->id)->delete();
-        // Insert all new combinations
-        $insertData = [];
-        foreach ($data['items'] ?? [] as $item) {
-            if (!empty($item['car_id']) && !empty($item['hotel_id'])) {
-                $insertData[] = [
-                    'package_id' => $package->id,
-                    'car_id' => $item['car_id'],
-                    'hotel_id' => $item['hotel_id'],
-                    'custom_price' => $item['custom_price'] ?? null,
-                    'already_price' => !empty($item['already_price']),
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ];
-            }
-        }
+        'items.*.car_id' => 'required|exists:cars,id',
 
-        if (!empty($insertData)) {
-            DB::table('package_items')->insert($insertData);
-        }
+        'items.*.person_count' => 'required|integer|min:1',
+        'items.*.vehicle_name' => 'nullable|string|max:255',
+        'items.*.room_count' => 'required|integer|min:1',
 
-        return redirect()->route('packages.show', $package->id)->with('success', 'Package items updated successfully!');
+        'items.*.standard_price' => 'nullable|numeric|min:0',
+        'items.*.deluxe_price' => 'nullable|numeric|min:0',
+        'items.*.luxury_price' => 'nullable|numeric|min:0',
+        'items.*.premium_price' => 'nullable|numeric|min:0',
+    ]);
+
+    // Delete old items
+    DB::table('package_items')->where('package_id', $package->id)->delete();
+
+    // Insert new items
+    $insertData = [];
+    foreach ($data['items'] ?? [] as $item) {
+        $insertData[] = [
+            'package_id' => $package->id,
+            'car_id' => $item['car_id'],
+
+            'person_count' => $item['person_count'],
+            'vehicle_name' => $item['vehicle_name'],
+            'room_count' => $item['room_count'],
+
+            'standard_price' => $item['standard_price'] ?? null,
+            'deluxe_price' => $item['deluxe_price'] ?? null,
+            'luxury_price' => $item['luxury_price'] ?? null,
+            'premium_price' => $item['premium_price'] ?? null,
+
+            'created_at' => now(),
+            'updated_at' => now(),
+        ];
     }
+
+    if (!empty($insertData)) {
+        DB::table('package_items')->insert($insertData);
+    }
+
+    return redirect()->route('packages.show', $package->id)
+        ->with('success', 'Package items updated successfully!');
+}
+
     public function apiShow(Package $package)
     {
         $package->load(['packageType', 'packageCategory', 'difficultyType', 'packageItems.car', 'packageItems.hotel']);

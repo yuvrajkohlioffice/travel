@@ -43,7 +43,8 @@ Route::get('/hotels', function () {
 
 Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified'])->group(function () {
     Route::post('/followup/store', [FollowupController::class, 'store'])->name('followup.store');
-
+ Route::get('/packages/partial-item-row', [App\Http\Controllers\PackageController::class, 'partialItemRow'])
+    ->name('packages.partialItemRow');
     Route::resource('users', UserController::class);
     Route::resource('cars', CarController::class);
     Route::resource('hotels', HotelController::class);
@@ -53,6 +54,8 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         Route::get('{package}/edit-relations', [PackageController::class, 'editRelations'])->name('packages.edit-relations');
         Route::post('{package}/update-relations', [PackageController::class, 'updateRelations'])->name('packages.update-relations');
     });
+   
+
     Route::resource('pickup-points', \App\Http\Controllers\PickupPointController::class);
     Route::get('/leads/{lead}/assign', [LeadController::class, 'assignForm'])->name('leads.assign.form');
     Route::post('/leads/{lead}/assign', [LeadController::class, 'assignStore'])->name('leads.assign.store');
