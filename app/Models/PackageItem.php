@@ -14,7 +14,6 @@ class PackageItem extends Model
     protected $fillable = [
         'package_id',
         'car_id',
-        // New fields
         'person_count',
         'vehicle_name',
         'room_count',
@@ -24,15 +23,19 @@ class PackageItem extends Model
         'premium_price',
     ];
 
+    /**
+     * Relationship: PackageItem belongs to a Package
+     */
     public function package()
     {
         return $this->belongsTo(Package::class);
     }
 
+    /**
+     * Relationship: PackageItem belongs to a Car
+     */
     public function car()
     {
         return $this->belongsTo(Car::class);
     }
-
-    
 }

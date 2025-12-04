@@ -7,6 +7,7 @@ use App\Models\PackageType;
 use App\Models\PackageCategory;
 use App\Models\DifficultyType;
 use App\Models\Car;
+use App\Models\PackageItem;
 use App\Mail\SharePackageMail;
 use Illuminate\Support\Facades\Mail;
 use App\Models\Hotel;
@@ -185,102 +186,182 @@ class PackageController extends Controller
     /**
      * Update package's cars and hotels with custom_price and already_price
      */
-public function partialItemRow(Request $request)
-{
-    $index = $request->query('index', 1);
+    public function partialItemRow(Request $request)
+    {
+        $index = $request->query('index', null);
+        $itemId = $request->query('item_id', null);
 
-    $allCars = Car::all();
-    $allHotels = Hotel::all();
+        $allCars = Car::all();
+        $allHotels = Hotel::all();
 
-    // Empty item for new row
-    $item = null;
+        $item = null;
+        if ($itemId) {
+            $item = \App\Models\PackageItem::find($itemId);
+            $index = $itemId; // just to keep unique input names
+        } elseif (!$index) {
+            $index = 1;
+        }
 
-    return view('packages.partials.package-item-row', compact(
-        'index', 'item', 'allCars', 'allHotels'
-    ));
-}
+        return view('packages.partials.package-item-row', compact('index', 'item', 'allCars', 'allHotels'));
+    }
 
     public function updateRelations(Request $request, Package $package)
+    {
+        $data = $request->validate([
+            'items' => 'nullable|array',
+            'items.*.car_id' => 'required|exists:cars,id',
+            'items.*.person_count' => 'required|integer|min:1',
+            'items.*.vehicle_name' => 'nullable|string|max:255',
+            'items.*.room_count' => 'required|integer|min:1',
+            'items.*.standard_price' => 'nullable|numeric|min:0',
+            'items.*.deluxe_price' => 'nullable|numeric|min:0',
+            'items.*.luxury_price' => 'nullable|numeric|min:0',
+            'items.*.premium_price' => 'nullable|numeric|min:0',
+        ]);
+
+        // Insert new records
+        $insertData = [];
+        foreach ($data['items'] ?? [] as $item) {
+            $insertData[] = [
+                'package_id' => $package->id,
+                'car_id' => $item['car_id'],
+                'person_count' => $item['person_count'],
+                'vehicle_name' => $item['vehicle_name'],
+                'room_count' => $item['room_count'],
+                'standard_price' => $item['standard_price'] ?? null,
+                'deluxe_price' => $item['deluxe_price'] ?? null,
+                'luxury_price' => $item['luxury_price'] ?? null,
+                'premium_price' => $item['premium_price'] ?? null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+        }
+
+        if (!empty($insertData)) {
+            DB::table('package_items')->insert($insertData);
+        }
+
+        // AJAX response
+        if ($request->ajax()) {
+            $package->load('packageItems.car');
+            $html = view('packages.partials.package-items-table', compact('package'))->render();
+            return response()->json([
+                'success' => true,
+                'html' => $html,
+                'message' => 'Package items updated successfully!',
+            ]);
+        }
+
+        // Regular redirect with flash message
+        return redirect()->route('packages.edit-relations', $package->id)->with('success', 'Package items updated successfully!');
+    }
+    public function updatePackageItem(Request $request, PackageItem $item)
 {
     $data = $request->validate([
-        'items' => 'nullable|array',
-
-        'items.*.car_id' => 'required|exists:cars,id',
-
-        'items.*.person_count' => 'required|integer|min:1',
-        'items.*.vehicle_name' => 'nullable|string|max:255',
-        'items.*.room_count' => 'required|integer|min:1',
-
-        'items.*.standard_price' => 'nullable|numeric|min:0',
-        'items.*.deluxe_price' => 'nullable|numeric|min:0',
-        'items.*.luxury_price' => 'nullable|numeric|min:0',
-        'items.*.premium_price' => 'nullable|numeric|min:0',
+        'car_id' => 'nullable|exists:cars,id',
+        'person_count' => 'nullable|integer|min:1',
+        'vehicle_name' => 'nullable|string|max:255',
+        'room_count' => 'nullable|integer|min:1',
+        'standard_price' => 'nullable|numeric|min:0',
+        'deluxe_price' => 'nullable|numeric|min:0',
+        'luxury_price' => 'nullable|numeric|min:0',
+        'premium_price' => 'nullable|numeric|min:0',
     ]);
 
-    // Delete old items
-    DB::table('package_items')->where('package_id', $package->id)->delete();
+    $item->update($data);
 
-    // Insert new items
-    $insertData = [];
-    foreach ($data['items'] ?? [] as $item) {
-        $insertData[] = [
-            'package_id' => $package->id,
-            'car_id' => $item['car_id'],
-
-            'person_count' => $item['person_count'],
-            'vehicle_name' => $item['vehicle_name'],
-            'room_count' => $item['room_count'],
-
-            'standard_price' => $item['standard_price'] ?? null,
-            'deluxe_price' => $item['deluxe_price'] ?? null,
-            'luxury_price' => $item['luxury_price'] ?? null,
-            'premium_price' => $item['premium_price'] ?? null,
-
-            'created_at' => now(),
-            'updated_at' => now(),
-        ];
-    }
-
-    if (!empty($insertData)) {
-        DB::table('package_items')->insert($insertData);
-    }
-
-    return redirect()->route('packages.show', $package->id)
-        ->with('success', 'Package items updated successfully!');
-}
-
-    public function apiShow(Package $package)
-    {
-        $package->load(['packageType', 'packageCategory', 'difficultyType', 'packageItems.car', 'packageItems.hotel']);
-
-        // Build custom response structure
-        $response = [
-            'id' => $package->id,
-            'package_name' => $package->package_name,
-            'package_days' => $package->package_days,
-            'package_nights' => $package->package_nights,
-            'package_price' => $package->package_price,
-            'pickup_points' => $package->pickup_points,
-
-            'package_banner_url' => $package->package_banner ? asset('storage/' . $package->package_banner) : null,
-
-            'package_docs_url' => $package->package_docs ? asset('storage/' . $package->package_docs) : null,
-
-            'other_images_url' => collect($package->other_images ?? [])
-                ->map(fn($img) => asset('storage/' . $img))
-                ->toArray(),
-
-            'packageType' => $package->packageType,
-            'packageCategory' => $package->packageCategory,
-            'difficultyType' => $package->difficultyType,
-            'packageItems' => $package->packageItems,
-        ];
+    if ($request->ajax()) {
+        // Reload package items to update table dynamically
+        $package = $item->package()->with('packageItems.car')->first();
+        $html = view('packages.partials.package-items-table', compact('package'))->render();
 
         return response()->json([
             'success' => true,
-            'package' => $response,
+            'html' => $html,
+            'message' => 'Package item updated successfully!',
         ]);
     }
+
+    return redirect()->back()->with('success', 'Package item updated successfully!');
+}
+
+public function deleteRelation(PackageItem $item)
+{
+    try {
+        $item->delete();
+
+        // If AJAX request, return JSON
+        if (request()->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Package item deleted successfully!',
+            ]);
+        }
+
+        // Otherwise, redirect back
+        return back()->with('success', 'Package item deleted successfully!');
+    } catch (\Exception $e) {
+        if (request()->ajax()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete package item: ' . $e->getMessage(),
+            ]);
+        }
+
+        return back()->with('error', 'Failed to delete package item.');
+    }
+}
+
+    public function apiShow(Package $package)
+{
+    // Eager load relationships
+    $package->load([
+        'packageType',
+        'packageCategory',
+        'difficultyType',
+        'packageItems.car'
+    ]);
+
+    // Transform packageItems with car details
+    $packageItems = $package->packageItems->map(function ($item) {
+        return [
+            'id' => $item->id,
+            'car' => $item->car,
+            'person_count' => $item->person_count,
+            'vehicle_name' => $item->vehicle_name,
+            'room_count' => $item->room_count,
+            'standard_price' => $item->standard_price,
+            'deluxe_price' => $item->deluxe_price,
+            'luxury_price' => $item->luxury_price,
+            'premium_price' => $item->premium_price,
+        ];
+    });
+
+    // Build custom response
+    $response = [
+        'id' => $package->id,
+        'package_name' => $package->package_name,
+        'package_days' => $package->package_days,
+        'package_nights' => $package->package_nights,
+        'package_price' => $package->package_price,
+        'pickup_points' => $package->pickup_points,
+        'package_banner_url' => $package->package_banner ? asset('storage/' . $package->package_banner) : null,
+        'package_docs_url' => $package->package_docs ? asset('storage/' . $package->package_docs) : null,
+        'other_images_url' => collect($package->other_images ?? [])
+            ->map(fn($img) => asset('storage/' . $img))
+            ->toArray(),
+        'packageType' => $package->packageType,
+        'packageCategory' => $package->packageCategory,
+        'difficultyType' => $package->difficultyType,
+        'packageItems' => $packageItems,
+    ];
+
+    return response()->json([
+        'success' => true,
+        'package' => $response,
+    ]);
+}
+
 
     public function sendPackageEmail(Request $request)
     {

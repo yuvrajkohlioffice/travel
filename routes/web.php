@@ -42,6 +42,10 @@ Route::get('/hotels', function () {
 });
 
 Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified'])->group(function () {
+    Route::delete('packages/item/{item}', [PackageController::class, 'deleteRelation'])
+     ->name('packages.item.delete');
+Route::put('packages/item/{item}', [PackageController::class, 'updatePackageItem'])
+    ->name('packages.item.update');
     Route::post('/followup/store', [FollowupController::class, 'store'])->name('followup.store');
  Route::get('/packages/partial-item-row', [App\Http\Controllers\PackageController::class, 'partialItemRow'])
     ->name('packages.partialItemRow');
