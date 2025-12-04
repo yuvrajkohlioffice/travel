@@ -18,6 +18,7 @@
         <h2 class="text-2xl font-bold text-gray-800 dark:text-white mb-4">
             Edit Lead
         </h2>
+     <div class="max-h-[75vh] overflow-y-auto p-6 space-y-4 scrollbar-thin scrollbar-thumb-gray-400 dark:scrollbar-thumb-gray-600 scrollbar-track-gray-100 dark:scrollbar-track-gray-700">
 
         <!-- Form -->
         <form @submit.prevent="submitEdit" class="space-y-4">
@@ -175,6 +176,6 @@
             </button>
 
         </form>
-
+     </div>
     </div>
 </div>

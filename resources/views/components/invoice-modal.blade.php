@@ -20,7 +20,7 @@
 
             <!-- RIGHT PANEL: Invoice Preview -->
             <div
-                class="col-span-8 border rounded-xl p-4 shadow-sm bg-gray-50 max-h-[500px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100">
+                class="col-span-8 border rounded-xl p-4 shadow-sm bg-gray-50 max-h-[600px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100">
 
                 <p x-show="!packageData" class="text-gray-500 text-center mt-20">
                     Select a package to preview invoice details
@@ -68,23 +68,39 @@
                             <template x-for="item in packageData.packageItems" :key="item.id">
                                 <label class="flex items-start gap-3 mt-3 border-b pb-3 cursor-pointer">
                                     <input type="radio" :value="item.id" x-model="selectedInvoiceItems"
-                                        @change="updateInvoicePrice()"
+                                        @change="updateInvoicePrice(item)"
                                         class="mt-1 h-5 w-5 text-blue-600 border-gray-300 rounded">
+
                                     <div class="flex-1">
-                                        <p class="font-semibold text-blue-700">Item #<span x-text="item.id"></span></p>
-                                        <p class="text-sm mt-1"><strong>Hotel:</strong> <span
-                                                x-text="item.hotel.name"></span> (Type: <span
-                                                x-text="item.hotel.type"></span>)</p>
-                                        <p class="text-sm mt-1"><strong>Car:</strong> <span
-                                                x-text="item.car.name"></span> (Type: <span
-                                                x-text="item.car.type"></span>, Capacity: <span
-                                                x-text="item.car.capacity"></span>)</p>
-                                        <p class="mt-1"><strong>Price:</strong> ₹<span
-                                                x-text="(item.already_price || !item.custom_price || item.custom_price == '0.00') ? '0.00 (Already Added)' : item.custom_price"></span>
+                                        <p class="font-semibold text-blue-700">
+                                            Item #<span x-text="item.id"></span>
                                         </p>
+
+                                        <!-- HOTEL -->
+
+
+                                        <!-- CAR -->
+                                        <p class="text-sm">
+                                            <strong>Car:</strong> <span x-text="item.car.name"></span>
+                                            (Type: <span x-text="item.car.type"></span>, Capacity: <span
+                                                x-text="item.car.capacity"></span>)
+                                        </p>
+
+                                        <!-- ROOM PRICES -->
+                                        <p class="mt-1 text-sm">
+                                            <strong>Room Prices:</strong><br>
+                                            Standard: ₹<span x-text="item.standard_price"></span> |
+                                            Deluxe: ₹<span x-text="item.deluxe_price"></span> |
+                                            Luxury: ₹<span x-text="item.luxury_price"></span> |
+                                            Premium: ₹<span x-text="item.premium_price"></span>
+                                        </p>
+
+                                        <!-- CAR PRICE -->
+
                                     </div>
                                 </label>
                             </template>
+
                         </div>
 
                     </div>
@@ -126,7 +142,16 @@
                         <option value="20">20% Off</option>
                     </select>
                 </div>
-
+                <div>
+                    <label class="block font-semibold mb-1">Select Room Type</label>
+                    <select x-model="selectedRoomType" @change="updateInvoicePrice()"
+                        class="w-full p-3 rounded-xl border bg-white focus:ring-2 focus:ring-blue-300">
+                        <option value="standard_price">Standard</option>
+                        <option value="deluxe_price">Deluxe</option>
+                        <option value="luxury_price">Luxury</option>
+                        <option value="premium_price">Premium</option>
+                    </select>
+                </div>
                 <!-- FINAL PRICE -->
                 <div class="pt-2">
                     <strong class="text-indigo-700">Final Price:</strong>
@@ -143,7 +168,7 @@
                 <!-- SEND BUTTON -->
                 <button @click="sendInvoice"
                     class="w-full bg-blue-600 text-white py-3 rounded-xl shadow-md hover:bg-blue-700 hover:-translate-y-0.5 transition transform">
-                    <i class="fa-solid fa-file-invoice"></i> Send Invoice
+                    <i class="fa-solid fa-file-invoice"></i> Genrate Invoice
                 </button>
 
             </div>

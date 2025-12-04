@@ -262,6 +262,7 @@
                 selectedPackage: '',
                 showDropdown: false,
                 showSelectedPackage: false,
+                selectedRoomType: 'standard_price',
                 selectedPackageName: '',
                 allPackages: @json($packages),
                 selectedPackageDocs: [],
@@ -281,41 +282,67 @@
                     if (this.selectedPackageInvoice) this.fetchPackageDataAPI();
                     this.invoiceOpen = true;
                 },
-
                 fetchPackageDataAPI() {
                     if (!this.selectedPackageInvoice) return;
+
                     fetch(`/packages/${this.selectedPackageInvoice}/json`)
                         .then(res => res.json())
                         .then(data => {
                             this.packageData = data.package;
-                            this.packagePrice = Number(this.packageData.package_price) || 0;
-                            this.itemPrice = 0;
-                            this.totalPrice = this.packagePrice;
-                            this.calculateDiscountedPrice();
-                            this.animatedPrice = this.totalPrice;
-                            this.selectedInvoiceItems = null;
-                        })
-                        .catch(err => console.error("Failed to fetch package data:", err));
-                },
 
-                updateInvoicePrice() {
+                            this.packagePrice = Number(this.packageData.package_price) || 0;
+
+                            this.itemPrice = 0;
+                            this.totalPrice = 0;
+
+                            this.selectedRoomType = 'standard_price';
+                            this.selectedInvoiceItems = null;
+
+                            // ⭐ Auto-select first item
+                            if (this.packageData.packageItems.length > 0) {
+                                const firstItem = this.packageData.packageItems[0];
+                                this.selectedInvoiceItems = firstItem.id;
+
+                                // Auto-calc price for first item
+                                this.updateInvoicePrice(firstItem);
+                            }
+
+                            this.calculateDiscountedPrice();
+                        });
+                },
+                updateInvoicePrice(item = null) {
                     if (!this.packageData || !this.selectedInvoiceItems) return;
 
-                    const item = this.packageData.packageItems.find(i => i.id == this.selectedInvoiceItems);
-                    let custom = Number(item?.custom_price) || 0;
+                    // If item was not passed from @change, find it
+                    if (!item) {
+                        item = this.packageData.packageItems.find(i => i.id == this.selectedInvoiceItems);
+                    }
+                    if (!item) return;
+
+                    const roomPrice = Number(item[this.selectedRoomType]) || 0;
+                    const carPrice = item.car?.price?.per_day ? Number(item.car.price.per_day) : 0;
+
+                    this.itemPrice = roomPrice;
 
                     const oldTotal = this.totalPrice;
-                    this.itemPrice = custom;
-                    this.totalPrice = this.packagePrice + custom;
+
+                    // Only item price – no base price
+                    this.totalPrice = this.itemPrice;
+
                     this.animateNumber(oldTotal, this.totalPrice);
                     this.calculateDiscountedPrice();
                 },
 
+
                 calculateDiscountedPrice() {
                     const discount = parseFloat(this.selectedDiscount) || 0;
+
                     const priceAfterDiscount = this.totalPrice * (1 - discount / 100);
+
+                    // Total for all people
                     this.discountedPrice = (priceAfterDiscount * this.peopleCount).toFixed(2);
                 },
+
 
                 animateNumber(from, to, duration = 400) {
                     const start = performance.now();
@@ -336,16 +363,16 @@
                     this.selectedDiscount = 0;
                     this.totalPrice = 0;
                     this.discountedPrice = 0;
+                    this.selectedRoomType = 'standard_price';
                 },
 
                 sendInvoice() {
-                    if (!this.selectedPackageInvoice) {
-                        return alert("Please select a package first!");
-                    }
+                    if (!this.selectedPackageInvoice) return alert("Please select a package first!");
 
                     console.log('Invoice Data:', {
                         packageId: this.selectedPackageInvoice,
-                        items: this.selectedInvoiceItems,
+                        itemId: this.selectedInvoiceItems,
+                        roomType: this.selectedRoomType,
                         travelDate: this.travelStartDate,
                         discount: this.selectedDiscount,
                         finalPrice: this.discountedPrice,

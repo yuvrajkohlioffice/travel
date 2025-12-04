@@ -16,6 +16,7 @@
                 <span x-text="shareLeadName"></span>
             </p>
         </div>
+     <div class="max-h-[75vh] overflow-y-auto p-6 space-y-4 scrollbar-thin scrollbar-thumb-gray-400 dark:scrollbar-thumb-gray-600 scrollbar-track-gray-100 dark:scrollbar-track-gray-700">
 
         <!-- Body: Grid -->
         <div class="grid grid-cols-12 gap-6 mt-4">
@@ -65,6 +66,8 @@
             </div>
 
         </div>
+     </div>
+     
     </div>
 </div>
 
