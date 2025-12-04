@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 use App\Http\Controllers\UserController;
 use Livewire\Volt\Volt;
+use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\PackageTypeController;
 use App\Http\Controllers\PackageCategoryController;
 use App\Http\Controllers\DifficultyTypeController;
@@ -44,6 +45,20 @@ Route::get('/hotels', function () {
 Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified'])->group(function () {
     Route::delete('packages/item/{item}', [PackageController::class, 'deleteRelation'])
      ->name('packages.item.delete');
+      Route::get('/invoices', [InvoiceController::class, 'index'])->name('invoices.index');
+
+    // Create Invoice
+    Route::get('/invoices/create', [InvoiceController::class, 'create'])->name('invoices.create');
+
+    // Store Invoice
+    Route::post('/invoices', [InvoiceController::class, 'store'])->name('invoices.store');
+
+    // Show Single Invoice
+    Route::get('/invoices/{id}', [InvoiceController::class, 'show'])->name('invoices.show');
+
+    // Delete Invoice
+    Route::delete('/invoices/{id}', [InvoiceController::class, 'destroy'])->name('invoices.destroy');
+
 Route::put('packages/item/{item}', [PackageController::class, 'updatePackageItem'])
     ->name('packages.item.update');
     Route::post('/followup/store', [FollowupController::class, 'store'])->name('followup.store');
@@ -82,7 +97,5 @@ Route::put('packages/item/{item}', [PackageController::class, 'updatePackageItem
     Route::get('/dashboard', function () {
         return view('dashboard');
     })->name('dashboard');
-    Route::get('/invoice', function () {
-        return view('invoice.index');
-    })->name('invoice.index');
+   
 });

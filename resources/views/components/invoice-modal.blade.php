@@ -1,8 +1,8 @@
-<div x-show="invoiceOpen" x-transition.opacity
-    class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+<div  x-show="invoiceOpen" x-transition.opacity
+     class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
 
     <div @click.outside="closeInvoice"
-        class="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-5xl shadow-xl relative transition-transform transform scale-95 x-show:invoiceOpen:scale-100">
+         class="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-5xl shadow-xl relative transition-transform transform scale-95 x-show:invoiceOpen:scale-100">
 
         <!-- CLOSE BUTTON -->
         <button @click="closeInvoice" class="absolute top-3 right-3 text-gray-500 hover:text-gray-700 transition">
@@ -19,24 +19,20 @@
         <div class="grid grid-cols-12 gap-6 mt-4">
 
             <!-- RIGHT PANEL: Invoice Preview -->
-            <div
-                class="col-span-8 border rounded-xl p-4 shadow-sm bg-gray-50 max-h-[600px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100">
-
+            <div class="col-span-8 border rounded-xl p-4 shadow-sm bg-gray-50 max-h-[600px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100">
                 <p x-show="!packageData" class="text-gray-500 text-center mt-20">
                     Select a package to preview invoice details
                 </p>
 
                 <template x-if="packageData">
                     <div class="space-y-4">
-
                         <!-- PACKAGE INFO -->
                         <div>
                             <h3 class="text-xl font-bold text-indigo-700" x-text="packageData.package_name"></h3>
                             <p class="mt-2 text-lg">
                                 <span><strong>Base Price:</strong> ₹<span x-text="packagePrice"></span></span>
                                 <template x-if="itemPrice > 0">
-                                    <span class="block text-sm text-gray-600">+ Item Price: ₹<span
-                                            x-text="itemPrice"></span></span>
+                                    <span class="block text-sm text-gray-600">+ Item Price: ₹<span x-text="itemPrice"></span></span>
                                 </template>
                             </p>
                         </div>
@@ -56,8 +52,7 @@
                             <strong>Images:</strong>
                             <div class="flex gap-2 flex-wrap mt-2">
                                 <template x-for="img in packageData.other_images_url">
-                                    <img :src="img"
-                                        class="w-16 h-16 rounded-lg object-cover border shadow-sm" />
+                                    <img :src="img" class="w-16 h-16 rounded-lg object-cover border shadow-sm" />
                                 </template>
                             </div>
                         </div>
@@ -68,25 +63,14 @@
                             <template x-for="item in packageData.packageItems" :key="item.id">
                                 <label class="flex items-start gap-3 mt-3 border-b pb-3 cursor-pointer">
                                     <input type="radio" :value="item.id" x-model="selectedInvoiceItems"
-                                        @change="updateInvoicePrice(item)"
-                                        class="mt-1 h-5 w-5 text-blue-600 border-gray-300 rounded">
-
+                                           @change="updateInvoicePrice(item)"
+                                           class="mt-1 h-5 w-5 text-blue-600 border-gray-300 rounded">
                                     <div class="flex-1">
-                                        <p class="font-semibold text-blue-700">
-                                            Item #<span x-text="item.id"></span>
-                                        </p>
-
-                                        <!-- HOTEL -->
-
-
-                                        <!-- CAR -->
+                                        <p class="font-semibold text-blue-700">Item #<span x-text="item.id"></span></p>
                                         <p class="text-sm">
                                             <strong>Car:</strong> <span x-text="item.car.name"></span>
-                                            (Type: <span x-text="item.car.type"></span>, Capacity: <span
-                                                x-text="item.car.capacity"></span>)
+                                            (Type: <span x-text="item.car.type"></span>, Capacity: <span x-text="item.car.capacity"></span>)
                                         </p>
-
-                                        <!-- ROOM PRICES -->
                                         <p class="mt-1 text-sm">
                                             <strong>Room Prices:</strong><br>
                                             Standard: ₹<span x-text="item.standard_price"></span> |
@@ -94,28 +78,21 @@
                                             Luxury: ₹<span x-text="item.luxury_price"></span> |
                                             Premium: ₹<span x-text="item.premium_price"></span>
                                         </p>
-
-                                        <!-- CAR PRICE -->
-
                                     </div>
                                 </label>
                             </template>
-
                         </div>
-
                     </div>
                 </template>
-
             </div>
 
             <!-- LEFT PANEL: Inputs & Actions -->
             <div class="col-span-4 border rounded-xl p-6 shadow-sm bg-gray-50 space-y-4">
-
                 <!-- PACKAGE SELECT -->
                 <div>
                     <label class="block font-semibold mb-1">Select Package</label>
                     <select x-model="selectedPackageInvoice" @change="fetchPackageDataAPI"
-                        class="w-full p-3 rounded-xl border bg-white focus:ring-2 focus:ring-blue-300">
+                            class="w-full p-3 rounded-xl border bg-white focus:ring-2 focus:ring-blue-300">
                         <option value="">Select Package</option>
                         <template x-for="pkg in packages" :key="pkg.id">
                             <option :value="pkg.id" x-text="pkg.package_name"></option>
@@ -127,14 +104,14 @@
                 <div>
                     <label class="block font-semibold mb-1">Start Travel Date</label>
                     <input type="date" x-model="travelStartDate"
-                        class="w-full p-3 rounded-xl border bg-white focus:ring-2 focus:ring-blue-300">
+                           class="w-full p-3 rounded-xl border bg-white focus:ring-2 focus:ring-blue-300">
                 </div>
 
                 <!-- DISCOUNT -->
                 <div>
                     <label class="block font-semibold mb-1">Select Discount</label>
                     <select x-model="selectedDiscount" @change="calculateDiscountedPrice()"
-                        class="w-full p-3 rounded-xl border bg-white focus:ring-2 focus:ring-blue-300">
+                            class="w-full p-3 rounded-xl border bg-white focus:ring-2 focus:ring-blue-300">
                         <option value="0">No Discount</option>
                         <option value="5">5% Off</option>
                         <option value="10">10% Off</option>
@@ -142,37 +119,52 @@
                         <option value="20">20% Off</option>
                     </select>
                 </div>
+
+                <!-- PACKAGE TYPE -->
                 <div>
-                    <label class="block font-semibold mb-1">Select Room Type</label>
+                    <label class="block font-semibold mb-1">Select Package Type</label>
                     <select x-model="selectedRoomType" @change="updateInvoicePrice()"
-                        class="w-full p-3 rounded-xl border bg-white focus:ring-2 focus:ring-blue-300">
+                            class="w-full p-3 rounded-xl border bg-white focus:ring-2 focus:ring-blue-300">
                         <option value="standard_price">Standard</option>
                         <option value="deluxe_price">Deluxe</option>
                         <option value="luxury_price">Luxury</option>
                         <option value="premium_price">Premium</option>
                     </select>
                 </div>
+
                 <!-- FINAL PRICE -->
                 <div class="pt-2">
                     <strong class="text-indigo-700">Final Price:</strong>
                     <span class="text-2xl font-bold">₹<span x-text="discountedPrice"></span></span>
-                    <template x-if="peopleCount > 1">
-                        <p class="text-sm text-gray-600">
-                            (For <span x-text="peopleCount"></span> people) <br>
-                            (Single Person: ₹<span x-text="(Number(discountedPrice) / peopleCount).toFixed(2)"></span>)
-
-                        </p>
+                    <template x-if="peopleCount > 0">
+                        <p class="text-sm text-gray-600">Adults: <span x-text="peopleCount"></span> — ₹<span x-text="(finalPricePerAdult).toFixed(2)"></span> each</p>
+                    </template>
+                    <template x-if="childCount > 0">
+                        <p class="text-sm text-gray-600">Children: <span x-text="childCount"></span> — ₹<span x-text="(finalPricePerAdult/2).toFixed(2)"></span> each</p>
                     </template>
                 </div>
 
                 <!-- SEND BUTTON -->
-                <button @click="sendInvoice"
-                    class="w-full bg-blue-600 text-white py-3 rounded-xl shadow-md hover:bg-blue-700 hover:-translate-y-0.5 transition transform">
-                    <i class="fa-solid fa-file-invoice"></i> Genrate Invoice
+                <button type="button"
+                        @click="
+                            let params = new URLSearchParams({
+                                package_id: selectedPackageInvoice,
+                                package_type: selectedRoomType,
+                                adult_count: peopleCount,
+                                child_count: childCount,
+                                discount_amount: selectedDiscount,
+                                
+                                price_per_person: discountedPrice,
+                                travel_start_date: travelStartDate
+                            }).toString();
+                            window.location.href = '{{ route('invoices.create') }}?' + params;
+                        "
+                        class="w-full bg-blue-600 text-white py-3 rounded-xl shadow-md hover:bg-blue-700 hover:-translate-y-0.5 transition transform">
+                    <i class="fa-solid fa-file-invoice"></i> Generate Invoice
                 </button>
-
             </div>
-
         </div>
     </div>
+
+  
 </div>

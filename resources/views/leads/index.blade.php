@@ -172,7 +172,7 @@
                                             <i class="fa-solid fa-share"></i>
                                         </button>
                                         <button
-                                            @click="openInvoiceModal({{ $lead->id }}, '{{ $lead->name }}','{{ $lead->people_count }}','{{ $lead->package->id ?? '' }}','{{ $lead->email }}')"
+                                            @click="openInvoiceModal({{ $lead->id }}, '{{ $lead->name }}','{{ $lead->people_count }}','{{ $lead->child_count }}','{{ $lead->package->id ?? '' }}','{{ $lead->email }}')"
                                             class="border-2 border-green-500 text-green-500 px-4 py-1 rounded-lg hover:bg-green-500 hover:text-white transition">
                                             <i class="fa-solid fa-file-invoice"></i>
                                         </button>
@@ -229,6 +229,7 @@
                 leadName: "",
                 leadEmail: "",
                 peopleCount: 1,
+                childCount: 0,
 
                 /* PACKAGES */
                 packages: @json($packages),
@@ -268,20 +269,24 @@
                 selectedPackageDocs: [],
                 selectedPackagePdf: null,
                 selectedDocs: [],
+                finalPricePerAdult: 0,
 
                 /* EDIT */
                 editForm: {},
 
                 /* ---------------- INVOICE MODAL ---------------- */
-                openInvoiceModal(id, name, people_count = 1, packageId = null, email = '') {
+                openInvoiceModal(id, name, people_count = 1, child_count = 0, packageId = null, email = '') {
                     this.leadId = id;
                     this.leadName = name;
                     this.leadEmail = email;
                     this.peopleCount = Number(people_count) || 1;
+                    this.childCount = Number(child_count) || 0;
+
                     this.selectedPackageInvoice = packageId || (this.packages[0]?.id ?? "");
                     if (this.selectedPackageInvoice) this.fetchPackageDataAPI();
                     this.invoiceOpen = true;
                 },
+
                 fetchPackageDataAPI() {
                     if (!this.selectedPackageInvoice) return;
 
@@ -332,15 +337,17 @@
                     this.animateNumber(oldTotal, this.totalPrice);
                     this.calculateDiscountedPrice();
                 },
-
-
                 calculateDiscountedPrice() {
                     const discount = parseFloat(this.selectedDiscount) || 0;
 
-                    const priceAfterDiscount = this.totalPrice * (1 - discount / 100);
+                    const base = this.totalPrice * (1 - discount / 100);
 
-                    // Total for all people
-                    this.discountedPrice = (priceAfterDiscount * this.peopleCount).toFixed(2);
+                    this.finalPricePerAdult = base; // save per adult price
+
+                    const adultTotal = base * this.peopleCount;
+                    const childTotal = (base / 2) * this.childCount;
+
+                    this.discountedPrice = (adultTotal + childTotal).toFixed(2);
                 },
 
 
