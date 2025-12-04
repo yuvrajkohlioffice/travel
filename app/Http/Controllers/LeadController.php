@@ -32,6 +32,7 @@ class LeadController extends Controller
             'status'=> $lead->status,
             'package_id' => $lead->package_id,
             'inquiry_text' => $lead->inquiry_text,
+            'people_count' => $lead->people_count,
         ]);
     }
     public function index()
@@ -81,7 +82,7 @@ class LeadController extends Controller
             'email' => 'nullable|email',
             'phone_number' => 'nullable|max:15',
         ]);
-        $lead = Lead::create($validated + $request->only(['company_name', 'district', 'country', 'phone_code', 'city', 'client_category', 'lead_status', 'lead_source', 'website', 'package_id', 'inquiry_text']) + ['user_id' => auth()->id()]);
+        $lead = Lead::create($validated + $request->only(['company_name','people_count', 'district', 'country', 'phone_code', 'city', 'client_category', 'lead_status', 'lead_source', 'website', 'package_id', 'inquiry_text']) + ['user_id' => auth()->id()]);
 
         LeadUser::create([
             'lead_id' => $lead->id,
@@ -111,7 +112,7 @@ class LeadController extends Controller
             'phone_number' => 'nullable|max:15',
         ]);
 
-        $lead->update($validated + $request->only(['company_name', 'district', 'country', 'phone_code', 'city', 'client_category', 'lead_status', 'lead_source', 'website', 'package_id', 'inquiry_text','status']));
+        $lead->update($validated + $request->only(['company_name','people_count', 'district', 'country', 'phone_code', 'city', 'client_category', 'lead_status', 'lead_source', 'website', 'package_id', 'inquiry_text','status']));
 
         // Return JSON response
         return response()->json([

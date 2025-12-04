@@ -88,6 +88,7 @@
                     <input type="text" x-model="editForm.client_category"
                         class="mt-1 block w-full rounded-lg border px-4 py-2 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
                 </div>
+                
 
                 <!-- Lead Status -->
                 <div>
@@ -131,6 +132,11 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-400">Website</label>
                     <input type="text" x-model="editForm.website"
+                        class="mt-1 block w-full rounded-lg border px-4 py-2 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-400">Count of People Going</label>
+                    <input type="number" x-model="editForm.people_count"
                         class="mt-1 block w-full rounded-lg border px-4 py-2 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
                 </div>
 

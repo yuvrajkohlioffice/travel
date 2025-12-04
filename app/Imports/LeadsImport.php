@@ -21,26 +21,25 @@ class LeadsImport implements ToCollection, WithHeadingRow
     public function collection(Collection $rows)
     {
         foreach ($rows as $row) {
-            $package = isset($row['package_name']) 
-                ? Package::where('package_name', $row['package_name'])->first() 
-                : null;
+            $package = isset($row['package_name']) ? Package::where('package_name', $row['package_name'])->first() : null;
 
             Lead::create([
-                'name'            => $row['name'] ?? null,
-                'company_name'    => $row['company_name'] ?? null,
-                'email'           => $row['email'] ?? null,
-                'district'        => $row['district'] ?? null,
-                'country'         => $row['country'] ?? null,
-                'phone_code'      => $row['phone_code'] ?? null,
-                'phone_number'    => $row['phone_number'] ?? null,
-                'city'            => $row['city'] ?? null,
+                'name' => $row['name'] ?? null,
+                'company_name' => $row['company_name'] ?? null,
+                'email' => $row['email'] ?? null,
+                'district' => $row['district'] ?? null,
+                'country' => $row['country'] ?? null,
+                'phone_code' => $row['phone_code'] ?? null,
+                'phone_number' => $row['phone_number'] ?? null,
+                'city' => $row['city'] ?? null,
                 'client_category' => $row['client_category'] ?? null,
-                'lead_status'     => $row['lead_status'] ?? null,
-                'lead_source'     => $row['lead_source'] ?? null,
-                'website'         => $row['website'] ?? null,
-                'package_id'      => $package ? $package->id : null,
-                'inquiry_text'    => $package ? ($row['inquiry_text'] ?? null) : ($row['package_name'] ?? ''),
-                'user_id'         => $this->userId,
+                'lead_status' => $row['lead_status'] ?? null,
+                'lead_source' => $row['lead_source'] ?? null,
+                'website' => $row['website'] ?? null,
+                'package_id' => $package ? $package->id : null,
+                'inquiry_text' => $package ? $row['inquiry_text'] ?? null : $row['package_name'] ?? '',
+                'user_id' => $this->userId,
+                'people_count' => $row['people_count'] ?? null,
             ]);
         }
     }

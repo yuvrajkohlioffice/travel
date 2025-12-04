@@ -253,41 +253,40 @@ class PackageController extends Controller
     }
 
     public function sendPackageEmail(Request $request)
-{
-    $request->validate([
-        'lead_name' => 'required|string',
-        'package_id' => 'required|exists:packages,id',
-        'email' => 'required|email',
-        'documents' => 'nullable|array',
-    ]);
+    {
+        $request->validate([
+            'lead_name' => 'required|string',
+            'package_id' => 'required|exists:packages,id',
+            'email' => 'required|email',
+            'documents' => 'nullable|array',
+        ]);
 
-    $package = Package::findOrFail($request->package_id);
+        $package = Package::findOrFail($request->package_id);
 
-    // Use selected documents or all package docs
-    $docs = $request->documents ?? $package->package_docs;
+        // Use selected documents or all package docs
+        $docs = $request->documents ?? $package->package_docs;
 
-    // Resolve full paths and filter out invalid files
-    $validDocs = [];
-    foreach ($docs as $doc) {
-        // If it's already a full URL from storage, convert to storage path
-        if (str_starts_with($doc, asset('storage'))) {
-            $docPath = str_replace(asset('storage'), storage_path('app/public'), $doc);
-        } else {
-            // Otherwise, assume relative to public folder
-            $docPath = public_path($doc);
+        // Resolve full paths and filter out invalid files
+        $validDocs = [];
+        foreach ($docs as $doc) {
+            // If it's already a full URL from storage, convert to storage path
+            if (str_starts_with($doc, asset('storage'))) {
+                $docPath = str_replace(asset('storage'), storage_path('app/public'), $doc);
+            } else {
+                // Otherwise, assume relative to public folder
+                $docPath = public_path($doc);
+            }
+
+            if (file_exists($docPath) && is_readable($docPath)) {
+                $validDocs[] = $docPath;
+            }
         }
 
-        if (file_exists($docPath) && is_readable($docPath)) {
-            $validDocs[] = $docPath;
-        }
+        Mail::to($request->email)->send(new SharePackageMail($request->lead_name, $package->package_name, $validDocs));
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Package email sent successfully!',
+        ]);
     }
-
-    Mail::to($request->email)->send(new SharePackageMail($request->lead_name, $package->package_name, $validDocs));
-
-    return response()->json([
-        'success' => true,
-        'message' => 'Package email sent successfully!',
-    ]);
-}
-
 }

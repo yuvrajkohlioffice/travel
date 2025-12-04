@@ -1,79 +1,179 @@
 <!-- INVOICE MODAL -->
-<div x-show="invoiceOpen" 
-     x-transition.opacity
+<div x-show="invoiceOpen" x-transition.opacity
     class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
 
-
     <div @click.outside="closeInvoice"
-         class="bg-white rounded-xl p-6 w-full max-w-3xl shadow-lg relative">
+        class="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-5xl shadow-xl relative">
 
         <!-- CLOSE BUTTON -->
-        <button @click="closeInvoice" 
-                class="absolute top-3 right-3 text-gray-500 hover:text-gray-700">
+        <button @click="closeInvoice" class="absolute top-3 right-3 text-gray-500 hover:text-gray-700 transition">
             <i class="fa-solid fa-xmark text-2xl"></i>
         </button>
 
-        <h2 class="text-xl font-bold mb-4">Send Invoice</h2>
-
-        <!-- Lead Info -->
-        <p class="mb-2">
-            <strong>Lead:</strong> 
-            <span x-text="leadName"></span>
-        </p>
-
-        <!-- Package Dropdown -->
-        <label class="font-semibold">Select Package</label>
-        <select x-model="selectedPackageInvoice" 
-                @change="fetchPackageData"
-                class="w-full border rounded p-2 mb-4">
-            <option value="">Select Package</option>
-
-            <template x-for="pkg in packages" :key="pkg.id">
-                <option :value="pkg.id" x-text="pkg.package_name"></option>
-            </template>
-        </select>
-
-        <!-- Package Data Preview -->
-        <div class="border rounded p-4 bg-gray-50 h-72 overflow-auto" 
-             x-show="packageData">
-
-            <h3 class="text-lg font-bold" x-text="packageData.package_name"></h3>
-
-            <p class="mt-1">
-                <strong>Price:</strong> ₹<span x-text="packageData.package_price"></span>
-            </p>
-
-            <!-- DAYS LIST -->
-            <div class="mt-3">
-                <strong>Days:</strong>
-                <template x-for="(day, index) in packageData.days" :key="index">
-                    <p class="text-sm mt-1">
-                        <strong>Day <span x-text="index + 1"></span>:</strong>
-                        <span x-text="day.from"></span> → 
-                        <span x-text="day.to"></span>
-                    </p>
-                </template>
-            </div>
-
-            <!-- ADD-ONS -->
-            <div class="mt-4">
-                <strong>Add-Ons:</strong>
-                <ul class="list-disc ml-5 mt-1">
-                    <template x-for="addon in packageData.addons" :key="addon.id">
-                        <li>
-                            <span x-text="addon.title"></span>: 
-                            ₹<span x-text="addon.price"></span>
-                        </li>
-                    </template>
-                </ul>
-            </div>
+        <!-- HEADER -->
+        <div class="text-center border-b pb-3">
+            <h2 class="text-2xl font-bold text-gray-800">Send Invoice</h2>
+            <p class="text-blue-600 font-semibold text-lg mt-1" x-text="leadName"></p>
         </div>
 
-        <!-- SEND BUTTON -->
-        <button @click="sendInvoice"
-                class="bg-blue-600 text-white px-4 py-2 rounded mt-4 w-full hover:bg-blue-700">
-            Send Invoice
-        </button>
+        <!-- GRID -->
+        <div class="grid grid-cols-12 gap-6 mt-4">
+
+            <!-- RIGHT PANEL -->
+            <div
+                class="col-span-8 border rounded-xl p-4 shadow-sm bg-gray-50 
+            max-h-[400px] overflow-y-auto overscroll-contain 
+            scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100 rounded-xl">
+
+                <p x-show="!packageData" class="text-gray-500 text-center mt-20">
+                    Select a package to preview invoice details
+                </p>
+
+                <template x-if="packageData">
+                    <div class="space-y-4">
+
+                        <!-- BASIC INFO -->
+                        <div>
+                            <h3 class="text-xl font-bold text-indigo-700" x-text="packageData.package_name"></h3>
+
+                            <p class="mt-2 text-lg space-y-1">
+
+                                <span>
+                                    <strong>Base Price:</strong> ₹<span x-text="packagePrice"></span>
+                                </span>
+
+                                <template x-if="itemPrice > 0">
+                                    <span class="block text-sm text-gray-600">
+                                        + Item Price: ₹<span x-text="itemPrice"></span>
+                                    </span>
+                                </template>
+
+
+                            </p>
+                        </div>
+
+                        <!-- PACKAGE DETAILS -->
+                        <div class="space-y-2">
+                            <p><strong>Pickup:</strong> <span x-text="packageData.pickup_points"></span></p>
+
+                            <p>
+                                <strong>Type:</strong> <span x-text="packageData.packageType?.name"></span> |
+                                <strong>Category:</strong> <span x-text="packageData.packageCategory?.name"></span> |
+                                <strong>Difficulty:</strong> <span x-text="packageData.difficultyType?.name"></span>
+                            </p>
+                        </div>
+
+                        <!-- IMAGES -->
+                        <div>
+                            <strong>Images:</strong>
+                            <div class="flex gap-2 flex-wrap mt-2">
+                                <template x-for="img in packageData.other_images_url">
+                                    <img :src="img"
+                                        class="w-16 h-16 rounded-lg object-cover border shadow-sm" />
+                                </template>
+                            </div>
+                        </div>
+
+                        <!-- ITEMS -->
+                        <div>
+                            <strong class="text-lg">Package Items:</strong>
+
+                            <template x-for="item in packageData.packageItems" :key="item.id">
+                                <label class="flex items-start gap-3 mt-3 border-b pb-3 cursor-pointer">
+
+                                    <input type="radio" :value="item.id" x-model="selectedInvoiceItems"
+                                        @change="updateInvoicePrice()"
+                                        class="mt-1 h-5 w-5 text-blue-600 border-gray-300 rounded">
+
+                                    <div class="flex-1">
+                                        <p class="font-semibold text-blue-700">
+                                            Item #<span x-text="item.id"></span>
+                                        </p>
+
+                                        <p class="text-sm mt-1">
+                                            <strong>Hotel:</strong>
+                                            <span x-text="item.hotel.name"></span>
+                                            (Type: <span x-text="item.hotel.type"></span>)
+
+                                        </p>
+
+                                        <p class="text-sm mt-1">
+                                            <strong>Car:</strong>
+                                            <span x-text="item.car.name"></span>
+                                            (Type: <span x-text="item.car.type"></span>,
+                                            Capacity: <span x-text="item.car.capacity"></span>)
+                                        </p>
+
+                                        <p class="mt-1">
+                                            <strong>Price:</strong>
+                                            ₹<span
+                                                x-text="(item.already_price || !item.custom_price || item.custom_price == '0.00') 
+                 ? '0.00 (Already Added)' 
+                 : item.custom_price">
+                                            </span>
+                                        </p>
+
+
+                                        </p>
+                                    </div>
+
+                                </label>
+                            </template>
+                        </div>
+
+                    </div>
+                </template>
+
+            </div>
+
+
+            <!-- LEFT PANEL -->
+            <div class="col-span-4 border rounded-xl p-6 shadow-sm bg-gray-50 space-y-4">
+
+                <!-- PACKAGE DROPDOWN -->
+                <div>
+                    <label class="block font-semibold mb-1">Select Package</label>
+                    <div class="relative">
+                        <select x-model="selectedPackageInvoice" @change="fetchPackageDataAPI"
+                            class="w-full p-3 rounded-xl border bg-white pr-10 focus:ring-2 focus:ring-blue-300">
+
+                            <option value="">Select Package</option>
+
+                            <template x-for="pkg in packages" :key="pkg.id">
+                                <option :value="pkg.id" x-text="pkg.package_name"></option>
+                            </template>
+
+                        </select>
+                        <i class="fa-solid fa-chevron-down absolute right-3 top-3 text-gray-500"></i>
+                    </div>
+                </div>
+                <span class="block pt-1">
+                    <strong class="text-indigo-700">Final Price:</strong>
+                    <span class="text-2xl font-bold">
+                        ₹<span x-text="(totalPrice * peopleCount).toFixed(2)"></span>
+                    </span>
+                    <template x-if="peopleCount > 1">
+                        <span class="text-sm text-gray-600">
+                            <br>
+                            (For <span x-text="peopleCount"></span> people)
+                            <br>
+                            (For Single Person <span x-text="totalPrice"></span> )
+                        </span>
+                    </template>
+                </span>
+
+
+
+
+                <!-- SEND -->
+                <button @click="sendInvoice"
+                    class="w-full bg-blue-600 text-white py-3 rounded-xl shadow-md hover:bg-blue-700 hover:-translate-y-0.5 transition">
+                    <i class="fa-solid fa-file-invoice"></i> Send Invoice
+                </button>
+
+            </div>
+
+        </div>
 
     </div>
 </div>

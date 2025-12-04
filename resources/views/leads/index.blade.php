@@ -171,10 +171,12 @@
                                             class="border-2 border-green-500 text-green-500 px-4 py-1 rounded-lg hover:bg-green-500 hover:text-white transition duration-300">
                                             <i class="fa-solid fa-share"></i>
                                         </button>
-                                        <button @click="openInvoiceModal({{ $lead->id }}, '{{ $lead->name }}')"
-                                            class="border-2 border-green-500 text-green-500 px-4 py-1 rounded-lg hover:bg-green-500 hover:text-white transition duration-300">
+                                        <button
+                                            @click="openInvoiceModal({{ $lead->id }}, '{{ $lead->name }}','{{ $lead->people_count }}','{{ $lead->package->id ?? '' }}','{{ $lead->email }}')"
+                                            class="border-2 border-green-500 text-green-500 px-4 py-1 rounded-lg hover:bg-green-500 hover:text-white transition">
                                             <i class="fa-solid fa-file-invoice"></i>
                                         </button>
+
                                         <button @click="openOtherModal({{ $lead->id }}, '{{ $lead->name }}')"
                                             class="border-2 border-green-500 text-green-500 px-4 py-1 rounded-lg hover:bg-green-500 hover:text-white transition duration-300">
                                             Other
@@ -217,7 +219,8 @@
     <script>
         function leadModals() {
             return {
-                /* ---------------- MODALS ---------------- */
+
+                /* ---------------- STATE ---------------- */
                 invoiceOpen: false,
                 followOpen: false,
                 shareOpen: false,
@@ -225,11 +228,14 @@
 
                 leadId: "",
                 leadName: "",
+                leadPerson:"",
+
+                /* PACKAGES */
                 packages: @json($packages),
                 selectedPackageInvoice: "",
                 packageData: null,
 
-                // Follow-up
+                /* FOLLOW-UP */
                 phoneNumber: '',
                 phoneCode: '',
                 fullNumber: '',
@@ -242,7 +248,7 @@
                     'Not Pickup', 'Other'
                 ],
 
-                // Share
+                /* SHARE */
                 shareLeadId: '',
                 shareLeadName: '',
                 selectedPackage: '',
@@ -250,20 +256,118 @@
                 showSelectedPackage: false,
                 selectedPackageName: '',
                 allPackages: @json($packages),
-                leadEmail: '', // set this when opening modal
-                // Edit
+                selectedPackageDocs: [],
+                selectedPackagePdf: null,
+                selectedDocs: [],
+                leadEmail: '',
+                selectedInvoiceItems: null,
+                packagePrice: 0,
+                itemPrice: 0,
+                totalPrice: 0,
+                animatedPrice: 0,
+
+
+                /* EDIT */
                 editForm: {},
 
-                /* ---------------- OPEN/CLOSE MODALS ---------------- */
-                openInvoiceModal(id, name) {
-                    this.leadId = id;
-                    this.leadName = name;
-                    this.invoiceOpen = true;
-                },
-                closeInvoice() {
-                    this.invoiceOpen = false;
+                /* ---------------- INVOICE MODAL ---------------- */
+       
+                openInvoiceModal(id, name, people_count = 1, packageId = null, email = '') {
+    this.leadId = id;
+    this.leadName = name;
+    this.leadEmail = email;
+    this.peopleCount = Number(people_count) || 1; // store people count
+
+    // Default package for dropdown
+    this.selectedPackageInvoice = packageId ? packageId : (this.packages[0]?.id ?? "");
+
+    // Fetch package details from API
+    if (this.selectedPackageInvoice) {
+        this.fetchPackageDataAPI();
+    }
+
+    this.invoiceOpen = true;
+},
+                animateNumber(from, to, duration = 400) {
+                    const start = performance.now();
+
+                    const animate = (time) => {
+                        const progress = Math.min((time - start) / duration, 1);
+                        this.animatedPrice = Math.floor(from + (to - from) * progress);
+
+                        if (progress < 1) requestAnimationFrame(animate);
+                    };
+
+                    requestAnimationFrame(animate);
                 },
 
+
+
+                updateInvoicePrice() {
+                    if (!this.packageData || !this.selectedInvoiceItems) return;
+
+                    const item = this.packageData.packageItems.find(
+                        i => i.id == this.selectedInvoiceItems
+                    );
+
+                    let custom = item.custom_price;
+
+                    // Normalize invalid values
+                    if (!custom || custom === "0" || custom === "0.00" || custom === 0) {
+                        custom = 0;
+                    } else {
+                        custom = Number(custom);
+                    }
+
+                    const oldTotal = this.totalPrice;
+
+                    // Final pricing rule:
+                    // total = base package price + custom_price (if > 0)
+                    this.itemPrice = custom;
+                    this.totalPrice = Number(this.packagePrice) + custom;
+
+                    this.animateNumber(oldTotal, this.totalPrice);
+                },
+
+                closeInvoice() {
+                    this.invoiceOpen = false;
+                    this.packageData = null;
+                    this.selectedPackageInvoice = "";
+                },
+
+                /* Fetch full package details from API */
+                fetchPackageDataAPI() {
+                    if (!this.selectedPackageInvoice) return;
+
+                    fetch(`/packages/${this.selectedPackageInvoice}/json`)
+                        .then(res => res.json())
+                        .then(data => {
+                            this.packageData = data.package;
+
+                            this.packagePrice = Number(this.packageData.package_price);
+
+                            this.itemPrice = 0;
+                            this.totalPrice = this.packagePrice;
+
+                            this.animateNumber(0, this.totalPrice);
+
+                            this.selectedInvoiceItems = null;
+                        });
+                },
+
+
+
+                sendInvoice() {
+                    if (!this.selectedPackageInvoice) {
+                        alert("Please select a package first!");
+                        return;
+                    }
+
+                    alert("Sending invoice...");
+                },
+
+
+                /* ---------------- FOLLOW-UP MODAL ---------------- */
                 openFollowModal(id, name) {
                     this.leadId = id;
                     this.leadName = name;
@@ -283,32 +387,25 @@
                             }));
                         });
                 },
+
                 closeFollow() {
                     this.followOpen = false;
                 },
 
-
-
-
+                /* ---------------- SHARE MODAL ---------------- */
                 handleShare(id, name, packageId = null, email = '') {
                     this.shareLeadId = id;
                     this.shareLeadName = name;
                     this.leadEmail = email;
 
-                    // Always show dropdown
                     this.showDropdown = true;
+                    this.showSelectedPackage = true;
 
-                    // Select package
-                    if (packageId) {
-                        this.selectedPackage = packageId;
-                    } else if (this.allPackages.length > 0) {
-                        this.selectedPackage = this.allPackages[0].id;
-                    }
+                    // Default selected package
+                    this.selectedPackage = packageId ? packageId : (this.allPackages[0]?.id ?? "");
 
-                    // Fetch package data
                     this.fetchPackageDocs(this.selectedPackage);
 
-                    this.showSelectedPackage = true;
                     this.shareOpen = true;
                 },
 
@@ -319,7 +416,6 @@
 
                             let docs = data.package.package_docs_url;
 
-                            // Convert string → array
                             if (typeof docs === 'string' && docs !== '') {
                                 docs = [docs];
                             } else if (!Array.isArray(docs)) {
@@ -339,12 +435,12 @@
                         });
                 },
 
-
                 sendEmail() {
                     if (this.selectedDocs.length === 0) {
                         alert('Select at least one document!');
                         return;
                     }
+
                     fetch("{{ route('leads.sendPackageEmail') }}", {
                             method: 'POST',
                             headers: {
@@ -364,12 +460,11 @@
                                 alert(resp.message);
                                 this.closeShare();
                             } else alert('Failed to send email!');
-                        })
-                        .catch(err => console.error(err));
+                        });
                 },
 
                 sendWhatsApp() {
-                    console.log("Send WhatsApp with docs:", this.selectedDocs);
+                    console.log("WhatsApp docs:", this.selectedDocs);
                 },
 
                 sendBoth() {
@@ -384,12 +479,7 @@
                     this.selectedPackagePdf = null;
                 },
 
-
-
-                closeShare() {
-                    this.shareOpen = false;
-                },
-
+                /* ---------------- EDIT MODAL ---------------- */
                 openEditModal(id) {
                     fetch(`/leads/${id}/json`)
                         .then(res => res.json())
@@ -400,12 +490,14 @@
                             this.editOpen = true;
                         });
                 },
+
                 closeEditModal() {
                     this.editOpen = false;
                 },
+
                 submitEdit() {
-                    const urlTemplate = `{{ route('leads.update', ':id') }}`;
-                    const url = urlTemplate.replace(':id', this.editForm.id);
+                    const url = `{{ route('leads.update', ':id') }}`.replace(':id', this.editForm.id);
+
                     fetch(url, {
                             method: 'POST',
                             headers: {
@@ -416,35 +508,26 @@
                                 ...this.editForm,
                                 _method: 'PUT'
                             })
-                        }).then(res => res.json())
+                        })
+                        .then(res => res.json())
                         .then(resp => {
                             if (resp.success) location.reload();
-                            else console.error(resp);
-                        })
-                        .catch(err => console.error(err));
-                },
-
-                fetchPackageData() {
-                    this.packageData = this.packages.find(p => p.id == this.selectedPackageInvoice) || null;
+                        });
                 },
 
                 /* ---------------- BULK ASSIGN ---------------- */
                 selected: [],
                 bulkUser: '',
+
                 toggleLead(event) {
                     const id = parseInt(event.target.value);
                     if (event.target.checked) this.selected.push(id);
                     else this.selected = this.selected.filter(i => i !== id);
                 },
+
                 assignUser() {
-                    if (!this.bulkUser) {
-                        alert('Please select a user');
-                        return;
-                    }
-                    if (this.selected.length === 0) {
-                        alert('Please select at least one lead');
-                        return;
-                    }
+                    if (!this.bulkUser) return alert('Please select a user');
+                    if (this.selected.length === 0) return alert('Please select at least one lead');
 
                     fetch('{{ route('leads.bulkAssign') }}', {
                             method: 'POST',
@@ -461,19 +544,14 @@
                         .then(resp => {
                             if (resp.success) {
                                 alert(resp.message);
-                                // Optionally reload the table or remove selected leads
-                                this.selected = [];
-                                this.bulkUser = '';
-                                window.location.reload(); // or dynamically update table
-                            } else {
-                                alert('Error assigning leads!');
+                                window.location.reload();
                             }
-                        })
-                        .catch(err => console.error(err));
+                        });
                 }
 
             }
         }
     </script>
+
 
 </x-app-layout>

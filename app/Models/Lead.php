@@ -25,7 +25,8 @@ class Lead extends Model
         'package_id',
         'inquiry_text',
         'status',
-        'user_id', // Added user_id
+        'user_id',
+        'people_count', // Add this
     ];
 
     protected $casts = [
