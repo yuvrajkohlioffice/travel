@@ -219,7 +219,6 @@
     <script>
         function leadModals() {
             return {
-
                 /* ---------------- STATE ---------------- */
                 invoiceOpen: false,
                 followOpen: false,
@@ -228,12 +227,21 @@
 
                 leadId: "",
                 leadName: "",
-                leadPerson:"",
+                leadEmail: "",
+                peopleCount: 1,
 
                 /* PACKAGES */
                 packages: @json($packages),
                 selectedPackageInvoice: "",
                 packageData: null,
+                selectedInvoiceItems: null,
+                packagePrice: 0,
+                itemPrice: 0,
+                totalPrice: 0,
+                discountedPrice: 0,
+                selectedDiscount: 0,
+                travelStartDate: '',
+                animatedPrice: 0,
 
                 /* FOLLOW-UP */
                 phoneNumber: '',
@@ -259,113 +267,92 @@
                 selectedPackageDocs: [],
                 selectedPackagePdf: null,
                 selectedDocs: [],
-                leadEmail: '',
-                selectedInvoiceItems: null,
-                packagePrice: 0,
-                itemPrice: 0,
-                totalPrice: 0,
-                animatedPrice: 0,
-
 
                 /* EDIT */
                 editForm: {},
 
                 /* ---------------- INVOICE MODAL ---------------- */
-       
                 openInvoiceModal(id, name, people_count = 1, packageId = null, email = '') {
-    this.leadId = id;
-    this.leadName = name;
-    this.leadEmail = email;
-    this.peopleCount = Number(people_count) || 1; // store people count
-
-    // Default package for dropdown
-    this.selectedPackageInvoice = packageId ? packageId : (this.packages[0]?.id ?? "");
-
-    // Fetch package details from API
-    if (this.selectedPackageInvoice) {
-        this.fetchPackageDataAPI();
-    }
-
-    this.invoiceOpen = true;
-},
-                animateNumber(from, to, duration = 400) {
-                    const start = performance.now();
-
-                    const animate = (time) => {
-                        const progress = Math.min((time - start) / duration, 1);
-                        this.animatedPrice = Math.floor(from + (to - from) * progress);
-
-                        if (progress < 1) requestAnimationFrame(animate);
-                    };
-
-                    requestAnimationFrame(animate);
+                    this.leadId = id;
+                    this.leadName = name;
+                    this.leadEmail = email;
+                    this.peopleCount = Number(people_count) || 1;
+                    this.selectedPackageInvoice = packageId || (this.packages[0]?.id ?? "");
+                    if (this.selectedPackageInvoice) this.fetchPackageDataAPI();
+                    this.invoiceOpen = true;
                 },
 
-
+                fetchPackageDataAPI() {
+                    if (!this.selectedPackageInvoice) return;
+                    fetch(`/packages/${this.selectedPackageInvoice}/json`)
+                        .then(res => res.json())
+                        .then(data => {
+                            this.packageData = data.package;
+                            this.packagePrice = Number(this.packageData.package_price) || 0;
+                            this.itemPrice = 0;
+                            this.totalPrice = this.packagePrice;
+                            this.calculateDiscountedPrice();
+                            this.animatedPrice = this.totalPrice;
+                            this.selectedInvoiceItems = null;
+                        })
+                        .catch(err => console.error("Failed to fetch package data:", err));
+                },
 
                 updateInvoicePrice() {
                     if (!this.packageData || !this.selectedInvoiceItems) return;
 
-                    const item = this.packageData.packageItems.find(
-                        i => i.id == this.selectedInvoiceItems
-                    );
-
-                    let custom = item.custom_price;
-
-                    // Normalize invalid values
-                    if (!custom || custom === "0" || custom === "0.00" || custom === 0) {
-                        custom = 0;
-                    } else {
-                        custom = Number(custom);
-                    }
+                    const item = this.packageData.packageItems.find(i => i.id == this.selectedInvoiceItems);
+                    let custom = Number(item?.custom_price) || 0;
 
                     const oldTotal = this.totalPrice;
-
-                    // Final pricing rule:
-                    // total = base package price + custom_price (if > 0)
                     this.itemPrice = custom;
-                    this.totalPrice = Number(this.packagePrice) + custom;
-
+                    this.totalPrice = this.packagePrice + custom;
                     this.animateNumber(oldTotal, this.totalPrice);
+                    this.calculateDiscountedPrice();
+                },
+
+                calculateDiscountedPrice() {
+                    const discount = parseFloat(this.selectedDiscount) || 0;
+                    const priceAfterDiscount = this.totalPrice * (1 - discount / 100);
+                    this.discountedPrice = (priceAfterDiscount * this.peopleCount).toFixed(2);
+                },
+
+                animateNumber(from, to, duration = 400) {
+                    const start = performance.now();
+                    const animate = (time) => {
+                        const progress = Math.min((time - start) / duration, 1);
+                        this.animatedPrice = Math.floor(from + (to - from) * progress);
+                        if (progress < 1) requestAnimationFrame(animate);
+                    };
+                    requestAnimationFrame(animate);
                 },
 
                 closeInvoice() {
                     this.invoiceOpen = false;
                     this.packageData = null;
                     this.selectedPackageInvoice = "";
+                    this.selectedInvoiceItems = null;
+                    this.travelStartDate = '';
+                    this.selectedDiscount = 0;
+                    this.totalPrice = 0;
+                    this.discountedPrice = 0;
                 },
-
-                /* Fetch full package details from API */
-                fetchPackageDataAPI() {
-                    if (!this.selectedPackageInvoice) return;
-
-                    fetch(`/packages/${this.selectedPackageInvoice}/json`)
-                        .then(res => res.json())
-                        .then(data => {
-                            this.packageData = data.package;
-
-                            this.packagePrice = Number(this.packageData.package_price);
-
-                            this.itemPrice = 0;
-                            this.totalPrice = this.packagePrice;
-
-                            this.animateNumber(0, this.totalPrice);
-
-                            this.selectedInvoiceItems = null;
-                        });
-                },
-
-
 
                 sendInvoice() {
                     if (!this.selectedPackageInvoice) {
-                        alert("Please select a package first!");
-                        return;
+                        return alert("Please select a package first!");
                     }
 
-                    alert("Sending invoice...");
+                    console.log('Invoice Data:', {
+                        packageId: this.selectedPackageInvoice,
+                        items: this.selectedInvoiceItems,
+                        travelDate: this.travelStartDate,
+                        discount: this.selectedDiscount,
+                        finalPrice: this.discountedPrice,
+                        people: this.peopleCount,
+                    });
+                    alert("Invoice sent!");
                 },
-
 
                 /* ---------------- FOLLOW-UP MODAL ---------------- */
                 openFollowModal(id, name) {
@@ -376,16 +363,18 @@
                     fetch(`/leads/${id}/details`)
                         .then(res => res.json())
                         .then(data => {
-                            this.phoneNumber = data.phone.phone_number;
-                            this.phoneCode = data.phone.phone_code;
-                            this.fullNumber = data.phone.full_number;
-                            this.followups = data.followups.map(f => ({
+                            const phone = data.phone || {};
+                            this.phoneNumber = phone.phone_number || '';
+                            this.phoneCode = phone.phone_code || '';
+                            this.fullNumber = phone.full_number || '';
+                            this.followups = (data.followups || []).map(f => ({
                                 ...f,
                                 created_at: f.created_at,
                                 next_followup_date: f.next_followup_date,
                                 user_name: f.user_name
                             }));
-                        });
+                        })
+                        .catch(err => console.error("Failed to fetch follow-ups:", err));
                 },
 
                 closeFollow() {
@@ -397,15 +386,10 @@
                     this.shareLeadId = id;
                     this.shareLeadName = name;
                     this.leadEmail = email;
-
                     this.showDropdown = true;
                     this.showSelectedPackage = true;
-
-                    // Default selected package
-                    this.selectedPackage = packageId ? packageId : (this.allPackages[0]?.id ?? "");
-
+                    this.selectedPackage = packageId || (this.allPackages[0]?.id ?? "");
                     this.fetchPackageDocs(this.selectedPackage);
-
                     this.shareOpen = true;
                 },
 
@@ -413,17 +397,11 @@
                     fetch(`/packages/${packageId}/json`)
                         .then(res => res.json())
                         .then(data => {
-
                             let docs = data.package.package_docs_url;
-
-                            if (typeof docs === 'string' && docs !== '') {
-                                docs = [docs];
-                            } else if (!Array.isArray(docs)) {
-                                docs = [];
-                            }
-
+                            if (typeof docs === 'string' && docs !== '') docs = [docs];
+                            else if (!Array.isArray(docs)) docs = [];
                             this.selectedPackageDocs = docs;
-                            this.selectedPackagePdf = docs.length > 0 ? docs[0] : null;
+                            this.selectedPackagePdf = docs[0] || null;
                             this.selectedDocs = [...docs];
                             this.selectedPackageName = data.package.package_name;
                         })
@@ -436,10 +414,7 @@
                 },
 
                 sendEmail() {
-                    if (this.selectedDocs.length === 0) {
-                        alert('Select at least one document!');
-                        return;
-                    }
+                    if (!this.selectedDocs.length) return alert('Select at least one document!');
 
                     fetch("{{ route('leads.sendPackageEmail') }}", {
                             method: 'POST',
@@ -488,7 +463,8 @@
                                 ...data
                             };
                             this.editOpen = true;
-                        });
+                        })
+                        .catch(err => console.error("Failed to fetch edit data:", err));
                 },
 
                 closeEditModal() {
@@ -527,7 +503,7 @@
 
                 assignUser() {
                     if (!this.bulkUser) return alert('Please select a user');
-                    if (this.selected.length === 0) return alert('Please select at least one lead');
+                    if (!this.selected.length) return alert('Please select at least one lead');
 
                     fetch('{{ route('leads.bulkAssign') }}', {
                             method: 'POST',
@@ -548,10 +524,10 @@
                             }
                         });
                 }
-
             }
         }
     </script>
+
 
 
 </x-app-layout>

@@ -75,4 +75,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     Route::get('/dashboard', function () {
         return view('dashboard');
     })->name('dashboard');
+    Route::get('/invoice', function () {
+        return view('invoice.index');
+    })->name('invoice.index');
 });

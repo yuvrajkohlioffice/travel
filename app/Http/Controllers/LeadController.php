@@ -33,6 +33,7 @@ class LeadController extends Controller
             'package_id' => $lead->package_id,
             'inquiry_text' => $lead->inquiry_text,
             'people_count' => $lead->people_count,
+            'child_count' => $lead->child_count,
         ]);
     }
     public function index()
@@ -112,7 +113,7 @@ class LeadController extends Controller
             'phone_number' => 'nullable|max:15',
         ]);
 
-        $lead->update($validated + $request->only(['company_name','people_count', 'district', 'country', 'phone_code', 'city', 'client_category', 'lead_status', 'lead_source', 'website', 'package_id', 'inquiry_text','status']));
+        $lead->update($validated + $request->only(['company_name','people_count','child_count', 'district', 'country', 'phone_code', 'city', 'client_category', 'lead_status', 'lead_source', 'website', 'package_id', 'inquiry_text','status']));
 
         // Return JSON response
         return response()->json([

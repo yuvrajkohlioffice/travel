@@ -67,7 +67,7 @@
 
                 <!-- Price -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-400">Price</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-400">Price (Also Add 20% Company Profit )</label>
                     <input type="number" step="0.01" name="package_price" class="mt-1 block w-full border rounded px-4 py-2" required>
                 </div>
 

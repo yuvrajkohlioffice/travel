@@ -7,11 +7,10 @@
     class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
 
     <div @click.outside="closeEditModal"
-         class="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-3xl shadow-2xl p-6 relative">
+        class="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-3xl shadow-2xl p-6 relative">
 
         <!-- Close Button -->
-        <button @click="closeEditModal"
-            class="absolute top-3 right-3 text-gray-500 hover:text-gray-700">
+        <button @click="closeEditModal" class="absolute top-3 right-3 text-gray-500 hover:text-gray-700">
             <i class="fa-solid fa-xmark text-2xl"></i>
         </button>
 
@@ -88,7 +87,7 @@
                     <input type="text" x-model="editForm.client_category"
                         class="mt-1 block w-full rounded-lg border px-4 py-2 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
                 </div>
-                
+
 
                 <!-- Lead Status -->
                 <div>
@@ -102,23 +101,23 @@
                     </select>
                 </div>
                 <div>
-    <label class="block text-sm font-medium text-gray-700 dark:text-gray-400">Lead Status</label>
-    <select x-model="editForm.status"
-        class="mt-1 block w-full rounded-lg border px-4 py-2 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
-        <option value="">Select Status</option>
-        <option value="Pending">Pending</option>
-        <option value="Approved">Approved</option>
-        <option value="Quotation Sent">Quotation Sent</option>
-        <option value="Follow-up Taken">Follow-up Taken</option>
-        <option value="Hot">Hot</option>
-        <option value="Warm">Warm</option>
-        <option value="Cold">Cold</option>
-        <option value="Lost">Lost</option>
-        <option value="Converted">Converted</option>
-        <option value="On Hold">On Hold</option>
-        <option value="Rejected">Rejected</option>
-    </select>
-</div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-400">Lead Status</label>
+                    <select x-model="editForm.status"
+                        class="mt-1 block w-full rounded-lg border px-4 py-2 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
+                        <option value="">Select Status</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Approved">Approved</option>
+                        <option value="Quotation Sent">Quotation Sent</option>
+                        <option value="Follow-up Taken">Follow-up Taken</option>
+                        <option value="Hot">Hot</option>
+                        <option value="Warm">Warm</option>
+                        <option value="Cold">Cold</option>
+                        <option value="Lost">Lost</option>
+                        <option value="Converted">Converted</option>
+                        <option value="On Hold">On Hold</option>
+                        <option value="Rejected">Rejected</option>
+                    </select>
+                </div>
 
 
                 <!-- Lead Source -->
@@ -135,14 +134,22 @@
                         class="mt-1 block w-full rounded-lg border px-4 py-2 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-400">Count of People Going</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-400">Count of People
+                        Going</label>
                     <input type="number" x-model="editForm.people_count"
+                        class="mt-1 block w-full rounded-lg border px-4 py-2 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-400">Count of Child
+                        Going</label>
+                    <input type="number" x-model="editForm.child_count"
                         class="mt-1 block w-full rounded-lg border px-4 py-2 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
                 </div>
 
                 <!-- Package -->
                 <div class="col-span-2">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-400">Select Package (Optional)</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-400">Select Package
+                        (Optional)</label>
                     <select x-model="editForm.package_id"
                         class="mt-1 block w-full rounded-lg border px-4 py-2 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
                         <option value="">-- No Package --</option>
