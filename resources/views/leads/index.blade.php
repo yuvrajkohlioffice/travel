@@ -316,9 +316,19 @@
                     fetch(`/packages/${packageId}/json`)
                         .then(res => res.json())
                         .then(data => {
-                            this.selectedPackageDocs = data.package.package_docs_url || [];
-                            this.selectedPackagePdf = this.selectedPackageDocs[0] || null;
-                            this.selectedDocs = [...this.selectedPackageDocs];
+
+                            let docs = data.package.package_docs_url;
+
+                            // Convert string → array
+                            if (typeof docs === 'string' && docs !== '') {
+                                docs = [docs];
+                            } else if (!Array.isArray(docs)) {
+                                docs = [];
+                            }
+
+                            this.selectedPackageDocs = docs;
+                            this.selectedPackagePdf = docs.length > 0 ? docs[0] : null;
+                            this.selectedDocs = [...docs];
                             this.selectedPackageName = data.package.package_name;
                         })
                         .catch(err => {
@@ -328,6 +338,7 @@
                             this.selectedDocs = [];
                         });
                 },
+
 
                 sendEmail() {
                     if (this.selectedDocs.length === 0) {
