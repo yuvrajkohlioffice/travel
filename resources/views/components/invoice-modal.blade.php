@@ -126,7 +126,7 @@
 
                                         <!-- ⭐ Room Prices -->
                                         <p class="mt-2 text-sm">
-                                            <strong>Room Prices:</strong><br>
+                                            <strong>Package Type:</strong><br>
                                             Standard: ₹<span x-text="item.standard_price"></span> |
                                             Deluxe: ₹<span x-text="item.deluxe_price"></span> |
                                             Luxury: ₹<span x-text="item.luxury_price"></span> |

@@ -148,6 +148,7 @@ class InvoiceController extends Controller
         $request->validate([
             'lead_id' => 'required|integer|exists:leads,id',
             'package_id' => 'required|integer|exists:packages,id',
+            'package_items_id' => 'nullable|integer|exists:package_items,id',
             'package_type' => 'required|string',
             'adult_count' => 'required|integer|min:0',
             'child_count' => 'required|integer|min:0',
@@ -162,8 +163,11 @@ class InvoiceController extends Controller
         $lead = Lead::find($request->lead_id);
 
         // Current date in India
-        $issuedDate = Carbon::now('Asia/Kolkata')->toDateString(); // YYYY-MM-DD
-        // If you want datetime: Carbon::now('Asia/Kolkata')->toDateTimeString()
+        $issuedDate = Carbon::now('Asia/Kolkata')->toDateString();
+
+        $totalTravelers = $request->adult_count + $request->child_count;
+        $subtotalPrice = $request->price_per_person * $totalTravelers;
+        $finalPrice = $subtotalPrice - $request->discount_amount;
 
         $invoice = Invoice::create([
             'invoice_no' => $this->generateInvoiceNo(),
@@ -171,16 +175,17 @@ class InvoiceController extends Controller
             'lead_id' => $request->lead_id,
             'primary_full_name' => $lead->name ?? 'Unknown',
             'package_id' => $request->package_id,
+            'package_items_id' => $request->package_items_id ?? null, // ✅ save selected item
             'package_type' => $request->package_type,
             'adult_count' => $request->adult_count,
             'child_count' => $request->child_count,
             'discount_amount' => $request->discount_amount,
             'price_per_person' => $request->price_per_person,
             'travel_start_date' => $request->travel_start_date,
-            'issued_date' => $issuedDate, // ✅ Indian current date
-            'total_travelers' => $request->adult_count + $request->child_count,
-            'subtotal_price' => $request->price_per_person * ($request->adult_count + $request->child_count),
-            'final_price' => $request->price_per_person * ($request->adult_count + $request->child_count) - $request->discount_amount,
+            'issued_date' => $issuedDate,
+            'total_travelers' => $totalTravelers,
+            'subtotal_price' => $subtotalPrice,
+            'final_price' => $finalPrice,
         ]);
 
         return response()->json([

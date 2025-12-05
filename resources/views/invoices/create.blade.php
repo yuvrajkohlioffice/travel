@@ -57,6 +57,7 @@
                     <textarea x-model="additionalTravelers" placeholder='[{"name":"John Doe","age":30},{"name":"Jane Doe","age":28}]' class="w-full p-3 rounded-xl border h-24"></textarea>
                     <p class="text-sm text-gray-500">Enter additional travelers in JSON format (name, age).</p>
                 </div>
+                <input type="text" name="" id="">
 
                 <!-- Discount -->
                 <div>
