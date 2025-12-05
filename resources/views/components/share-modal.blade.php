@@ -1,4 +1,7 @@
-<div x-data="shareLeadModal()" x-show="shareOpen" x-transition.opacity
+{{-- <div x-data="shareLeadModal()" x-show="shareOpen" x-transition.opacity
+     class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+ --}}
+ <div  x-show="shareOpen" x-transition.opacity
      class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
 
     <div @click.outside="closeShare" x-transition

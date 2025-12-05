@@ -517,6 +517,48 @@
                     this.selectedDocs = [];
                     this.selectedPackagePdf = null;
                 },
+                sendEmail() {
+                    if (!this.leadEmail || !this.selectedPackage) {
+                        alert("Email & Package are required.");
+                        return;
+                    }
+
+                    const payload = {
+                        lead_name: this.shareLeadName,
+                        package_id: this.selectedPackage,
+                        email: this.leadEmail,
+                        documents: this.selectedDocs,
+                    };
+
+                    // Loader optional
+                    this.sending = true;
+
+                    fetch("{{ route('leads.sendPackageEmail') }}", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "X-CSRF-TOKEN": '{{ csrf_token() }}'
+                            },
+                            body: JSON.stringify(payload)
+                        })
+                        .then(res => res.json())
+                        .then(response => {
+                            this.sending = false;
+
+                            if (response.success) {
+                                alert("📧 Package Email Sent Successfully!");
+                                this.closeShare();
+                            } else {
+                                alert("Failed to send email.");
+                            }
+                        })
+                        .catch(err => {
+                            this.sending = false;
+                            console.error(err);
+                            alert("Error sending email.");
+                        });
+                },
+
 
 
                 /* ---------------- EDIT MODAL ---------------- */
