@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Invoice;
 use App\Models\Lead;
 use App\Models\Package;
+use App\Models\PackageItem;
 use Illuminate\Http\Request;
 
 use Carbon\Carbon;
@@ -26,43 +27,39 @@ class InvoiceController extends Controller
     /**
      * Show Create Invoice Form
      */
-    public function create(Request $request)
-    {
-        $invoice = null;
-        $lead = null;
-        $package = null;
+public function create(Request $request)
+{
+    $invoice = null;
+    $lead = null;
+    $package = null;
+    $packageItems = collect();
 
-        // Load existing invoice if invoice_id exists
-        if ($request->invoice_id) {
-            $invoice = Invoice::with('package', 'lead')->find($request->invoice_id);
-            if ($invoice) {
-                $lead = $invoice->lead;
-                $package = $invoice->package;
-            }
+    // Load invoice if editing
+    if ($request->invoice_id) {
+        $invoice = Invoice::with(['package', 'packageItem'])->find($request->invoice_id);
+
+        if ($invoice) {
+            $lead = $invoice->lead;
+            $package = $invoice->package;
+            $packageItems = $package ? $package->packageItems : collect();
         }
-
-        // Load lead if lead_id exists and no invoice
-        if (!$invoice && $request->lead_id) {
-            $lead = Lead::find($request->lead_id);
-            $package = $lead?->package;
-        }
-
-        $packages = Package::all();
-
-        // Prefill values
-        $prefill = [
-            'package_id' => $invoice->package_id ?? $request->query('package_id', $package?->id ?? null),
-            'package_type' => $invoice->package_type ?? $request->query('package_type', 'standard_price'),
-            'adult_count' => $invoice->adult_count ?? $request->query('adult_count', 1),
-            'child_count' => $invoice->child_count ?? $request->query('child_count', 0),
-            'discount_amount' => $invoice->discount_amount ?? $request->query('discount_amount', 0),
-            'tax_amount' => $invoice->tax_amount ?? $request->query('tax_amount', 0),
-            'price_per_person' => $invoice->price_per_person ?? $request->query('price_per_person', $package?->package_price ?? 0),
-            'travel_start_date' => $invoice->travel_start_date ?? $request->query('travel_start_date', now()->toDateString()),
-        ];
-
-        return view('invoices.create', compact('lead', 'package', 'prefill', 'packages', 'invoice'));
     }
+
+    // Load normally if creating from lead
+    if ($request->lead_id && !$invoice) {
+        $lead = Lead::find($request->lead_id);
+        $package = $lead?->package;
+        $packageItems = $package ? $package->packageItems : collect();
+    }
+
+    return view('invoices.create', [
+        'invoice' => $invoice,
+        'lead' => $lead,
+        'packages' => Package::all(),
+        'packageItems' => $packageItems,
+    ]);
+}
+
 
     /**
      * Store Invoice
