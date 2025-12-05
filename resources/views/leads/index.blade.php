@@ -289,16 +289,6 @@
 
 
                 /* ---------------- INIT HELPERS ---------------- */
-
-                loadCars() {
-                    fetch('/api/cars')
-                        .then(res => res.json())
-                        .then(data => this.cars = data.data || []);
-                },
-
-
-                /* ---------------- INVOICE MODAL ---------------- */
-
                 openInvoiceModal(id, name, people = 1, child = 0, packageId = null, email = '') {
                     this.leadId = id;
                     this.leadName = name;
@@ -308,60 +298,43 @@
                     this.childCount = Number(child) || 0;
 
                     this.selectedPackageInvoice = packageId || (this.packages[0]?.id ?? "");
-
                     this.invoiceOpen = true;
 
-                    this.loadCars(); // Fetch cars on open
-                    this.fetchFilteredItems(true);
-                },
-                /* ---------------- QUICK INVOICE ---------------- */
-                createQuickInvoice() {
-                    if (!this.selectedPackageInvoice) {
-                        alert("Please select a package first!");
-                        return;
+                    this.loadCars();
+
+                    // Fetch package details only if a package is preselected
+                    if (this.selectedPackageInvoice) {
+                        this.fetchPackageDetails(this.selectedPackageInvoice);
+                    } else {
+                        this.packageData = null;
                     }
+                },
 
-                    const payload = {
-                        lead_id: this.leadId,
-                        package_id: this.selectedPackageInvoice,
-                        package_items_id: this.selectedInvoiceItems, // ✅ pass selected radio ID
-                        package_type: this.selectedRoomType,
-                        adult_count: this.peopleCount,
-                        child_count: this.childCount,
-                        discount_amount: this.selectedDiscount,
-                        price_per_person: this.discountedPrice,
-                        travel_start_date: this.travelStartDate
-                    };
+                fetchPackageDetails(packageId) {
+                    if (!packageId) return;
 
-
-                    fetch('/invoices/create-quick', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                            },
-                            body: JSON.stringify(payload)
-                        })
+                    fetch(`/packages/${packageId}/json`)
                         .then(res => res.json())
-                        .then(data => {
-                            if (data.success && data.data && data.data.id) {
-                                // Redirect to invoice creation route with the new invoice ID
-                                window.location.href = '{{ route('invoices.create') }}?invoice_id=' + data.data.id;
-                            } else {
-                                alert('Failed to create invoice.');
+                        .then(res => {
+                            if (res.success) {
+                                this.packageData = res.package;
+
+                                // Preselect first package item
+                                if (this.packageData.packageItems?.length > 0) {
+                                    this.selectedInvoiceItems = this.packageData.packageItems[0].id;
+                                    this.updateInvoicePrice(this.packageData.packageItems[0]);
+                                } else {
+                                    this.selectedInvoiceItems = null;
+                                    this.itemPrice = this.totalPrice = this.discountedPrice = 0;
+                                }
+
+                                this.calculateDiscountedPrice();
                             }
-                        })
-                        .catch(err => {
-                            console.error(err);
-                            alert('Something went wrong while creating the invoice.');
                         });
                 },
 
-                fetchFilteredItems(auto = false) {
-                    if (!this.selectedPackageInvoice) {
-                        alert("Please select a package first.");
-                        return;
-                    }
+                fetchFilteredItems() {
+                    if (!this.selectedPackageInvoice) return;
 
                     const url =
                         `/package-items/filter?package_id=${this.selectedPackageInvoice}&adult_count=${this.peopleCount}&child_count=${this.childCount}&car_id=${this.selectedCar}`;
@@ -370,22 +343,18 @@
                         .then(res => res.json())
                         .then(res => {
                             this.filteredItems = res.data;
-                            this.packageData = {
-                                packageItems: res.data
-                            };
+                            this.packageData.packageItems = res.data;
 
                             if (res.data.length > 0) {
-                                const first = res.data[0];
-                                this.selectedInvoiceItems = first.id;
-                                this.updateInvoicePrice(first);
+                                const firstItem = res.data[0];
+                                this.selectedInvoiceItems = firstItem.id;
+                                this.updateInvoicePrice(firstItem);
                             } else {
                                 this.selectedInvoiceItems = null;
-                                this.itemPrice = 0;
-                                this.totalPrice = 0;
-                                this.discountedPrice = 0;
+                                this.itemPrice = this.totalPrice = this.discountedPrice = 0;
                             }
 
-                            if (auto) this.calculateDiscountedPrice();
+                            this.calculateDiscountedPrice();
                         });
                 },
 
@@ -400,8 +369,7 @@
                     const roomPrice = Number(item[this.selectedRoomType]) || 0;
                     const carPrice = item.car?.price?.per_day ? Number(item.car.price.per_day) : 0;
 
-                    this.itemPrice = roomPrice + carPrice;
-
+                    this.itemPrice = roomPrice;
                     const oldTotal = this.totalPrice;
                     this.totalPrice = this.itemPrice;
 
@@ -441,19 +409,50 @@
                     this.totalPrice = 0;
                     this.discountedPrice = 0;
                     this.selectedRoomType = 'standard_price';
+                    this.selectedCar = "";
+                },
+
+                createQuickInvoice() {
+                    if (!this.selectedPackageInvoice) return alert("Please select a package first!");
+
+                    const payload = {
+                        lead_id: this.leadId,
+                        package_id: this.selectedPackageInvoice,
+                        package_items_id: this.selectedInvoiceItems,
+                        package_type: this.selectedRoomType,
+                        adult_count: this.peopleCount,
+                        child_count: this.childCount,
+                        discount_amount: this.selectedDiscount,
+                        price_per_person: this.discountedPrice,
+                        travel_start_date: this.travelStartDate
+                    };
+
+                    fetch('/invoices/create-quick', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            },
+                            body: JSON.stringify(payload)
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success && data.data?.id) {
+                                window.location.href = '{{ route('invoices.create') }}?invoice_id=' + data.data.id;
+                            } else {
+                                alert('Failed to create invoice.');
+                            }
+                        })
+                        .catch(err => console.error(err));
+                },
+
+                loadCars() {
+                    fetch('/api/cars')
+                        .then(res => res.json())
+                        .then(data => this.cars = data.data || []);
                 },
 
 
-                /* ---------------- SEND INVOICE ---------------- */
-
-                sendInvoice() {
-                    if (!this.selectedPackageInvoice) {
-                        alert("Please select a package first!");
-                        return;
-                    }
-
-                    alert("Invoice sent!");
-                },
 
 
                 /* ---------------- FOLLOW-UP MODAL ---------------- */
