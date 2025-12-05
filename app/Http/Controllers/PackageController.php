@@ -256,112 +256,106 @@ class PackageController extends Controller
         return redirect()->route('packages.edit-relations', $package->id)->with('success', 'Package items updated successfully!');
     }
     public function updatePackageItem(Request $request, PackageItem $item)
-{
-    $data = $request->validate([
-        'car_id' => 'nullable|exists:cars,id',
-        'person_count' => 'nullable|integer|min:1',
-        'vehicle_name' => 'nullable|string|max:255',
-        'room_count' => 'nullable|integer|min:1',
-        'standard_price' => 'nullable|numeric|min:0',
-        'deluxe_price' => 'nullable|numeric|min:0',
-        'luxury_price' => 'nullable|numeric|min:0',
-        'premium_price' => 'nullable|numeric|min:0',
-    ]);
+    {
+        $data = $request->validate([
+            'car_id' => 'nullable|exists:cars,id',
+            'person_count' => 'nullable|integer|min:1',
+            'vehicle_name' => 'nullable|string|max:255',
+            'room_count' => 'nullable|integer|min:1',
+            'standard_price' => 'nullable|numeric|min:0',
+            'deluxe_price' => 'nullable|numeric|min:0',
+            'luxury_price' => 'nullable|numeric|min:0',
+            'premium_price' => 'nullable|numeric|min:0',
+        ]);
 
-    $item->update($data);
+        $item->update($data);
 
-    if ($request->ajax()) {
-        // Reload package items to update table dynamically
-        $package = $item->package()->with('packageItems.car')->first();
-        $html = view('packages.partials.package-items-table', compact('package'))->render();
+        if ($request->ajax()) {
+            // Reload package items to update table dynamically
+            $package = $item->package()->with('packageItems.car')->first();
+            $html = view('packages.partials.package-items-table', compact('package'))->render();
+
+            return response()->json([
+                'success' => true,
+                'html' => $html,
+                'message' => 'Package item updated successfully!',
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Package item updated successfully!');
+    }
+
+    public function deleteRelation(PackageItem $item)
+    {
+        try {
+            $item->delete();
+
+            // If AJAX request, return JSON
+            if (request()->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Package item deleted successfully!',
+                ]);
+            }
+
+            // Otherwise, redirect back
+            return back()->with('success', 'Package item deleted successfully!');
+        } catch (\Exception $e) {
+            if (request()->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to delete package item: ' . $e->getMessage(),
+                ]);
+            }
+
+            return back()->with('error', 'Failed to delete package item.');
+        }
+    }
+
+    public function apiShow(Package $package)
+    {
+        // Eager load relationships
+        $package->load(['packageType', 'packageCategory', 'difficultyType', 'packageItems.car']);
+
+        // Transform packageItems with car details
+        $packageItems = $package->packageItems->map(function ($item) {
+            return [
+                'id' => $item->id,
+                'car' => $item->car,
+                'person_count' => $item->person_count,
+                'vehicle_name' => $item->vehicle_name,
+                'room_count' => $item->room_count,
+                'standard_price' => $item->standard_price,
+                'deluxe_price' => $item->deluxe_price,
+                'luxury_price' => $item->luxury_price,
+                'premium_price' => $item->premium_price,
+            ];
+        });
+
+        // Build custom response
+        $response = [
+            'id' => $package->id,
+            'package_name' => $package->package_name,
+            'package_days' => $package->package_days,
+            'package_nights' => $package->package_nights,
+            'package_price' => $package->package_price,
+            'pickup_points' => $package->pickup_points,
+            'package_banner_url' => $package->package_banner ? asset('storage/' . $package->package_banner) : null,
+            'package_docs_url' => $package->package_docs ? asset('storage/' . $package->package_docs) : null,
+            'other_images_url' => collect($package->other_images ?? [])
+                ->map(fn($img) => asset('storage/' . $img))
+                ->toArray(),
+            'packageType' => $package->packageType,
+            'packageCategory' => $package->packageCategory,
+            'difficultyType' => $package->difficultyType,
+            'packageItems' => $packageItems,
+        ];
 
         return response()->json([
             'success' => true,
-            'html' => $html,
-            'message' => 'Package item updated successfully!',
+            'package' => $response,
         ]);
     }
-
-    return redirect()->back()->with('success', 'Package item updated successfully!');
-}
-
-public function deleteRelation(PackageItem $item)
-{
-    try {
-        $item->delete();
-
-        // If AJAX request, return JSON
-        if (request()->ajax()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Package item deleted successfully!',
-            ]);
-        }
-
-        // Otherwise, redirect back
-        return back()->with('success', 'Package item deleted successfully!');
-    } catch (\Exception $e) {
-        if (request()->ajax()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to delete package item: ' . $e->getMessage(),
-            ]);
-        }
-
-        return back()->with('error', 'Failed to delete package item.');
-    }
-}
-
-    public function apiShow(Package $package)
-{
-    // Eager load relationships
-    $package->load([
-        'packageType',
-        'packageCategory',
-        'difficultyType',
-        'packageItems.car'
-    ]);
-
-    // Transform packageItems with car details
-    $packageItems = $package->packageItems->map(function ($item) {
-        return [
-            'id' => $item->id,
-            'car' => $item->car,
-            'person_count' => $item->person_count,
-            'vehicle_name' => $item->vehicle_name,
-            'room_count' => $item->room_count,
-            'standard_price' => $item->standard_price,
-            'deluxe_price' => $item->deluxe_price,
-            'luxury_price' => $item->luxury_price,
-            'premium_price' => $item->premium_price,
-        ];
-    });
-
-    // Build custom response
-    $response = [
-        'id' => $package->id,
-        'package_name' => $package->package_name,
-        'package_days' => $package->package_days,
-        'package_nights' => $package->package_nights,
-        'package_price' => $package->package_price,
-        'pickup_points' => $package->pickup_points,
-        'package_banner_url' => $package->package_banner ? asset('storage/' . $package->package_banner) : null,
-        'package_docs_url' => $package->package_docs ? asset('storage/' . $package->package_docs) : null,
-        'other_images_url' => collect($package->other_images ?? [])
-            ->map(fn($img) => asset('storage/' . $img))
-            ->toArray(),
-        'packageType' => $package->packageType,
-        'packageCategory' => $package->packageCategory,
-        'difficultyType' => $package->difficultyType,
-        'packageItems' => $packageItems,
-    ];
-
-    return response()->json([
-        'success' => true,
-        'package' => $response,
-    ]);
-}
-
 
     public function sendPackageEmail(Request $request)
     {
@@ -400,4 +394,61 @@ public function deleteRelation(PackageItem $item)
             'message' => 'Package email sent successfully!',
         ]);
     }
+public function filterPackageItems(Request $request)
+{
+    $packageId = $request->package_id;
+    $carId = $request->car_id;
+
+    $totalPeople = ($request->adult_count ?? 0) + ($request->child_count ?? 0);
+
+    // ------------------------------------------
+    // Validate package
+    // ------------------------------------------
+    if (!$packageId) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Package ID is required.',
+            'data' => [],
+        ]);
+    }
+
+    // ------------------------------------------
+    // Build base query
+    // ------------------------------------------
+    $query = PackageItem::with('car')->where('package_id', $packageId);
+
+    // ------------------------------------------
+    // Filter by people count if provided
+    // ------------------------------------------
+    if ($totalPeople > 0) {
+        $query->where('person_count', $totalPeople);
+    }
+
+    // ------------------------------------------
+    // Filter by car only if car_id is provided
+    // ------------------------------------------
+    if ($carId) {
+        $query->where('car_id', $carId);
+    }
+
+    $items = $query->orderBy('id', 'desc')->get();
+
+    if ($items->count() > 0) {
+        return response()->json([
+            'success' => true,
+            'data' => $items,
+        ]);
+    }
+
+    // ------------------------------------------
+    // Nothing found
+    // ------------------------------------------
+    return response()->json([
+        'success' => false,
+        'message' => 'No items found for the selected criteria.',
+        'data' => [],
+    ]);
+}
+
+
 }

@@ -217,350 +217,313 @@
         <x-invoice-modal :packgaes="$packages" />
     </div>
     <script>
-        function leadModals() {
-            return {
-                /* ---------------- STATE ---------------- */
-                invoiceOpen: false,
-                followOpen: false,
-                shareOpen: false,
-                editOpen: false,
+function leadModals() {
+    return {
 
-                leadId: "",
-                leadName: "",
-                leadEmail: "",
-                peopleCount: 1,
-                childCount: 0,
+        /* ---------------- STATE ---------------- */
+        invoiceOpen: false,
+        followOpen: false,
+        shareOpen: false,
+        editOpen: false,
 
-                /* PACKAGES */
-                packages: @json($packages),
-                selectedPackageInvoice: "",
-                packageData: null,
-                selectedInvoiceItems: null,
-                packagePrice: 0,
-                itemPrice: 0,
-                totalPrice: 0,
-                discountedPrice: 0,
-                selectedDiscount: 0,
-                travelStartDate: '',
-                animatedPrice: 0,
+        /* Lead Info */
+        leadId: "",
+        leadName: "",
+        leadEmail: "",
+        peopleCount: 1,
+        childCount: 0,
 
-                /* FOLLOW-UP */
-                phoneNumber: '',
-                phoneCode: '',
-                fullNumber: '',
-                selectedReason: '',
-                followups: [],
-                reasons: [
-                    'Call Back Later', 'Call Me Tomorrow', 'Payment Tomorrow',
-                    'Talk With My Partner', 'Work with other company',
-                    'Not Interested', 'Interested', 'Wrong Information',
-                    'Not Pickup', 'Other'
-                ],
+        /* Package Data */
+        packages: @json($packages),
+        selectedPackageInvoice: "",
+        packageData: null,
+        selectedInvoiceItems: null,
+        selectedRoomType: 'standard_price',
+        filteredItems: [],
 
-                /* SHARE */
-                shareLeadId: '',
-                shareLeadName: '',
-                selectedPackage: '',
-                showDropdown: false,
-                showSelectedPackage: false,
-                selectedRoomType: 'standard_price',
-                selectedPackageName: '',
-                allPackages: @json($packages),
-                selectedPackageDocs: [],
-                selectedPackagePdf: null,
-                selectedDocs: [],
-                finalPricePerAdult: 0,
+        /* Pricing */
+        packagePrice: 0,
+        itemPrice: 0,
+        totalPrice: 0,
+        discountedPrice: 0,
+        finalPricePerAdult: 0,
+        selectedDiscount: 0,
+        travelStartDate: "",
+        animatedPrice: 0,
 
-                /* EDIT */
-                editForm: {},
+        /* Cars */
+        cars: [],
+        selectedCar: "",
 
-                /* ---------------- INVOICE MODAL ---------------- */
-                openInvoiceModal(id, name, people_count = 1, child_count = 0, packageId = null, email = '') {
-                    this.leadId = id;
-                    this.leadName = name;
-                    this.leadEmail = email;
-                    this.peopleCount = Number(people_count) || 1;
-                    this.childCount = Number(child_count) || 0;
+        /* Follow-up */
+        phoneNumber: '',
+        phoneCode: '',
+        fullNumber: '',
+        selectedReason: '',
+        followups: [],
+        reasons: [
+            'Call Back Later', 'Call Me Tomorrow', 'Payment Tomorrow',
+            'Talk With My Partner', 'Work with other company',
+            'Not Interested', 'Interested', 'Wrong Information',
+            'Not Pickup', 'Other'
+        ],
 
-                    this.selectedPackageInvoice = packageId || (this.packages[0]?.id ?? "");
-                    if (this.selectedPackageInvoice) this.fetchPackageDataAPI();
-                    this.invoiceOpen = true;
-                },
+        /* Share */
+        shareLeadId: '',
+        shareLeadName: '',
+        selectedPackage: '',
+        selectedPackageName: '',
+        selectedPackageDocs: [],
+        selectedPackagePdf: null,
+        selectedDocs: [],
+        showDropdown: false,
+        showSelectedPackage: false,
+        allPackages: @json($packages),
 
-                fetchPackageDataAPI() {
-                    if (!this.selectedPackageInvoice) return;
+        /* Edit */
+        editForm: {},
 
-                    fetch(`/packages/${this.selectedPackageInvoice}/json`)
-                        .then(res => res.json())
-                        .then(data => {
-                            this.packageData = data.package;
-
-                            this.packagePrice = Number(this.packageData.package_price) || 0;
-
-                            this.itemPrice = 0;
-                            this.totalPrice = 0;
-
-                            this.selectedRoomType = 'standard_price';
-                            this.selectedInvoiceItems = null;
-
-                            // ⭐ Auto-select first item
-                            if (this.packageData.packageItems.length > 0) {
-                                const firstItem = this.packageData.packageItems[0];
-                                this.selectedInvoiceItems = firstItem.id;
-
-                                // Auto-calc price for first item
-                                this.updateInvoicePrice(firstItem);
-                            }
-
-                            this.calculateDiscountedPrice();
-                        });
-                },
-                updateInvoicePrice(item = null) {
-                    if (!this.packageData || !this.selectedInvoiceItems) return;
-
-                    // If item was not passed from @change, find it
-                    if (!item) {
-                        item = this.packageData.packageItems.find(i => i.id == this.selectedInvoiceItems);
-                    }
-                    if (!item) return;
-
-                    const roomPrice = Number(item[this.selectedRoomType]) || 0;
-                    const carPrice = item.car?.price?.per_day ? Number(item.car.price.per_day) : 0;
-
-                    this.itemPrice = roomPrice;
-
-                    const oldTotal = this.totalPrice;
-
-                    // Only item price – no base price
-                    this.totalPrice = this.itemPrice;
-
-                    this.animateNumber(oldTotal, this.totalPrice);
-                    this.calculateDiscountedPrice();
-                },
-                calculateDiscountedPrice() {
-                    const discount = parseFloat(this.selectedDiscount) || 0;
-
-                    const base = this.totalPrice * (1 - discount / 100);
-
-                    this.finalPricePerAdult = base; // save per adult price
-
-                    const adultTotal = base * this.peopleCount;
-                    const childTotal = (base / 2) * this.childCount;
-
-                    this.discountedPrice = (adultTotal + childTotal).toFixed(2);
-                },
+        /* Bulk */
+        selected: [],
+        bulkUser: '',
 
 
-                animateNumber(from, to, duration = 400) {
-                    const start = performance.now();
-                    const animate = (time) => {
-                        const progress = Math.min((time - start) / duration, 1);
-                        this.animatedPrice = Math.floor(from + (to - from) * progress);
-                        if (progress < 1) requestAnimationFrame(animate);
-                    };
-                    requestAnimationFrame(animate);
-                },
+        /* ---------------- INIT HELPERS ---------------- */
 
-                closeInvoice() {
-                    this.invoiceOpen = false;
-                    this.packageData = null;
-                    this.selectedPackageInvoice = "";
-                    this.selectedInvoiceItems = null;
-                    this.travelStartDate = '';
-                    this.selectedDiscount = 0;
-                    this.totalPrice = 0;
-                    this.discountedPrice = 0;
-                    this.selectedRoomType = 'standard_price';
-                },
+        loadCars() {
+            fetch('/api/cars')
+                .then(res => res.json())
+                .then(data => this.cars = data.data || []);
+        },
 
-                sendInvoice() {
-                    if (!this.selectedPackageInvoice) return alert("Please select a package first!");
 
-                    console.log('Invoice Data:', {
-                        packageId: this.selectedPackageInvoice,
-                        itemId: this.selectedInvoiceItems,
-                        roomType: this.selectedRoomType,
-                        travelDate: this.travelStartDate,
-                        discount: this.selectedDiscount,
-                        finalPrice: this.discountedPrice,
-                        people: this.peopleCount,
-                    });
-                    alert("Invoice sent!");
-                },
+        /* ---------------- INVOICE MODAL ---------------- */
 
-                /* ---------------- FOLLOW-UP MODAL ---------------- */
-                openFollowModal(id, name) {
-                    this.leadId = id;
-                    this.leadName = name;
-                    this.followOpen = true;
+        openInvoiceModal(id, name, people = 1, child = 0, packageId = null, email = '') {
+            this.leadId = id;
+            this.leadName = name;
+            this.leadEmail = email;
 
-                    fetch(`/leads/${id}/details`)
-                        .then(res => res.json())
-                        .then(data => {
-                            const phone = data.phone || {};
-                            this.phoneNumber = phone.phone_number || '';
-                            this.phoneCode = phone.phone_code || '';
-                            this.fullNumber = phone.full_number || '';
-                            this.followups = (data.followups || []).map(f => ({
-                                ...f,
-                                created_at: f.created_at,
-                                next_followup_date: f.next_followup_date,
-                                user_name: f.user_name
-                            }));
-                        })
-                        .catch(err => console.error("Failed to fetch follow-ups:", err));
-                },
+            this.peopleCount = Number(people) || 1;
+            this.childCount = Number(child) || 0;
 
-                closeFollow() {
-                    this.followOpen = false;
-                },
+            this.selectedPackageInvoice = packageId || (this.packages[0]?.id ?? "");
 
-                /* ---------------- SHARE MODAL ---------------- */
-                handleShare(id, name, packageId = null, email = '') {
-                    this.shareLeadId = id;
-                    this.shareLeadName = name;
-                    this.leadEmail = email;
-                    this.showDropdown = true;
-                    this.showSelectedPackage = true;
-                    this.selectedPackage = packageId || (this.allPackages[0]?.id ?? "");
-                    this.fetchPackageDocs(this.selectedPackage);
-                    this.shareOpen = true;
-                },
+            this.invoiceOpen = true;
 
-                fetchPackageDocs(packageId) {
-                    fetch(`/packages/${packageId}/json`)
-                        .then(res => res.json())
-                        .then(data => {
-                            let docs = data.package.package_docs_url;
-                            if (typeof docs === 'string' && docs !== '') docs = [docs];
-                            else if (!Array.isArray(docs)) docs = [];
-                            this.selectedPackageDocs = docs;
-                            this.selectedPackagePdf = docs[0] || null;
-                            this.selectedDocs = [...docs];
-                            this.selectedPackageName = data.package.package_name;
-                        })
-                        .catch(err => {
-                            console.error("Error fetching package docs:", err);
-                            this.selectedPackageDocs = [];
-                            this.selectedPackagePdf = null;
-                            this.selectedDocs = [];
-                        });
-                },
+            this.loadCars(); // Fetch cars on open
+            this.fetchFilteredItems(true);
+        },
 
-                sendEmail() {
-                    if (!this.selectedDocs.length) return alert('Select at least one document!');
-
-                    fetch("{{ route('leads.sendPackageEmail') }}", {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                            },
-                            body: JSON.stringify({
-                                lead_name: this.shareLeadName,
-                                package_id: this.selectedPackage,
-                                email: this.leadEmail,
-                                documents: this.selectedDocs
-                            })
-                        })
-                        .then(res => res.json())
-                        .then(resp => {
-                            if (resp.success) {
-                                alert(resp.message);
-                                this.closeShare();
-                            } else alert('Failed to send email!');
-                        });
-                },
-
-                sendWhatsApp() {
-                    console.log("WhatsApp docs:", this.selectedDocs);
-                },
-
-                sendBoth() {
-                    this.sendEmail();
-                    this.sendWhatsApp();
-                },
-
-                closeShare() {
-                    this.shareOpen = false;
-                    this.selectedPackageDocs = [];
-                    this.selectedDocs = [];
-                    this.selectedPackagePdf = null;
-                },
-
-                /* ---------------- EDIT MODAL ---------------- */
-                openEditModal(id) {
-                    fetch(`/leads/${id}/json`)
-                        .then(res => res.json())
-                        .then(data => {
-                            this.editForm = {
-                                ...data
-                            };
-                            this.editOpen = true;
-                        })
-                        .catch(err => console.error("Failed to fetch edit data:", err));
-                },
-
-                closeEditModal() {
-                    this.editOpen = false;
-                },
-
-                submitEdit() {
-                    const url = `{{ route('leads.update', ':id') }}`.replace(':id', this.editForm.id);
-
-                    fetch(url, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                            },
-                            body: JSON.stringify({
-                                ...this.editForm,
-                                _method: 'PUT'
-                            })
-                        })
-                        .then(res => res.json())
-                        .then(resp => {
-                            if (resp.success) location.reload();
-                        });
-                },
-
-                /* ---------------- BULK ASSIGN ---------------- */
-                selected: [],
-                bulkUser: '',
-
-                toggleLead(event) {
-                    const id = parseInt(event.target.value);
-                    if (event.target.checked) this.selected.push(id);
-                    else this.selected = this.selected.filter(i => i !== id);
-                },
-
-                assignUser() {
-                    if (!this.bulkUser) return alert('Please select a user');
-                    if (!this.selected.length) return alert('Please select at least one lead');
-
-                    fetch('{{ route('leads.bulkAssign') }}', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                            },
-                            body: JSON.stringify({
-                                lead_ids: this.selected,
-                                user_id: this.bulkUser
-                            })
-                        })
-                        .then(res => res.json())
-                        .then(resp => {
-                            if (resp.success) {
-                                alert(resp.message);
-                                window.location.reload();
-                            }
-                        });
-                }
+        fetchFilteredItems(auto = false) {
+            if (!this.selectedPackageInvoice) {
+                alert("Please select a package first.");
+                return;
             }
+
+            const url = `/package-items/filter?package_id=${this.selectedPackageInvoice}&adult_count=${this.peopleCount}&child_count=${this.childCount}&car_id=${this.selectedCar}`;
+
+            fetch(url)
+                .then(res => res.json())
+                .then(res => {
+                    this.filteredItems = res.data;
+                    this.packageData = { packageItems: res.data };
+
+                    if (res.data.length > 0) {
+                        const first = res.data[0];
+                        this.selectedInvoiceItems = first.id;
+                        this.updateInvoicePrice(first);
+                    } else {
+                        this.selectedInvoiceItems = null;
+                        this.itemPrice = 0;
+                        this.totalPrice = 0;
+                        this.discountedPrice = 0;
+                    }
+
+                    if (auto) this.calculateDiscountedPrice();
+                });
+        },
+
+        updateInvoicePrice(item = null) {
+            if (!this.packageData || !this.selectedInvoiceItems) return;
+
+            if (!item) {
+                item = this.packageData.packageItems.find(i => i.id == this.selectedInvoiceItems);
+            }
+            if (!item) return;
+
+            const roomPrice = Number(item[this.selectedRoomType]) || 0;
+            const carPrice = item.car?.price?.per_day ? Number(item.car.price.per_day) : 0;
+
+            this.itemPrice = roomPrice + carPrice;
+
+            const oldTotal = this.totalPrice;
+            this.totalPrice = this.itemPrice;
+
+            this.animateNumber(oldTotal, this.totalPrice);
+            this.calculateDiscountedPrice();
+        },
+
+        calculateDiscountedPrice() {
+            const discount = parseFloat(this.selectedDiscount) || 0;
+            const base = this.totalPrice * (1 - discount / 100);
+
+            this.finalPricePerAdult = base;
+
+            const adults = base * this.peopleCount;
+            const children = (base / 2) * this.childCount;
+
+            this.discountedPrice = (adults + children).toFixed(2);
+        },
+
+        animateNumber(from, to, duration = 400) {
+            const start = performance.now();
+            const animate = (time) => {
+                const p = Math.min((time - start) / duration, 1);
+                this.animatedPrice = Math.floor(from + (to - from) * p);
+                if (p < 1) requestAnimationFrame(animate);
+            };
+            requestAnimationFrame(animate);
+        },
+
+        closeInvoice() {
+            this.invoiceOpen = false;
+            this.packageData = null;
+            this.selectedPackageInvoice = "";
+            this.selectedInvoiceItems = null;
+            this.travelStartDate = '';
+            this.selectedDiscount = 0;
+            this.totalPrice = 0;
+            this.discountedPrice = 0;
+            this.selectedRoomType = 'standard_price';
+        },
+
+
+        /* ---------------- SEND INVOICE ---------------- */
+
+        sendInvoice() {
+            if (!this.selectedPackageInvoice) {
+                alert("Please select a package first!");
+                return;
+            }
+
+            alert("Invoice sent!");
+        },
+
+
+        /* ---------------- FOLLOW-UP MODAL ---------------- */
+
+        openFollowModal(id, name) {
+            this.leadId = id;
+            this.leadName = name;
+            this.followOpen = true;
+
+            fetch(`/leads/${id}/details`)
+                .then(res => res.json())
+                .then(data => {
+                    const phone = data.phone || {};
+                    this.phoneNumber = phone.phone_number || '';
+                    this.phoneCode = phone.phone_code || '';
+                    this.fullNumber = phone.full_number || '';
+                    this.followups = data.followups || [];
+                });
+        },
+
+        closeFollow() {
+            this.followOpen = false;
+        },
+
+
+        /* ---------------- SHARE MODAL ---------------- */
+
+        handleShare(id, name, packageId = null, email = '') {
+            this.shareLeadId = id;
+            this.shareLeadName = name;
+            this.leadEmail = email;
+
+            this.selectedPackage = packageId || (this.allPackages[0]?.id ?? "");
+
+            this.showDropdown = true;
+            this.showSelectedPackage = true;
+
+            this.fetchPackageDocs(this.selectedPackage);
+            this.shareOpen = true;
+        },
+
+        fetchPackageDocs(packageId) {
+            fetch(`/packages/${packageId}/json`)
+                .then(res => res.json())
+                .then(data => {
+                    let docs = data.package.package_docs_url;
+
+                    if (typeof docs === 'string') docs = [docs];
+                    if (!Array.isArray(docs)) docs = [];
+
+                    this.selectedPackageDocs = docs;
+                    this.selectedPackagePdf = docs[0] || null;
+                    this.selectedDocs = [...docs];
+
+                    this.selectedPackageName = data.package.package_name;
+                });
+        },
+
+        closeShare() {
+            this.shareOpen = false;
+            this.selectedPackageDocs = [];
+            this.selectedDocs = [];
+            this.selectedPackagePdf = null;
+        },
+
+
+        /* ---------------- EDIT MODAL ---------------- */
+
+        openEditModal(id) {
+            fetch(`/leads/${id}/json`)
+                .then(res => res.json())
+                .then(data => {
+                    this.editForm = { ...data };
+                    this.editOpen = true;
+                });
+        },
+
+        closeEditModal() {
+            this.editOpen = false;
+        },
+
+
+        /* ---------------- BULK ASSIGN ---------------- */
+
+        toggleLead(event) {
+            const id = parseInt(event.target.value);
+            if (event.target.checked) this.selected.push(id);
+            else this.selected = this.selected.filter(i => i !== id);
+        },
+
+        assignUser() {
+            if (!this.bulkUser) return alert('Select a user');
+            if (!this.selected.length) return alert('Select at least one lead');
+
+            fetch('{{ route('leads.bulkAssign') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify({
+                    lead_ids: this.selected,
+                    user_id: this.bulkUser
+                })
+            })
+            .then(res => res.json())
+            .then(resp => {
+                if (resp.success) window.location.reload();
+            });
         }
-    </script>
+
+    };
+}
+</script>
+
 
 
 

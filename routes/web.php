@@ -41,10 +41,13 @@ Route::get('/cars', function () {
 Route::get('/hotels', function () {
     return \App\Models\Hotel::all();
 });
+Route::get('/api/cars', [\App\Http\Controllers\Api\CarController::class, 'index']);
 
 Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified'])->group(function () {
     Route::delete('packages/item/{item}', [PackageController::class, 'deleteRelation'])
      ->name('packages.item.delete');
+     Route::get('/package-items/filter', [PackageController::class, 'filterPackageItems']);
+
       Route::get('/invoices', [InvoiceController::class, 'index'])->name('invoices.index');
 
     // Create Invoice
