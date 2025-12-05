@@ -14,10 +14,18 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\PackageController;
 use App\Http\Controllers\LeadController;
 use App\Http\Controllers\FollowupController;
+use App\Http\Controllers\WhatsAppController;
+
+Route::post("/send-text", [WhatsAppController::class, "sendText"]);
+Route::post("/send-media", [WhatsAppController::class, "sendMedia"]);
+Route::post("/send-media-json", [WhatsAppController::class, "sendMediaJson"]);
 
 Route::get('/', function () {
     return view('welcome');
 })->name('home');
+Route::get('/whatsapp', function () {
+    return view('whatsapp');
+})->name('whatsapp');
 
 Route::view('dashboard', 'dashboard')
     ->middleware(['auth', 'verified'])
