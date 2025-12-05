@@ -202,23 +202,13 @@
                 </div>
 
                 <!-- SEND BUTTON -->
-                <button type="button"
-                    @click="
-                            let params = new URLSearchParams({
-                                package_id: selectedPackageInvoice,
-                                package_type: selectedRoomType,
-                                adult_count: peopleCount,
-                                child_count: childCount,
-                                discount_amount: selectedDiscount,
-                                
-                                price_per_person: discountedPrice,
-                                travel_start_date: travelStartDate
-                            }).toString();
-                            window.location.href = '{{ route('invoices.create') }}?' + params;
-                        "
-                    class="w-full bg-blue-600 text-white py-3 rounded-xl shadow-md hover:bg-blue-700 hover:-translate-y-0.5 transition transform">
-                    <i class="fa-solid fa-file-invoice"></i> Generate Invoice
-                </button>
+                <button
+    type="button"
+    @click="createQuickInvoice()"
+    class="w-full bg-blue-600 text-white py-3 rounded-xl shadow-md hover:bg-blue-700 hover:-translate-y-0.5 transition transform">
+    <i class="fa-solid fa-file-invoice"></i> Generate Invoice
+</button>
+
             </div>
         </div>
     </div>

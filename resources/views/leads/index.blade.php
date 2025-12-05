@@ -314,6 +314,46 @@
                     this.loadCars(); // Fetch cars on open
                     this.fetchFilteredItems(true);
                 },
+/* ---------------- QUICK INVOICE ---------------- */
+createQuickInvoice() {
+    if (!this.selectedPackageInvoice) {
+        alert("Please select a package first!");
+        return;
+    }
+
+    const payload = {
+        lead_id: this.leadId,
+        package_id: this.selectedPackageInvoice,
+        package_type: this.selectedRoomType,
+        adult_count: this.peopleCount,
+        child_count: this.childCount,
+        discount_amount: this.selectedDiscount,
+        price_per_person: this.discountedPrice,
+        travel_start_date: this.travelStartDate
+    };
+
+    fetch('/invoices/create-quick', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify(payload)
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success && data.data && data.data.id) {
+            // Redirect to invoice creation route with the new invoice ID
+            window.location.href = '{{ route('invoices.create') }}?invoice_id=' + data.data.id;
+        } else {
+            alert('Failed to create invoice.');
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert('Something went wrong while creating the invoice.');
+    });
+},
 
                 fetchFilteredItems(auto = false) {
                     if (!this.selectedPackageInvoice) {

@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 use App\Http\Controllers\UserController;
 use Livewire\Volt\Volt;
-
+use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\PackageTypeController;
 use App\Http\Controllers\PackageCategoryController;
 use App\Http\Controllers\DifficultyTypeController;

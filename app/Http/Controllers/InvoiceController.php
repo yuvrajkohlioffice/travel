@@ -6,6 +6,8 @@ use App\Models\Invoice;
 use App\Models\Lead;
 use App\Models\Package;
 use Illuminate\Http\Request;
+
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 
 class InvoiceController extends Controller
@@ -26,27 +28,40 @@ class InvoiceController extends Controller
      */
     public function create(Request $request)
     {
+        $invoice = null;
         $lead = null;
         $package = null;
 
-        // Load lead if lead_id exists
-        if ($request->lead_id) {
+        // Load existing invoice if invoice_id exists
+        if ($request->invoice_id) {
+            $invoice = Invoice::with('package', 'lead')->find($request->invoice_id);
+            if ($invoice) {
+                $lead = $invoice->lead;
+                $package = $invoice->package;
+            }
+        }
+
+        // Load lead if lead_id exists and no invoice
+        if (!$invoice && $request->lead_id) {
             $lead = Lead::find($request->lead_id);
             $package = $lead?->package;
         }
+
         $packages = Package::all();
-        // Prefill from query params if available
+
+        // Prefill values
         $prefill = [
-            'package_id' => $request->query('package_id', $package?->id ?? null),
-            'package_type' => $request->query('package_type', 'standard_price'),
-            'adult_count' => $request->query('adult_count', 1),
-            'child_count' => $request->query('child_count', 0),
-            'discount_amount' => $request->query('discount_amount', 0),
-            'tax_amount' => $request->query('tax_amount', 0),
-            'price_per_person' => $request->query('price_per_person', $package?->package_price ?? 0),
+            'package_id' => $invoice->package_id ?? $request->query('package_id', $package?->id ?? null),
+            'package_type' => $invoice->package_type ?? $request->query('package_type', 'standard_price'),
+            'adult_count' => $invoice->adult_count ?? $request->query('adult_count', 1),
+            'child_count' => $invoice->child_count ?? $request->query('child_count', 0),
+            'discount_amount' => $invoice->discount_amount ?? $request->query('discount_amount', 0),
+            'tax_amount' => $invoice->tax_amount ?? $request->query('tax_amount', 0),
+            'price_per_person' => $invoice->price_per_person ?? $request->query('price_per_person', $package?->package_price ?? 0),
+            'travel_start_date' => $invoice->travel_start_date ?? $request->query('travel_start_date', now()->toDateString()),
         ];
 
-        return view('invoices.create', compact('lead', 'package', 'prefill', 'packages'));
+        return view('invoices.create', compact('lead', 'package', 'prefill', 'packages', 'invoice'));
     }
 
     /**
@@ -127,9 +142,11 @@ class InvoiceController extends Controller
 
         return back()->with('success', 'Invoice deleted successfully.');
     }
+
     public function createQuickInvoice(Request $request)
     {
         $request->validate([
+            'lead_id' => 'required|integer|exists:leads,id',
             'package_id' => 'required|integer|exists:packages,id',
             'package_type' => 'required|string',
             'adult_count' => 'required|integer|min:0',
@@ -141,9 +158,18 @@ class InvoiceController extends Controller
 
         $userId = Auth::id() ?? 1; // fallback to 1 if not logged in
 
+        // Fetch lead to get name
+        $lead = Lead::find($request->lead_id);
+
+        // Current date in India
+        $issuedDate = Carbon::now('Asia/Kolkata')->toDateString(); // YYYY-MM-DD
+        // If you want datetime: Carbon::now('Asia/Kolkata')->toDateTimeString()
+
         $invoice = Invoice::create([
-            'invoice_no' => $this->generateInvoiceNo(), // ✅ use sequential generator
+            'invoice_no' => $this->generateInvoiceNo(),
             'user_id' => $userId,
+            'lead_id' => $request->lead_id,
+            'primary_full_name' => $lead->name ?? 'Unknown',
             'package_id' => $request->package_id,
             'package_type' => $request->package_type,
             'adult_count' => $request->adult_count,
@@ -151,6 +177,7 @@ class InvoiceController extends Controller
             'discount_amount' => $request->discount_amount,
             'price_per_person' => $request->price_per_person,
             'travel_start_date' => $request->travel_start_date,
+            'issued_date' => $issuedDate, // ✅ Indian current date
             'total_travelers' => $request->adult_count + $request->child_count,
             'subtotal_price' => $request->price_per_person * ($request->adult_count + $request->child_count),
             'final_price' => $request->price_per_person * ($request->adult_count + $request->child_count) - $request->discount_amount,
