@@ -28,9 +28,9 @@
                 <template x-if="packageData">
                     <div class="space-y-4">
                         <!-- PACKAGE INFO -->
-                        
 
-                        
+
+
                         <div class="grid grid-cols-2 gap-4">
 
                             <!-- Adults -->

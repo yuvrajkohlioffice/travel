@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 use App\Http\Controllers\UserController;
 use Livewire\Volt\Volt;
-use App\Http\Controllers\InvoiceController;
+
 use App\Http\Controllers\PackageTypeController;
 use App\Http\Controllers\PackageCategoryController;
 use App\Http\Controllers\DifficultyTypeController;
@@ -41,6 +41,11 @@ Route::get('/cars', function () {
 Route::get('/hotels', function () {
     return \App\Models\Hotel::all();
 });
+// routes/api.php
+
+
+Route::post('/invoices/create-quick', [InvoiceController::class, 'createQuickInvoice']);
+
 Route::get('/api/cars', [\App\Http\Controllers\Api\CarController::class, 'index']);
 
 Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified'])->group(function () {

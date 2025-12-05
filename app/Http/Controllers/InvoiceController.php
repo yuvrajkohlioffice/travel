@@ -24,31 +24,30 @@ class InvoiceController extends Controller
     /**
      * Show Create Invoice Form
      */
-   public function create(Request $request)
-{
-    $lead = null;
-    $package = null;
+    public function create(Request $request)
+    {
+        $lead = null;
+        $package = null;
 
-    // Load lead if lead_id exists
-    if ($request->lead_id) {
-        $lead = Lead::find($request->lead_id);
-        $package = $lead?->package;
+        // Load lead if lead_id exists
+        if ($request->lead_id) {
+            $lead = Lead::find($request->lead_id);
+            $package = $lead?->package;
+        }
+        $packages = Package::all();
+        // Prefill from query params if available
+        $prefill = [
+            'package_id' => $request->query('package_id', $package?->id ?? null),
+            'package_type' => $request->query('package_type', 'standard_price'),
+            'adult_count' => $request->query('adult_count', 1),
+            'child_count' => $request->query('child_count', 0),
+            'discount_amount' => $request->query('discount_amount', 0),
+            'tax_amount' => $request->query('tax_amount', 0),
+            'price_per_person' => $request->query('price_per_person', $package?->package_price ?? 0),
+        ];
+
+        return view('invoices.create', compact('lead', 'package', 'prefill', 'packages'));
     }
-$packages = Package::all();
-    // Prefill from query params if available
-    $prefill = [
-        'package_id'       => $request->query('package_id', $package?->id ?? null),
-        'package_type'     => $request->query('package_type', 'standard_price'),
-        'adult_count'      => $request->query('adult_count', 1),
-        'child_count'      => $request->query('child_count', 0),
-        'discount_amount'  => $request->query('discount_amount', 0),
-        'tax_amount'       => $request->query('tax_amount', 0),
-        'price_per_person' => $request->query('price_per_person', $package?->package_price ?? 0),
-    ];
-
-    return view('invoices.create', compact('lead', 'package', 'prefill','packages'));
-}
-
 
     /**
      * Store Invoice
@@ -64,44 +63,39 @@ $packages = Package::all();
         ]);
 
         $invoice = Invoice::create([
-            'invoice_no'        => $this->generateInvoiceNo(),
-            'user_id'           => Auth::id(),
+            'invoice_no' => $this->generateInvoiceNo(),
+            'user_id' => Auth::id(),
 
-            'lead_id'           => $request->lead_id,
-            'package_id'        => $request->package_id,
+            'lead_id' => $request->lead_id,
+            'package_id' => $request->package_id,
 
-            'issued_date'       => $request->issued_date,
+            'issued_date' => $request->issued_date,
             'travel_start_date' => $request->travel_start_date,
 
             'primary_full_name' => $request->primary_full_name,
-            'primary_email'     => $request->primary_email,
-            'primary_phone'     => $request->primary_phone,
-            'primary_address'   => $request->primary_address,
+            'primary_email' => $request->primary_email,
+            'primary_phone' => $request->primary_phone,
+            'primary_address' => $request->primary_address,
 
-            'additional_travelers' => $request->additional_travelers
-                ? json_decode($request->additional_travelers, true)
-                : null,
+            'additional_travelers' => $request->additional_travelers ? json_decode($request->additional_travelers, true) : null,
 
             'total_travelers' => $request->total_travelers,
-            'adult_count'     => $request->adult_count,
-            'child_count'     => $request->child_count,
+            'adult_count' => $request->adult_count,
+            'child_count' => $request->child_count,
 
-            'package_name'    => $request->package_name,
-            'package_type'    => $request->package_type,
-            'price_per_person'=> $request->price_per_person,
+            'package_name' => $request->package_name,
+            'package_type' => $request->package_type,
+            'price_per_person' => $request->price_per_person,
 
-            'subtotal_price'  => $request->price_per_person * $request->total_travelers,
+            'subtotal_price' => $request->price_per_person * $request->total_travelers,
             'discount_amount' => $request->discount_amount ?? 0,
-            'tax_amount'      => $request->tax_amount ?? 0,
-            'final_price'     => (($request->price_per_person * $request->total_travelers)
-                                    - ($request->discount_amount ?? 0))
-                                    + ($request->tax_amount ?? 0),
+            'tax_amount' => $request->tax_amount ?? 0,
+            'final_price' => $request->price_per_person * $request->total_travelers - ($request->discount_amount ?? 0) + ($request->tax_amount ?? 0),
 
             'additional_details' => $request->additional_details,
         ]);
 
-        return redirect()->route('invoices.show', $invoice->id)
-                         ->with('success', 'Invoice created successfully.');
+        return redirect()->route('invoices.show', $invoice->id)->with('success', 'Invoice created successfully.');
     }
 
     /**
@@ -132,5 +126,40 @@ $packages = Package::all();
         Invoice::findOrFail($id)->delete();
 
         return back()->with('success', 'Invoice deleted successfully.');
+    }
+    public function createQuickInvoice(Request $request)
+    {
+        $request->validate([
+            'package_id' => 'required|integer|exists:packages,id',
+            'package_type' => 'required|string',
+            'adult_count' => 'required|integer|min:0',
+            'child_count' => 'required|integer|min:0',
+            'discount_amount' => 'required|numeric|min:0',
+            'price_per_person' => 'required|numeric|min:0',
+            'travel_start_date' => 'nullable|date',
+        ]);
+
+        $userId = Auth::id() ?? 1; // fallback to 1 if not logged in
+
+        $invoice = Invoice::create([
+            'invoice_no' => $this->generateInvoiceNo(), // ✅ use sequential generator
+            'user_id' => $userId,
+            'package_id' => $request->package_id,
+            'package_type' => $request->package_type,
+            'adult_count' => $request->adult_count,
+            'child_count' => $request->child_count,
+            'discount_amount' => $request->discount_amount,
+            'price_per_person' => $request->price_per_person,
+            'travel_start_date' => $request->travel_start_date,
+            'total_travelers' => $request->adult_count + $request->child_count,
+            'subtotal_price' => $request->price_per_person * ($request->adult_count + $request->child_count),
+            'final_price' => $request->price_per_person * ($request->adult_count + $request->child_count) - $request->discount_amount,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Invoice created successfully',
+            'data' => $invoice,
+        ]);
     }
 }
