@@ -73,6 +73,44 @@
                     <h3 class="text-lg font-bold text-gray-700 dark:text-gray-200 mb-4">
                         Last 30 Days Activity
                     </h3>
+                    <form method="GET" class="mb-6">
+
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+
+                            <!-- Month -->
+                            <select name="month" class="p-2 border rounded">
+                                <option value="">Select Month</option>
+                                @foreach (range(1, 12) as $m)
+                                    <option value="{{ $m }}" {{ request('month') == $m ? 'selected' : '' }}>
+                                        {{ DateTime::createFromFormat('!m', $m)->format('F') }}
+                                    </option>
+                                @endforeach
+                            </select>
+
+                            <!-- Year -->
+                            <select name="year" class="p-2 border rounded">
+                                <option value="">Select Year</option>
+                                @foreach (range(date('Y') - 5, date('Y') + 1) as $y)
+                                    <option value="{{ $y }}" {{ request('year') == $y ? 'selected' : '' }}>
+                                        {{ $y }}
+                                    </option>
+                                @endforeach
+                            </select>
+
+                            <!-- From Date -->
+                            <input type="date" name="from" value="{{ request('from') }}"
+                                class="p-2 border rounded">
+
+                            <!-- To Date -->
+                            <input type="date" name="to" value="{{ request('to') }}"
+                                class="p-2 border rounded">
+                        </div>
+
+                        <button class="mt-4 px-6 py-2 bg-indigo-600 text-white rounded">
+                            Filter
+                        </button>
+
+                    </form>
 
                     <canvas id="leadsInvoicesChart" height="120"></canvas>
                 </div>
@@ -170,33 +208,87 @@
 
         <script>
             document.addEventListener("DOMContentLoaded", () => {
-                const ctx = document.getElementById("leadsInvoicesChart");
 
+                const ctx = document.getElementById("leadsInvoicesChart");
                 if (!ctx) return;
 
-                const data = window.chartData ?? [];
+                const rawData = window.chartData ?? [];
 
+                // ------------------------------------------
+                // 📌 1. Prepare Date Formats
+                // ------------------------------------------
+
+                // For chart (show only day)
+                const chartLabels = rawData.map(item => {
+                    const d = new Date(item.date);
+                    return String(d.getDate()).padStart(2, "0"); // → "06"
+                });
+
+                // For dropdown (show like → 06 Dec 2025)
+                const readableLabels = rawData.map(item => {
+                    const d = new Date(item.date);
+
+                    return new Intl.DateTimeFormat("en-US", {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric",
+                    }).format(d); // → "06 Dec 2025"
+                });
+
+                // Keep ISO dates for backend filtering
+                const isoDates = rawData.map(i => i.date);
+
+                // OPTIONAL: attach to window for reuse in dropdowns
+                window.chartFormattedDates = {
+                    chartLabels,
+                    readableLabels,
+                    isoDates
+                };
+
+                // ------------------------------------------
+                // 📌 2. Render Chart (only day on x-axis)
+                // ------------------------------------------
                 new Chart(ctx, {
                     type: 'line',
                     data: {
-                        labels: data.map(i => i.date),
+                        labels: chartLabels,
                         datasets: [{
                                 label: "Leads",
-                                data: data.map(i => i.leads),
-                                borderColor: "blue",
+                                data: rawData.map(i => i.leads),
+                                borderColor: "#2563eb",
                                 borderWidth: 2,
                                 tension: 0.4,
                             },
                             {
                                 label: "Invoices",
-                                data: data.map(i => i.invoices),
-                                borderColor: "green",
+                                data: rawData.map(i => i.invoices),
+                                borderColor: "#16a34a",
                                 borderWidth: 2,
                                 tension: 0.4,
                             }
                         ]
+                    },
+                    options: {
+                        plugins: {
+                            tooltip: {
+                                callbacks: {
+                                    title: (tooltipItems) => {
+                                        const index = tooltipItems[0].dataIndex;
+                                        const isoDate = rawData[index].date;
+
+                                        return new Intl.DateTimeFormat("en-US", {
+                                            day: "2-digit",
+                                            month: "short",
+                                            year: "numeric",
+                                        }).format(new Date(isoDate));
+                                    }
+                                }
+                            }
+                        }
                     }
                 });
+
+
             });
         </script>
 

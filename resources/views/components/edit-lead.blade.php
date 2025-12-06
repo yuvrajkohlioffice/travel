@@ -148,7 +148,7 @@
                 </div>
 
                 <!-- Package -->
-                <div class="col-span-2">
+                <div >
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-400">Select Package
                         (Optional)</label>
                     <select x-model="editForm.package_id"

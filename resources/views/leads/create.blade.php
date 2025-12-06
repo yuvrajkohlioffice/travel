@@ -132,6 +132,20 @@
                                 class="mt-1 block w-full rounded-lg border border-gray-300 px-4 py-2 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
                                 value="{{ old('website', $lead->website ?? '') }}">
                         </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-400">Count of People
+                        Going</label>
+                            <input type="number" name="people_count" x-model="lead.people_count"
+                                class="mt-1 block w-full rounded-lg border border-gray-300 px-4 py-2 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
+                                value="{{ old('people_count', $lead->people_count ?? '') }}">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-400">Count of Child
+                        Going</label>
+                            <input type="number" name="child_count" x-model="lead.child_count"
+                                class="mt-1 block w-full rounded-lg border border-gray-300 px-4 py-2 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
+                                value="{{ old('child_count', $lead->child_count ?? '') }}">
+                        </div>
 
                         <!-- Package -->
                         <div class="col-span-2">
