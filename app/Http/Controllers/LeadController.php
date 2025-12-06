@@ -36,39 +36,38 @@ class LeadController extends Controller
             'child_count' => $lead->child_count,
         ]);
     }
-    public function index()
-    {
-        $user = auth()->user();
-        $users = User::all();
-        $packages = Package::select('id','package_name','package_docs')->get();
+   public function index()
+{
+    $user = auth()->user();
 
+    $users = User::select('id', 'name')->get();
 
-        $query = Lead::with(['package', 'lastFollowup.user']);
+    // Cached packages for faster load (optional)
+    $packages = Package::select('id','package_name','package_docs')
+                       ->orderBy('package_name')
+                       ->get();
 
-        if ($user->role_id != 1) {
+    $leads = Lead::with(['package:id,package_name', 'lastFollowup.user:id,name'])
+        ->when($user->role_id != 1, function ($query) use ($user) {
             $query->where(function ($q) use ($user) {
-                $q->where('user_id', $user->id)->orWhereHas('assignedUsers', function ($q2) use ($user) {
-                    $q2->where('user_id', $user->id);
-                });
+                $q->where('user_id', $user->id)
+                  ->orWhereHas('assignedUsers', fn($u) => $u->where('user_id', $user->id));
             });
-        }
-
-        $leads = $query
-            ->orderByRaw(
-                "
+        })
+        ->orderByRaw("
             CASE
                 WHEN lead_status = 'Hot' THEN 1
                 WHEN lead_status = 'Warm' THEN 2
                 WHEN lead_status = 'Cold' THEN 3
                 ELSE 4
             END
-        ",
-            )
-            ->latest()
-            ->get();
+        ")
+        ->latest('id')
+        ->get();
 
-        return view('leads.index', compact('leads', 'packages', 'users'));
-    }
+    return view('leads.index', compact('leads', 'packages', 'users'));
+}
+
 
     public function create()
     {
