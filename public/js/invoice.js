@@ -1,6 +1,5 @@
 function invoiceGenerator({ invoice = null, lead = null, packageItems = [] } = {}) {
     return {
-
         //---------------------------------
         // INITIAL STATE
         //---------------------------------
@@ -11,12 +10,19 @@ function invoiceGenerator({ invoice = null, lead = null, packageItems = [] } = {
         packageItems,
         packageData: invoice?.package ?? null,
 
-        basePriceRaw: Number(invoice?.price_per_person ?? 0),
+        basePrice: Number(invoice?.price_per_person ?? 0),
+        subtotal: 0,
+        discountAmount: 0,
+        taxAmount: 0,
+        finalPrice: 0,
+manualBasePrice: null, // null means "no manual override"
 
-        adultCount: invoice?.adult_count ?? 1,
-        childCount: invoice?.child_count ?? 0,
+        adultCount: Number(invoice?.adult_count ?? 1),
+        childCount: Number(invoice?.child_count ?? 0),
 
-        additionalTravelers: invoice?.additional_travelers ?? "[]",
+        additionalTravelers: invoice?.additional_travelers
+            ? JSON.parse(invoice.additional_travelers)
+            : [],
 
         primaryName: invoice?.primary_full_name ?? "",
         primaryEmail: invoice?.primary_email ?? "",
@@ -26,68 +32,131 @@ function invoiceGenerator({ invoice = null, lead = null, packageItems = [] } = {
         discountPercent: Number(invoice?.discount_amount ?? 0),
         taxPercent: Number(invoice?.tax_percent ?? 5),
 
-        travelStartDate: invoice?.travel_start_date ?? new Date().toISOString().slice(0,10),
+        travelStartDate: invoice?.travel_start_date ?? new Date().toISOString().slice(0, 10),
         additionalDetails: invoice?.additional_details ?? "",
 
         hiddenFields: {},
 
         //---------------------------------
-        // COMPUTED
+        // COMPUTED VALUES
         //---------------------------------
-        get basePrice() {
-            // Editing invoice → use stored price
-            if (this.basePriceRaw > 0) return this.basePriceRaw;
-
-            // Selected item + room type → dynamic price
-            const selected = this.packageItems.find(i => i.id == this.selectedItem);
-            if (!selected) return 0;
-
-            const price = selected[this.selectedRoomType] ?? 0;
-            return Number(price);
-        },
-
-        get subtotal() {
-            return (this.adultCount * this.basePrice) + (this.childCount * (this.basePrice/2));
-        },
-
-        get taxAmount() {
-            return this.subtotal * (this.taxPercent / 100);
-        },
-
-        get finalPrice() {
-            const discount = this.subtotal * (this.discountPercent / 100);
-            return this.subtotal - discount + this.taxAmount;
+        get taxAmountComputed() {
+            return (this.subtotal * this.taxPercent) / 100;
         },
 
         get totalTravelers() {
+            // Normalize additional travelers in case it's a string
             let extra = [];
             try {
-                extra = Array.isArray(this.additionalTravelers)
-                    ? this.additionalTravelers
-                    : JSON.parse(this.additionalTravelers || "[]");
-            } catch {}
-            return this.adultCount + this.childCount + extra.length;
+                if (Array.isArray(this.additionalTravelers)) {
+                    extra = this.additionalTravelers;
+                } else if (typeof this.additionalTravelers === "string" && this.additionalTravelers.trim() !== "") {
+                    extra = JSON.parse(this.additionalTravelers);
+                }
+            } catch (e) {
+                console.warn("Invalid additionalTravelers JSON", e);
+                extra = [];
+            }
+            return Number(this.adultCount) + Number(this.childCount) + extra.length;
         },
 
         //---------------------------------
-        // LOAD PACKAGE JSON
+        // DATA NORMALIZATION
         //---------------------------------
-        loadPackage() {
+        normalizeTravelers() {
+            if (!Array.isArray(this.additionalTravelers)) {
+                try {
+                    this.additionalTravelers = this.additionalTravelers
+                        ? JSON.parse(this.additionalTravelers)
+                        : [];
+                } catch (e) {
+                    console.warn("Invalid additionalTravelers JSON:", e);
+                    this.additionalTravelers = [];
+                }
+            }
+        },
+
+        //---------------------------------
+        // PACKAGE DATA LOADING
+        //---------------------------------
+        async loadPackage() {
             if (!this.selectedPackage) return;
-            fetch(`/packages/${this.selectedPackage}/json`)
-                .then(res => res.json())
-                .then(data => {
-                    this.packageData = data.package;
 
-                    // Reset item selection if not editing
-                    if (!this.basePriceRaw) this.selectedItem = "";
+            try {
+                const res = await fetch(`/packages/${this.selectedPackage}/json`);
+                const data = await res.json();
 
-                    this.updateHiddenFields();
-                });
+                this.packageData = data.package;
+                this.packageItems = data.package.packageItems || [];
+
+                // Reset selections when creating new invoice
+                if (!invoice) {
+                    this.selectedItem = "";
+                    this.selectedRoomType = "standard_price";
+                }
+
+                this.recalculate();
+            } catch (error) {
+                console.error("Failed to load package:", error);
+            }
         },
 
         //---------------------------------
-        // UPDATE HIDDEN FIELDS
+        // TRAVELER MANAGEMENT
+        //---------------------------------
+        addTraveler() {
+            this.additionalTravelers.push({ name: "", relation: "", age: "" });
+            this.recalculate();
+        },
+
+        removeTraveler(index) {
+            this.additionalTravelers.splice(index, 1);
+            this.recalculate();
+        },
+
+        //---------------------------------
+        // PRICE CALCULATIONS
+        //---------------------------------
+        calculateSubtotal() {
+            const adultTotal = Number(this.adultCount) * this.basePrice;
+            const childTotal = Number(this.childCount) * (this.basePrice / 2);
+            this.subtotal = adultTotal + childTotal;
+        },
+
+        calculateDiscount() {
+            this.discountAmount = (this.subtotal * this.discountPercent) / 100;
+        },
+
+        calculateTax() {
+            this.taxAmount = (this.subtotal * this.taxPercent) / 100;
+        },
+
+        calculateFinalPrice() {
+            this.finalPrice = Math.max(0, this.subtotal - this.discountAmount + this.taxAmount);
+        },
+
+        /**
+         * Updates all prices in a proper order
+         * Handles subtotal, discount, tax, and final price
+         */
+updatePrices() {
+    // Determine base price from selected item
+    const item = this.packageItems.find(i => String(i.id) === String(this.selectedItem));
+    const defaultPrice = item ? Number(item[this.selectedRoomType] ?? 0) : 0;
+
+    // Use manual override if set
+    this.basePrice = this.manualBasePrice !== null ? this.manualBasePrice : defaultPrice;
+
+    // Perform full recalculation
+    this.calculateSubtotal();
+    this.calculateDiscount();
+    this.calculateTax();
+    this.calculateFinalPrice();
+},
+
+
+        //---------------------------------
+        // HIDDEN FORM FIELDS
         //---------------------------------
         updateHiddenFields() {
             this.hiddenFields = {
@@ -96,6 +165,8 @@ function invoiceGenerator({ invoice = null, lead = null, packageItems = [] } = {
 
                 package_id: this.selectedPackage,
                 package_items_id: this.selectedItem,
+                package_type: this.selectedRoomType,
+                package_name: this.packageData?.package_name ?? "",
 
                 primary_full_name: this.primaryName,
                 primary_email: this.primaryEmail,
@@ -106,49 +177,78 @@ function invoiceGenerator({ invoice = null, lead = null, packageItems = [] } = {
                 child_count: this.childCount,
                 total_travelers: this.totalTravelers,
 
-                package_name: this.packageData?.package_name ?? "",
-                package_type: this.selectedRoomType,
-
                 price_per_person: this.basePrice,
                 subtotal_price: this.subtotal.toFixed(2),
                 discount_percent: this.discountPercent,
-                discount_amount: (this.subtotal * this.discountPercent / 100).toFixed(2),
+                discount_amount: this.discountAmount.toFixed(2),
                 tax_percent: this.taxPercent,
                 tax_amount: this.taxAmount.toFixed(2),
                 final_price: this.finalPrice.toFixed(2),
 
                 travel_start_date: this.travelStartDate,
-                issued_date: new Date().toISOString().slice(0,10),
-                additional_travelers: this.additionalTravelers,
+                issued_date: new Date().toISOString().slice(0, 10),
+                additional_travelers: JSON.stringify(this.additionalTravelers),
                 additional_details: this.additionalDetails,
             };
+        },
+
+        //---------------------------------
+        // RECOMPUTE EVERYTHING
+        //---------------------------------
+        recalculate() {
+            this.normalizeTravelers();
+            this.updatePrices();
+            this.updateHiddenFields();
         },
 
         //---------------------------------
         // INITIALIZER
         //---------------------------------
         init() {
+            this.normalizeTravelers();
+            this.recalculate();
+
             if (this.selectedPackage) this.loadPackage();
 
-            // Watch all reactive properties
+            // Watch changes in selected item and room type
+            this.$watch('selectedItem', (newVal, oldVal) => {
+                console.log("Package Item changed:", oldVal, "→", newVal);
+                console.log("Selected item data:", this.packageItems.find(i => i.id == newVal));
+                this.updatePrices();
+            });
+
+            this.$watch('selectedRoomType', (newVal, oldVal) => {
+                console.log("Room Type changed:", oldVal, "→", newVal);
+                this.updatePrices();
+            });
+
+            // Global watcher for reactive updates
             this.$watch(() => ({
-                selectedPackage: this.selectedPackage,
-                selectedItem: this.selectedItem,
-                selectedRoomType: this.selectedRoomType,
                 adultCount: this.adultCount,
                 childCount: this.childCount,
+                discountPercent: this.discountPercent,
+                taxPercent: this.taxPercent,
+                travelStartDate: this.travelStartDate,
                 primaryName: this.primaryName,
                 primaryEmail: this.primaryEmail,
                 primaryPhone: this.primaryPhone,
                 primaryAddress: this.primaryAddress,
-                discountPercent: this.discountPercent,
-                taxPercent: this.taxPercent,
-                travelStartDate: this.travelStartDate,
                 additionalTravelers: this.additionalTravelers,
-                additionalDetails: this.additionalDetails
-            }), () => this.updateHiddenFields());
+                additionalDetails: this.additionalDetails,
+            }), () => {
+                this.updatePrices();
+                this.updateHiddenFields();
+            });
+        },
 
-            this.updateHiddenFields();
-        }
-    }
+        //---------------------------------
+        // UTILITY FUNCTIONS
+        //---------------------------------
+        formatCurrency(value) {
+            return Number(value).toLocaleString('en-IN', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        },
+    };
 }

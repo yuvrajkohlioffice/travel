@@ -64,51 +64,86 @@ public function create(Request $request)
     /**
      * Store Invoice
      */
-    public function store(Request $request)
-    {
-        $request->validate([
-            'primary_full_name' => 'required|string|max:255',
-            'issued_date' => 'required|date',
-            'travel_start_date' => 'required|date',
-            'total_travelers' => 'required|integer|min:1',
-            'price_per_person' => 'required|numeric|min:0',
-        ]);
+public function store(Request $request)
+{
+    // 1️⃣ Validate incoming request
+    $request->validate([
+        'lead_id' => 'nullable|exists:leads,id',
+        'package_id' => 'required|exists:packages,id',
+        'package_items_id' => 'nullable|exists:package_items,id',
+        'primary_full_name' => 'required|string|max:255',
+        'primary_email' => 'nullable|email|max:255',
+        'primary_phone' => 'nullable|string|max:20',
+        'primary_address' => 'nullable|string|max:500',
+        'issued_date' => 'required|date',
+        'travel_start_date' => 'required|date',
+        'adult_count' => 'required|integer|min:1',
+        'child_count' => 'nullable|integer|min:0',
+        'additional_travelers' => 'nullable|string',
+        'total_travelers' => 'required|integer|min:1',
+        'package_name' => 'nullable|string|max:255',
+        'package_type' => 'nullable|string|max:100',
+        'price_per_person' => 'required|numeric|min:0',
+        'discount_amount' => 'nullable|numeric|min:0',
+        'tax_amount' => 'nullable|numeric|min:0',
+        'additional_details' => 'nullable|string',
+    ]);
 
-        $invoice = Invoice::create([
-            'invoice_no' => $this->generateInvoiceNo(),
-            'user_id' => Auth::id(),
-
-            'lead_id' => $request->lead_id,
-            'package_id' => $request->package_id,
-
-            'issued_date' => $request->issued_date,
-            'travel_start_date' => $request->travel_start_date,
-
-            'primary_full_name' => $request->primary_full_name,
-            'primary_email' => $request->primary_email,
-            'primary_phone' => $request->primary_phone,
-            'primary_address' => $request->primary_address,
-
-            'additional_travelers' => $request->additional_travelers ? json_decode($request->additional_travelers, true) : null,
-
-            'total_travelers' => $request->total_travelers,
-            'adult_count' => $request->adult_count,
-            'child_count' => $request->child_count,
-
-            'package_name' => $request->package_name,
-            'package_type' => $request->package_type,
-            'price_per_person' => $request->price_per_person,
-
-            'subtotal_price' => $request->price_per_person * $request->total_travelers,
-            'discount_amount' => $request->discount_amount ?? 0,
-            'tax_amount' => $request->tax_amount ?? 0,
-            'final_price' => $request->price_per_person * $request->total_travelers - ($request->discount_amount ?? 0) + ($request->tax_amount ?? 0),
-
-            'additional_details' => $request->additional_details,
-        ]);
-
-        return redirect()->route('invoices.show', $invoice->id)->with('success', 'Invoice created successfully.');
+    // 2️⃣ Safely parse additional travelers JSON
+    $additionalTravelers = null;
+    if ($request->filled('additional_travelers')) {
+        try {
+            $additionalTravelers = json_decode($request->additional_travelers, true);
+        } catch (\Exception $e) {
+            $additionalTravelers = null; // fallback if JSON invalid
+        }
     }
+
+    // 3️⃣ Calculate derived fields
+    $subtotal = $request->price_per_person * $request->total_travelers;
+    $discount = $request->discount_amount ?? 0;
+    $tax = $request->tax_amount ?? 0;
+    $finalPrice = max(0, $subtotal - $discount + $tax);
+
+    // 4️⃣ Create the invoice
+    $invoice = Invoice::create([
+        'invoice_no' => $this->generateInvoiceNo(),
+        'user_id' => Auth::id(),
+
+        'lead_id' => $request->lead_id,
+        'package_id' => $request->package_id,
+        'package_items_id' => $request->package_items_id,
+
+        'issued_date' => $request->issued_date,
+        'travel_start_date' => $request->travel_start_date,
+
+        'primary_full_name' => $request->primary_full_name,
+        'primary_email' => $request->primary_email,
+        'primary_phone' => $request->primary_phone,
+        'primary_address' => $request->primary_address,
+
+        'additional_travelers' => $additionalTravelers,
+
+        'adult_count' => $request->adult_count,
+        'child_count' => $request->child_count ?? 0,
+        'total_travelers' => $request->total_travelers,
+
+        'package_name' => $request->package_name,
+        'package_type' => $request->package_type,
+        'price_per_person' => $request->price_per_person,
+
+        'subtotal_price' => $subtotal,
+        'discount_amount' => $discount,
+        'tax_amount' => $tax,
+        'final_price' => $finalPrice,
+
+        'additional_details' => $request->additional_details,
+    ]);
+
+    // 5️⃣ Redirect to the invoice page
+    return redirect()->route('invoices.show', $invoice->id)
+                     ->with('success', 'Invoice created successfully.');
+}
 
     /**
      * Show Single Invoice

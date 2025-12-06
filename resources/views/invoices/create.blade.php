@@ -25,7 +25,7 @@
             @include('invoices.components.lead-details')
             @include('invoices.components.package-dropdown')
             @include('invoices.components.package-item-dropdown')
-            @include('invoices.components.traveler-inputs')
+           
             @include('invoices.components.primary-traveler')
             @include('invoices.components.discount-date')
             @include('invoices.components.additional-details')
