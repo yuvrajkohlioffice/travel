@@ -47,7 +47,7 @@ class LeadController extends Controller
                        ->orderBy('package_name')
                        ->get();
 
-    $leads = Lead::with(['package:id,package_name', 'lastFollowup.user:id,name'])
+    $leads = Lead::with(['package:id,package_name', 'lastFollowup.user:id,name', 'latestAssignedUser.user'])
         ->when($user->role_id != 1, function ($query) use ($user) {
             $query->where(function ($q) use ($user) {
                 $q->where('user_id', $user->id)
@@ -121,6 +121,23 @@ class LeadController extends Controller
             'lead' => $lead, // optional, in case you want to update frontend dynamically
         ]);
     }
+    public function updateStatus(Request $request, Lead $lead)
+{
+    $request->validate([
+        'status' => 'required|string|max:255'
+    ]);
+
+    $lead->update([
+        'status' => $request->status
+    ]);
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Lead status updated successfully',
+        'status'  => $lead->status
+    ]);
+}
+
 
     public function destroy(Lead $lead)
     {

@@ -57,6 +57,9 @@ Route::post('/invoices/create-quick', [InvoiceController::class, 'createQuickInv
 Route::get('/api/cars', [\App\Http\Controllers\Api\CarController::class, 'index']);
 
 Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified'])->group(function () {
+    Route::patch('/leads/{lead}/status', [LeadController::class, 'updateStatus'])
+     ->name('leads.updateStatus');
+
     Route::delete('packages/item/{item}', [PackageController::class, 'deleteRelation'])->name('packages.item.delete');
     Route::get('/package-items/filter', [PackageController::class, 'filterPackageItems']);
 

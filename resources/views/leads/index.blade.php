@@ -1,59 +1,55 @@
 <x-app-layout>
 
     <div x-data="leadModals()" x-cloak class="min-h-screen bg-gradient-to-br from-gray-100 via-white to-gray-200">
-
         <div class="ml-64 flex justify-center items-start min-h-screen p-6">
-
             <div class="w-full max-w-7xl space-y-6">
 
-                {{-- ===================== HEADER ===================== --}}
-                <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4 p-6 rounded-xl shadow-lg">
-
-                    <h2 class="text-3xl font-bold flex items-center gap-3">
-                        <i class="fa-solid fa-people-group"></i>
+                <!-- Header -->
+                <div
+                    class="flex flex-col md:flex-row md:justify-between md:items-center gap-4 p-4 rounded-lg border bg-white">
+                    <h2 class="text-2xl font-semibold flex items-center gap-2 text-gray-800">
+                        <i class="fa-solid fa-people-group text-gray-700"></i>
                         Leads
                     </h2>
 
                     <div class="flex flex-col md:flex-row items-center gap-3">
 
-                        {{-- Import Template --}}
                         <a href="/Example-Import-Leads.xlsx"
-                           class="px-4 py-2 bg-white text-blue-600 font-semibold rounded-lg shadow hover:bg-gray-100 transition">
+                            class="px-3 py-2 border border-gray-300 text-gray-700 rounded hover:bg-gray-100 transition">
                             Import Template
                         </a>
 
-                        {{-- Import File Form --}}
                         <form action="{{ route('leads.import') }}" method="POST" enctype="multipart/form-data"
-                              class="flex items-center gap-2">
+                            class="flex items-center gap-2">
                             @csrf
                             <input type="file" name="file" accept=".xlsx,.csv" required
-                                   class="text-sm file:bg-white file:border-0 file:rounded-lg file:px-3 file:py-1 file:font-semibold cursor-pointer" />
+                                class="text-sm file:bg-gray-200 file:border-0 file:rounded file:px-3 file:py-1 file:text-gray-700 cursor-pointer" />
+
                             <button type="submit"
-                                    class="px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition">
-                                Import Leads
+                                class="px-4 py-2 bg-gray-800 text-white rounded hover:bg-black transition">
+                                Import
                             </button>
                         </form>
 
-                        {{-- Add Lead --}}
                         <a href="{{ route('leads.create') }}"
-                           class="px-5 py-2 bg-white text-blue-600 font-semibold rounded-lg shadow hover:bg-gray-100 transition">
+                            class="px-4 py-2 border border-gray-300 text-gray-700 rounded hover:bg-gray-100 transition">
                             + Add Lead
                         </a>
                     </div>
                 </div>
 
-                {{-- ===================== SUCCESS MESSAGE ===================== --}}
+                <!-- Success Message -->
                 @if (session('success'))
-                    <div class="p-4 bg-green-500 text-white rounded-lg shadow">
+                    <div class="p-3 bg-green-600 text-white rounded">
                         {{ session('success') }}
                     </div>
                 @endif
 
-                {{-- ===================== BULK ACTION ===================== --}}
-                <div x-show="selected.length > 0" class="mb-4 flex items-center gap-3">
-                    <span class="font-medium">Assign Selected Leads:</span>
+                <!-- Bulk Assign -->
+                <div x-show="selected.length > 0" class="mb-3 flex items-center gap-3">
+                    <span class="font-medium text-gray-700">Assign Selected Leads:</span>
 
-                    <select x-model="bulkUser" class="border border-gray-300 rounded px-2 py-1">
+                    <select x-model="bulkUser" class="border border-gray-300 rounded px-2 py-1 text-gray-700">
                         <option value="">Select User</option>
                         @foreach ($users as $user)
                             <option value="{{ $user->id }}">{{ $user->name }}</option>
@@ -61,176 +57,227 @@
                     </select>
 
                     <button @click="assignUser()"
-                            class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 transition">
+                        class="px-3 py-1 bg-gray-800 text-white rounded hover:bg-black transition">
                         Assign
                     </button>
 
-                    <span class="text-sm text-gray-500" x-text="selected.length + ' lead(s) selected'"></span>
+                    <span class="text-sm text-gray-500" x-text="selected.length + ' selected'"></span>
                 </div>
 
+                <!-- Table -->
+                <div class="bg-white rounded-lg border p-4 overflow-x-auto">
 
-                {{-- ===================== LEADS TABLE ===================== --}}
-                <div class="bg-white rounded-xl shadow overflow-x-auto p-4">
-
-                    <x-data-table 
-                        id="Leads-table"
-                        :headers="['#','ID','Client Info','Country','Reminder','Inquiry For','Proposal','Status','Action']"
-                        :excel="true"
-                        :print="true"
-                        title="Leads"
-                        resourceName="Leads"
-                    >
+                    <x-data-table id="Leads-table" :headers="[
+                        '#',
+                        'ID',
+                        'Client Info',
+                        'Location',
+                        'Reminder',
+                        'Inquiry',
+                        'Proposal',
+                        'Status',
+                        'Assigned',
+                        'Action',
+                    ]" :excel="true" :print="true" title="Leads"
+                        resourceName="Leads">
 
                         @foreach ($leads as $lead)
-
                             @php
-                                // Status Color Maps (moved to cleaner array)
-                                $statusClass = [
-                                    'Hot' => 'bg-red-500',
-                                    'Warm' => 'bg-yellow-400',
-                                    'Cold' => 'bg-gray-400',
-                                    'Interested' => 'bg-green-500',
-                                ][$lead->lead_status] ?? 'bg-gray-300';
-
-                                $stageClass = [
-                                    'Pending' => 'bg-blue-400',
-                                    'Approved' => 'bg-green-500',
-                                    'Quotation Sent' => 'bg-indigo-500',
-                                    'Follow-up Taken' => 'bg-purple-500',
-                                    'Converted' => 'bg-teal-500',
-                                    'Lost' => 'bg-gray-500',
-                                    'On Hold' => 'bg-orange-400',
-                                    'Rejected' => 'bg-red-600',
-                                ][$lead->status] ?? 'bg-gray-300';
-
-                                $maskedPhone = str_repeat('*', strlen($lead->phone_number) - 4) . substr($lead->phone_number, -4);
-                                $daysFloor = $lead->created_at->diffInDays();
+                                $maskedPhone =
+                                    str_repeat('*', strlen($lead->phone_number) - 4) . substr($lead->phone_number, -4);
+                                $stageClass =
+                                    [
+                                        'Pending' => 'bg-blue-400 text-white',
+                                        'Approved' => 'bg-green-500 text-white',
+                                        'Quotation Sent' => 'bg-indigo-500 text-white',
+                                        'Follow-up Taken' => 'bg-purple-500 text-white',
+                                        'Converted' => 'bg-teal-500 text-white',
+                                        'Lost' => 'bg-gray-500 text-white',
+                                        'On Hold' => 'bg-orange-400 text-white',
+                                        'Rejected' => 'bg-red-600 text-white',
+                                    ][$lead->status] ?? 'bg-gray-300 text-white';
+                                $statusClass =
+                                    [
+                                        'Hot' => 'bg-red-500',
+                                        'Warm' => 'bg-yellow-400',
+                                        'Cold' => 'bg-gray-400',
+                                        'Interested' => 'bg-green-500',
+                                    ][$lead->lead_status] ?? 'bg-gray-300';
                             @endphp
 
-                            <tr class="border-b hover:bg-gray-50 transition">
-
-                                {{-- Checkbox --}}
+                            <tr class="border-b hover:bg-gray-50">
                                 <td class="p-3 text-center">
-                                    <input type="checkbox" value="{{ $lead->id }}" 
-                                           @change="toggleLead($event)"
-                                           class="h-4 w-4 text-blue-600 rounded">
+                                    <input type="checkbox" value="{{ $lead->id }}" @change="toggleLead($event)"
+                                        class="h-4 w-4 text-gray-700 border-gray-400">
                                 </td>
 
-                                {{-- Serial --}}
-                                <td class="p-3 text-center">{{ $loop->iteration }}</td>
+                                <td class="p-3 text-center text-gray-700">
+                                    {{ $loop->iteration }}
+                                </td>
 
-                                {{-- Client Info --}}
-                                <td class="p-3">
-                                    <div class="font-semibold text-gray-800 flex items-center gap-2">
+                                <td class="p-3 text-gray-800">
+                                    <div class="font-medium flex items-center gap-2">
                                         {{ $lead->name }}
 
-                                        <span class="px-3 py-1 rounded-full text-white text-xs {{ $statusClass }}">
+                                        <!-- Simple Label -->
+                                        <span class="px-2 py-0.5 rounded text-white font-extrabold {{ $statusClass }}">
                                             {{ $lead->lead_status ?? 'N/A' }}
                                         </span>
 
                                         <button @click="openEditModal({{ $lead->id }})"
-                                                class="mx-1 text-gray-600 hover:text-blue-600"
-                                                aria-label="Edit Lead">
+                                            class="text-gray-600 hover:text-black">
                                             <i class="fa-solid fa-pen-to-square"></i>
                                         </button>
                                     </div>
 
-                                    <a href="mailto:{{ $lead->email }}" class="text-blue-600 hover:underline">
+                                    <a href="mailto:{{ $lead->email }}" class="text-gray-700 hover:underline text-sm">
                                         {{ $lead->email }}
                                     </a>
 
-                                    <div class="text-green-600 font-mono">
+                                    <div class="text-gray-600 text-sm font-mono">
                                         +{{ $lead->phone_code }} {{ $maskedPhone }}
                                     </div>
 
-                                    <div class="text-gray-500 text-sm">
-                                        {{ $lead->created_at->format('d-M-y') }} •
-                                        <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
-                                            {{ $daysFloor }} days old
-                                        </span>
+                                    <div class="text-gray-500 text-xs">
+                                        {{ $lead->created_at->format('d-M-y') }}
                                     </div>
                                 </td>
 
-                                {{-- Country --}}
-                                <td class="p-3 text-center">
-                                    <div>{{ $lead->country }}</div>
-                                    <div>{{ $lead->district }}</div>
-                                    <div>{{ $lead->city }}</div>
+                                <td class="p-3 text-center text-gray-700">
+                                    {{ $lead->country }} <br>
+                                    {{ $lead->district }} <br>
+                                    {{ $lead->city }}
                                 </td>
 
-                                {{-- Reminder --}}
                                 <td class="p-3 text-center">
                                     <button @click="openFollowModal({{ $lead->id }}, '{{ $lead->name }}')"
-                                            class="border-2 border-green-500 text-green-500 px-4 py-1 rounded-lg hover:bg-green-500 hover:text-white transition">
-                                        <i class="fa-solid fa-phone-volume mr-1"></i> Followup
+                                        class="px-3 py-1 border border-gray-400 rounded text-gray-700 hover:bg-gray-200 transition text-sm">
+                                        Followup
                                     </button>
 
                                     @if ($lead->lastFollowup)
-                                        <div class="text-sm text-gray-700 mt-2">
+                                        <div class="text-xs text-gray-600 mt-2">
                                             <strong>Last:</strong> {{ $lead->lastFollowup->reason }}<br>
-                                            <strong>By:</strong> {{ $lead->lastFollowup->user->name ?? 'N/A' }}<br>
-                                            <span class="text-xs text-gray-500">
-                                                {{ $lead->lastFollowup->created_at->format('d M Y h:i A') }}
-                                            </span>
+                                            <strong>By:</strong> {{ $lead->lastFollowup->user->name ?? 'N/A' }}
                                         </div>
                                     @endif
                                 </td>
 
-                                {{-- Inquiry --}}
-                                <td class="p-3 text-center"
-                                    title="{{ $lead->package->package_name ?? $lead->inquiry_text }}">
+                                <td class="p-3 text-center text-gray-700">
                                     {{ $lead->package->package_name ?? Str::limit($lead->inquiry_text, 20) }}
                                 </td>
 
-                                {{-- Proposal --}}
                                 <td class="p-3 text-center">
+                                    <button
+                                        @click="handleShare({{ $lead->id }}, '{{ $lead->name }}',
+                                '{{ $lead->package->id ?? '' }}','{{ $lead->email }}')"
+                                        class="px-3 py-1 border border-gray-400 rounded text-gray-700 hover:bg-gray-200 transition text-sm">
+                                        <i class="fa-solid fa-share"></i>
+                                    </button>
 
-                                   <button
-                                            @click="handleShare({{ $lead->id }}, '{{ $lead->name }}', '{{ $lead->package->id ?? '' }}','{{ $lead->email }}')"
-                                            class="border-2 border-green-500 text-green-500 px-4 py-1 rounded-lg hover:bg-green-500 hover:text-white transition duration-300">
-                                            <i class="fa-solid fa-share"></i>
-                                        </button>
-                                        <button
-                                            @click="openInvoiceModal({{ $lead->id }}, '{{ $lead->name }}','{{ $lead->people_count }}','{{ $lead->child_count }}','{{ $lead->package->id ?? '' }}','{{ $lead->email }}')"
-                                            class="border-2 border-green-500 text-green-500 px-4 py-1 rounded-lg hover:bg-green-500 hover:text-white transition">
-                                            <i class="fa-solid fa-file-invoice"></i>
-                                        </button>
-
-
-
+                                    <button
+                                        @click="openInvoiceModal({{ $lead->id }}, '{{ $lead->name }}',
+                                '{{ $lead->people_count }}','{{ $lead->child_count }}',
+                                '{{ $lead->package->id ?? '' }}','{{ $lead->email }}')"
+                                        class="px-3 py-1 border border-gray-400 rounded text-gray-700 hover:bg-gray-200 transition text-sm ml-1">
+                                        <i class="fa-solid fa-file-invoice"></i>
+                                    </button>
                                 </td>
 
-                                {{-- Status --}}
                                 <td class="p-3 text-center">
-                                    <span class="px-3 py-1 rounded-full text-white {{ $stageClass }}">
-                                        {{ $lead->status ?? 'N/A' }}
-                                    </span>
+                                    <div x-data="{ open: false, value: '{{ $lead->status }}' }" class="relative">
+
+                                        <!-- Display Status (Shown Initially) -->
+                                        <div x-show="!open" @click="open = true"
+                                            class="cursor-pointer text-xs px-2 py-1 rounded {{ $stageClass }}">
+                                            <span x-text="value || 'Select Status'"></span>
+                                        </div>
+
+                                        <!-- Dropdown (Hidden Until Click) -->
+                                        <select x-show="open" x-cloak
+                                            @change="
+                                                        value = $event.target.value;
+                                                        open = false;
+                                                        updateStatus({{ $lead->id }}, value);"
+                                            @click.outside="open = false"
+                                            class="px-2 py-1 rounded text-xs border bg-white dark:bg-gray-800">
+                                            <option value="">Select Status</option>
+                                            <option value="Pending" {{ $lead->status == 'Pending' ? 'selected' : '' }}>
+                                                Pending</option>
+                                            <option value="Approved"
+                                                {{ $lead->status == 'Approved' ? 'selected' : '' }}>Approved</option>
+                                            <option value="Quotation Sent"
+                                                {{ $lead->status == 'Quotation Sent' ? 'selected' : '' }}>Quotation
+                                                Sent</option>
+                                            <option value="Follow-up Taken"
+                                                {{ $lead->status == 'Follow-up Taken' ? 'selected' : '' }}>Follow-up
+                                                Taken</option>
+                                            <option value="Hot" {{ $lead->status == 'Hot' ? 'selected' : '' }}>Hot
+                                            </option>
+                                            <option value="Warm" {{ $lead->status == 'Warm' ? 'selected' : '' }}>Warm
+                                            </option>
+                                            <option value="Cold" {{ $lead->status == 'Cold' ? 'selected' : '' }}>Cold
+                                            </option>
+                                            <option value="Lost" {{ $lead->status == 'Lost' ? 'selected' : '' }}>Lost
+                                            </option>
+                                            <option value="Converted"
+                                                {{ $lead->status == 'Converted' ? 'selected' : '' }}>Converted</option>
+                                            <option value="On Hold" {{ $lead->status == 'On Hold' ? 'selected' : '' }}>
+                                                On Hold</option>
+                                            <option value="Rejected"
+                                                {{ $lead->status == 'Rejected' ? 'selected' : '' }}>Rejected</option>
+                                        </select>
+
+                                    </div>
                                 </td>
 
-                                {{-- Actions --}}
-                                <td class="p-3 text-center flex justify-center gap-2">
-                                    <a href="{{ route('leads.show', $lead->id) }}" class="btn-view"><i class="fa-solid fa-eye"></i></a>
-                                    <a href="{{ route('leads.assign.form', $lead->id) }}" class="btn-assign"><i class="fa-solid fa-user-plus"></i></a>
+
+
+                                <td class="p-3 text-center text-xs text-gray-700 space-y-1">
+                                    <div>
+                                        <strong>Assigned:</strong>
+                                        {{ $lead->latestAssignedUser->user->name ?? 'N/A' }}
+                                    </div>
+                                    <div>
+                                        <strong>By:</strong>
+                                        {{ $lead->latestAssignedUser->assignedBy->name ?? 'N/A' }}
+                                    </div>
+                                    <div>
+                                        <strong>Created:</strong>
+                                        {{ $lead->createdBy->name ?? 'System' }}
+                                    </div>
+                                </td>
+
+                                <td class="p-3 text-center">
+                                    <a href="{{ route('leads.show', $lead->id) }}"
+                                        class="px-3 py-1 border border-gray-400 rounded text-gray-700 hover:bg-gray-200 transition text-sm ml-1">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </a>
+
+                                    <a href="{{ route('leads.assign.form', $lead->id) }}"
+                                        class="px-3 py-1 border border-gray-400 rounded text-gray-700 hover:bg-gray-200 transition text-sm ml-1">
+                                        <i class="fa-solid fa-user-plus"></i>
+                                    </a>
 
                                     <form action="{{ route('leads.destroy', $lead->id) }}" method="POST"
-                                          onsubmit="return confirm('Delete this lead?')">
+                                        onsubmit="return confirm('Delete this lead?')">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="btn-delete">
+                                        <button type="submit"
+                                            class="px-3 py-1 border border-gray-400 rounded text-gray-700 hover:bg-gray-200 transition text-sm m-1 ">
                                             <i class="fa-solid fa-trash"></i>
                                         </button>
                                     </form>
                                 </td>
 
                             </tr>
-
                         @endforeach
-
                     </x-data-table>
                 </div>
 
             </div>
         </div>
+
 
         {{-- Modals --}}
         <x-edit-lead />
@@ -603,6 +650,70 @@
                 closeEditModal() {
                     this.editOpen = false;
                 },
+                async submitEdit() {
+                    try {
+                        if (!this.editForm.id) {
+                            alert("Lead ID missing—cannot update.");
+                            return;
+                        }
+
+                        const response = await fetch(`/leads/${this.editForm.id}`, {
+                            method: "PATCH",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "X-CSRF-TOKEN": document
+                                    .querySelector('meta[name="csrf-token"]')
+                                    .getAttribute("content"),
+                            },
+                            body: JSON.stringify(this.editForm),
+                        });
+
+                        const result = await response.json();
+
+                        if (!response.ok) {
+                            alert(result.message || "Validation failed");
+                            return;
+                        }
+
+                        alert("Lead Updated Successfully");
+                        this.closeEditModal();
+                        window.location.reload();
+
+                    } catch (error) {
+                        console.error(error);
+                        alert("Something went wrong while updating lead");
+                    }
+                },
+                async updateStatus(id, newStatus) {
+                    try {
+                        const response = await fetch(`/leads/${id}/status`, {
+                            method: "PATCH",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "X-CSRF-TOKEN": document
+                                    .querySelector('meta[name="csrf-token"]')
+                                    .getAttribute("content"),
+                            },
+                            body: JSON.stringify({
+                                status: newStatus
+                            }),
+                        });
+
+                        const result = await response.json();
+
+                        if (!response.ok) {
+                            alert(result.message || "Failed to update status");
+                            return;
+                        }
+                        window.location.reload();
+                        console.log("Status updated:", result.status);
+
+                    } catch (error) {
+                        console.error(error);
+                        alert("Error while updating status");
+                    }
+                },
+
 
 
                 /* ---------------- BULK ASSIGN ---------------- */

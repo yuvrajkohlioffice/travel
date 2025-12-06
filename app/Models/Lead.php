@@ -53,6 +53,10 @@ class Lead extends Model
     {
         return $this->hasMany(LeadUser::class);
     }
+public function latestAssignedUser()
+{
+    return $this->hasOne(LeadUser::class)->latestOfMany();
+}
 
     /**
      * User who created the lead
