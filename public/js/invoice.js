@@ -15,7 +15,7 @@ function invoiceGenerator({ invoice = null, lead = null, packageItems = [] } = {
         discountAmount: 0,
         taxAmount: 0,
         finalPrice: 0,
-manualBasePrice: null, // null means "no manual override"
+        manualBasePrice: null, // null means "no manual override"
 
         adultCount: Number(invoice?.adult_count ?? 1),
         childCount: Number(invoice?.child_count ?? 0),
@@ -45,7 +45,7 @@ manualBasePrice: null, // null means "no manual override"
         },
 
         get totalTravelers() {
-            // Normalize additional travelers in case it's a string
+            // Primary traveler is always 1
             let extra = [];
             try {
                 if (Array.isArray(this.additionalTravelers)) {
@@ -57,8 +57,16 @@ manualBasePrice: null, // null means "no manual override"
                 console.warn("Invalid additionalTravelers JSON", e);
                 extra = [];
             }
-            return Number(this.adultCount) + Number(this.childCount) + extra.length;
+
+            // Total travelers = primary traveler (1) + number of additional travelers
+            return 1 + extra.length;
         },
+
+        canAddTraveler() {
+            // Example: maximum 10 travelers
+            return this.totalTravelers < 10;
+        },
+
 
         //---------------------------------
         // DATA NORMALIZATION
@@ -106,8 +114,39 @@ manualBasePrice: null, // null means "no manual override"
         //---------------------------------
         addTraveler() {
             this.additionalTravelers.push({ name: "", relation: "", age: "" });
+            this.adultCount = Number(this.adultCount) - 1; // or adjust logic if child
             this.recalculate();
         },
+
+recalculateAdditionalTravelers() {
+    // Total adults excluding primary
+    const extraAdults = Math.max(0, this.adultCount - 1); // primary is 1
+    const extraChildren = this.childCount;
+
+    const maxAdults = 5;
+    const maxChildren = 5;
+    const maxTotal = 10;
+
+    // Enforce limits
+    const allowedExtraAdults = Math.min(extraAdults, maxAdults - 1); // primary counts
+    const allowedExtraChildren = Math.min(extraChildren, maxChildren);
+
+    let travelers = [];
+
+    // Add adult travelers
+    for (let i = 0; i < allowedExtraAdults; i++) {
+        travelers.push({ name: "", relation: "Adult", age: "" });
+    }
+
+    // Add child travelers
+    for (let i = 0; i < allowedExtraChildren; i++) {
+        travelers.push({ name: "", relation: "Child", age: "" });
+    }
+
+    // Ensure total travelers does not exceed maxTotal - 1 (primary counted separately)
+    this.additionalTravelers = travelers.slice(0, maxTotal - 1);
+},
+
 
         removeTraveler(index) {
             this.additionalTravelers.splice(index, 1);
@@ -139,20 +178,19 @@ manualBasePrice: null, // null means "no manual override"
          * Updates all prices in a proper order
          * Handles subtotal, discount, tax, and final price
          */
-updatePrices() {
-    // Determine base price from selected item
-    const item = this.packageItems.find(i => String(i.id) === String(this.selectedItem));
-    const defaultPrice = item ? Number(item[this.selectedRoomType] ?? 0) : 0;
+        updatePrices() {
+            const item = this.packageItems.find(i => String(i.id) === String(this.selectedItem));
+            const defaultPrice = item ? Number(item[this.selectedRoomType] ?? 0) : 0;
 
-    // Use manual override if set
-    this.basePrice = this.manualBasePrice !== null ? this.manualBasePrice : defaultPrice;
+            // If manual price is set, use it; otherwise, use package item price
+            this.basePrice = this.manualBasePrice !== null ? this.manualBasePrice : defaultPrice;
 
-    // Perform full recalculation
-    this.calculateSubtotal();
-    this.calculateDiscount();
-    this.calculateTax();
-    this.calculateFinalPrice();
-},
+            this.calculateSubtotal();  // adults full, children half
+            this.calculateDiscount();
+            this.calculateTax();
+            this.calculateFinalPrice();
+        },
+
 
 
         //---------------------------------
@@ -198,6 +236,7 @@ updatePrices() {
         recalculate() {
             this.normalizeTravelers();
             this.updatePrices();
+            this.recalculateAdditionalTravelers();
             this.updateHiddenFields();
         },
 
@@ -211,16 +250,23 @@ updatePrices() {
             if (this.selectedPackage) this.loadPackage();
 
             // Watch changes in selected item and room type
-            this.$watch('selectedItem', (newVal, oldVal) => {
-                console.log("Package Item changed:", oldVal, "→", newVal);
-                console.log("Selected item data:", this.packageItems.find(i => i.id == newVal));
+            this.$watch('selectedItem', (newVal) => {
+                this.manualBasePrice = null; // reset manual price on item change
+                this.updatePrices();
+            });
+// Watch changes in adult/child count
+this.$watch(() => this.adultCount, () => {
+    this.recalculate();
+});
+this.$watch(() => this.childCount, () => {
+    this.recalculate();
+});
+
+            this.$watch('selectedRoomType', (newVal) => {
+                this.manualBasePrice = null; // reset manual price on room type change
                 this.updatePrices();
             });
 
-            this.$watch('selectedRoomType', (newVal, oldVal) => {
-                console.log("Room Type changed:", oldVal, "→", newVal);
-                this.updatePrices();
-            });
 
             // Global watcher for reactive updates
             this.$watch(() => ({
