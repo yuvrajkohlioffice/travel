@@ -65,6 +65,180 @@
                 </div>
 
                 <!-- Table -->
+                <form method="GET" x-data class="mb-4 bg-white p-4 rounded-lg shadow">
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+
+                        <!-- Country -->
+                        <select name="country" x-on:change="$el.form.submit()"
+                            class="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm bg-white">
+                            <option value="">Country</option>
+                            @foreach ($leads->pluck('country')->unique() as $country)
+                                <option value="{{ $country }}"
+                                    {{ request('country') == $country ? 'selected' : '' }}>
+                                    {{ $country }}
+                                </option>
+                            @endforeach
+                        </select>
+
+                        <!-- District -->
+                        <select name="district" x-on:change="$el.form.submit()"
+                            class="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm bg-white">
+                            <option value="">District</option>
+                            @foreach ($leads->pluck('district')->unique() as $district)
+                                <option value="{{ $district }}"
+                                    {{ request('district') == $district ? 'selected' : '' }}>
+                                    {{ $district }}
+                                </option>
+                            @endforeach
+                        </select>
+
+                        <!-- City -->
+                        <select name="city" x-on:change="$el.form.submit()"
+                            class="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm bg-white">
+                            <option value="">City</option>
+                            @foreach ($leads->pluck('city')->unique() as $city)
+                                <option value="{{ $city }}" {{ request('city') == $city ? 'selected' : '' }}>
+                                    {{ $city }}
+                                </option>
+                            @endforeach
+                        </select>
+
+                        <!-- Lead Status -->
+                        <select name="lead_status" x-on:change="$el.form.submit()"
+                            class="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm bg-white">
+                            <option value="">Lead Status</option>
+                            <option value="Hot" {{ request('lead_status') == 'Hot' ? 'selected' : '' }}>Hot</option>
+                            <option value="Warm" {{ request('lead_status') == 'Warm' ? 'selected' : '' }}>Warm
+                            </option>
+                            <option value="Cold" {{ request('lead_status') == 'Cold' ? 'selected' : '' }}>Cold
+                            </option>
+                        </select>
+
+                        <!-- Stage -->
+                        <select name="status" x-on:change="$el.form.submit()"
+                            class="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm bg-white">
+                            <option value="">Stage</option>
+                            <option value="Pending" {{ request('status') == 'Pending' ? 'selected' : '' }}>Pending
+                            </option>
+                            <option value="Approved" {{ request('status') == 'Approved' ? 'selected' : '' }}>Approved
+                            </option>
+                            <option value="Quotation Sent"
+                                {{ request('status') == 'Quotation Sent' ? 'selected' : '' }}>Quotation Sent</option>
+                            <option value="Follow-up Taken"
+                                {{ request('status') == 'Follow-up Taken' ? 'selected' : '' }}>Follow-up Taken</option>
+
+                            <option value="Lost" {{ request('status') == 'Lost' ? 'selected' : '' }}>Lost</option>
+                            <option value="Converted" {{ request('status') == 'Converted' ? 'selected' : '' }}>
+                                Converted</option>
+                            <option value="On Hold" {{ request('status') == 'On Hold' ? 'selected' : '' }}>On Hold
+                            </option>
+                            <option value="Rejected" {{ request('status') == 'Rejected' ? 'selected' : '' }}>Rejected
+                            </option>
+                        </select>
+
+
+                        <!-- Package -->
+                        <select name="package_id" x-on:change="$el.form.submit()"
+                            class="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm bg-white">
+                            <option value="">Package</option>
+                            @foreach ($packages as $package)
+                                <option value="{{ $package->id }}"
+                                    {{ request('package_id') == $package->id ? 'selected' : '' }}>
+                                    {{ $package->package_name }}
+                                </option>
+                            @endforeach
+                        </select>
+
+                        <!-- Created By -->
+                        <select name="user_id" x-on:change="$el.form.submit()"
+                            class="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm bg-white">
+                            <option value="">Created By</option>
+                            @foreach ($users as $u)
+                                <option value="{{ $u->id }}"
+                                    {{ request('user_id') == $u->id ? 'selected' : '' }}>
+                                    {{ $u->name }}
+                                </option>
+                            @endforeach
+                        </select>
+
+                        <!-- Assigned To -->
+                        <select name="assigned_to" x-on:change="$el.form.submit()"
+                            class="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm bg-white">
+                            <option value="">Assigned To</option>
+                            @foreach ($users as $u)
+                                <option value="{{ $u->id }}"
+                                    {{ request('assigned_to') == $u->id ? 'selected' : '' }}>
+                                    {{ $u->name }}
+                                </option>
+                            @endforeach
+                        </select>
+
+                        <!-- Reset button -->
+                        <a href="{{ route('leads.index') }}"
+                            class="w-full px-4 py-2 bg-gray-500 text-white rounded text-sm flex items-center justify-center">
+                            Reset
+                        </a>
+
+                    </div>
+                </form>
+              
+
+                <div class="flex flex-wrap gap-2 mb-4">
+                    @php
+                        $statuses = [
+                            '' => 'All',
+                            'Follow-up Taken' => 'Follow-up Taken',
+                            'Converted' => 'Converted',
+                            'Approved' => 'Approved',
+                            'Rejected' => 'Rejected',
+                        ];
+                    @endphp
+
+                    @foreach ($statuses as $value => $label)
+    <form method="GET" class="inline">
+        @foreach (request()->except('status') as $name => $val)
+            <input type="hidden" name="{{ $name }}" value="{{ $val }}">
+        @endforeach
+        @if ($value != '')
+            <input type="hidden" name="status" value="{{ $value }}">
+        @endif
+        <button type="submit"
+            class="px-4 py-2 rounded-lg border border-gray-300 text-sm {{ $filters['status'] == $value ? 'bg-blue-500 text-white' : 'bg-white' }}">
+            {{ $label }} ({{ $statusCounts[$value ?: 'All'] ?? 0 }})
+        </button>
+    </form>
+@endforeach
+
+                </div>
+                  <div class="flex flex-wrap gap-2 mb-4">
+
+                    <!-- Time Filters -->
+                    @php
+                        $times = ['all' => 'All', 'today' => 'Today', 'week' => 'This Week', 'month' => 'This Month'];
+                    @endphp
+
+                    @foreach ($times as $key => $label)
+    <form method="GET" class="inline">
+        @foreach (request()->except('time') as $name => $value)
+            <input type="hidden" name="{{ $name }}" value="{{ $value }}">
+        @endforeach
+        <input type="hidden" name="time" value="{{ $key }}">
+        <button type="submit"
+            class="px-4 py-2 rounded-lg border border-gray-300 text-sm {{ $filters['time'] == $key ? 'bg-blue-500 text-white' : 'bg-white' }}">
+            {{ $label }} 
+        </button>
+    </form>
+@endforeach
+
+
+                </div>
+
+
+
+
+
+
                 <div class="bg-white rounded-lg border p-4 overflow-x-auto">
 
                     <x-data-table id="Leads-table" :headers="[
@@ -78,8 +252,8 @@
                         'Status',
                         'Assigned',
                         'Action',
-                    ]" :excel="true" :print="true" title="Leads"
-                        resourceName="Leads">
+                    ]" :excel="true" :print="true"
+                        title="Leads" resourceName="Leads">
 
                         @foreach ($leads as $lead)
                             @php
@@ -120,7 +294,8 @@
                                         {{ $lead->name }}
 
                                         <!-- Simple Label -->
-                                        <span class="px-2 py-0.5 rounded text-white font-extrabold {{ $statusClass }}">
+                                        <span
+                                            class="px-2 py-0.5 rounded text-white font-extrabold {{ $statusClass }}">
                                             {{ $lead->lead_status ?? 'N/A' }}
                                         </span>
 
@@ -130,7 +305,8 @@
                                         </button>
                                     </div>
 
-                                    <a href="mailto:{{ $lead->email }}" class="text-gray-700 hover:underline text-sm">
+                                    <a href="mailto:{{ $lead->email }}"
+                                        class="text-gray-700 hover:underline text-sm">
                                         {{ $lead->email }}
                                     </a>
 
@@ -202,7 +378,8 @@
                                             @click.outside="open = false"
                                             class="px-2 py-1 rounded text-xs border bg-white dark:bg-gray-800">
                                             <option value="">Select Status</option>
-                                            <option value="Pending" {{ $lead->status == 'Pending' ? 'selected' : '' }}>
+                                            <option value="Pending"
+                                                {{ $lead->status == 'Pending' ? 'selected' : '' }}>
                                                 Pending</option>
                                             <option value="Approved"
                                                 {{ $lead->status == 'Approved' ? 'selected' : '' }}>Approved</option>
@@ -212,17 +389,14 @@
                                             <option value="Follow-up Taken"
                                                 {{ $lead->status == 'Follow-up Taken' ? 'selected' : '' }}>Follow-up
                                                 Taken</option>
-                                            <option value="Hot" {{ $lead->status == 'Hot' ? 'selected' : '' }}>Hot
-                                            </option>
-                                            <option value="Warm" {{ $lead->status == 'Warm' ? 'selected' : '' }}>Warm
-                                            </option>
-                                            <option value="Cold" {{ $lead->status == 'Cold' ? 'selected' : '' }}>Cold
-                                            </option>
-                                            <option value="Lost" {{ $lead->status == 'Lost' ? 'selected' : '' }}>Lost
+
+                                            <option value="Lost" {{ $lead->status == 'Lost' ? 'selected' : '' }}>
+                                                Lost
                                             </option>
                                             <option value="Converted"
                                                 {{ $lead->status == 'Converted' ? 'selected' : '' }}>Converted</option>
-                                            <option value="On Hold" {{ $lead->status == 'On Hold' ? 'selected' : '' }}>
+                                            <option value="On Hold"
+                                                {{ $lead->status == 'On Hold' ? 'selected' : '' }}>
                                                 On Hold</option>
                                             <option value="Rejected"
                                                 {{ $lead->status == 'Rejected' ? 'selected' : '' }}>Rejected</option>

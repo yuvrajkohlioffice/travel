@@ -27,50 +27,71 @@ class Lead extends Model
         'status',
         'user_id',
         'people_count',
-        'child_count', // Add this
+        'child_count',
     ];
 
     protected $casts = [
         'created_at' => 'datetime',
     ];
 
-    /**
-     * Relationship with Package (optional)
-     */
+    // ================= Relationships =================
+
     public function package()
     {
         return $this->belongsTo(Package::class, 'package_id');
     }
+
     public function followups()
     {
         return $this->hasMany(Followup::class);
     }
 
-    /**
-     * Relationship with LeadUser (multiple assigned users)
-     */
+    public function lastFollowup()
+    {
+        return $this->hasOne(Followup::class)->latestOfMany();
+    }
+
     public function assignedUsers()
     {
         return $this->hasMany(LeadUser::class);
     }
-public function latestAssignedUser()
-{
-    return $this->hasOne(LeadUser::class)->latestOfMany();
-}
 
-    /**
-     * User who created the lead
-     */
+    public function latestAssignedUser()
+    {
+        return $this->hasOne(LeadUser::class)->latestOfMany();
+    }
+
     public function createdBy()
     {
         return $this->belongsTo(User::class, 'user_id');
     }
+
     public function views()
     {
         return $this->hasMany(LeadView::class);
     }
-    public function lastFollowup()
+
+    // ================= Optional Accessors =================
+    // You can get counts directly without loading relations separately
+
+    public function getFollowupsCountAttribute()
     {
-        return $this->hasOne(Followup::class)->latestOfMany();
+        return $this->followups()->count();
+    }
+
+    public function getAssignedUsersCountAttribute()
+    {
+        return $this->assignedUsers()->count();
+    }
+
+    public function getViewsCountAttribute()
+    {
+        return $this->views()->count();
+    }
+
+    // Example for last followup date
+    public function getLastFollowupDateAttribute()
+    {
+        return optional($this->lastFollowup)->created_at;
     }
 }

@@ -29,45 +29,79 @@ class LeadController extends Controller
             'lead_status' => $lead->lead_status,
             'lead_source' => $lead->lead_source,
             'website' => $lead->website,
-            'status'=> $lead->status,
+            'status' => $lead->status,
             'package_id' => $lead->package_id,
             'inquiry_text' => $lead->inquiry_text,
             'people_count' => $lead->people_count,
             'child_count' => $lead->child_count,
         ]);
     }
-   public function index()
-{
-    $user = auth()->user();
+    public function index(Request $request)
+    {
+        $user = auth()->user();
 
-    $users = User::select('id', 'name')->get();
+        // Users & Packages for filters
+        $users = User::select('id', 'name')->get();
+        $packages = Package::select('id', 'package_name')->orderBy('package_name')->get();
 
-    // Cached packages for faster load (optional)
-    $packages = Package::select('id','package_name','package_docs')
-                       ->orderBy('package_name')
-                       ->get();
+        // Filters from request
+        $filters = [
+            'country' => $request->country,
+            'district' => $request->district,
+            'city' => $request->city,
+            'lead_status' => $request->lead_status,
+            'status' => $request->status,
+            'package_id' => $request->package_id,
+            'user_id' => $request->user_id,
+            'assigned_to' => $request->assigned_to,
+            'time' => $request->time ?? 'all',
+        ];
 
-    $leads = Lead::with(['package:id,package_name', 'lastFollowup.user:id,name', 'latestAssignedUser.user'])
-        ->when($user->role_id != 1, function ($query) use ($user) {
-            $query->where(function ($q) use ($user) {
-                $q->where('user_id', $user->id)
-                  ->orWhereHas('assignedUsers', fn($u) => $u->where('user_id', $user->id));
+        $baseQuery = Lead::with(['package:id,package_name', 'lastFollowup.user:id,name', 'latestAssignedUser.user:id,name', 'createdBy:id,name'])
+            ->when($user->role_id != 1, fn($q) => $q->where(fn($q2) => $q2->where('user_id', $user->id)->orWhereHas('assignedUsers', fn($uq) => $uq->where('user_id', $user->id))))
+            ->when($filters['country'], fn($q, $v) => $q->where('country', $v))
+            ->when($filters['district'], fn($q, $v) => $q->where('district', $v))
+            ->when($filters['city'], fn($q, $v) => $q->where('city', $v))
+            ->when($filters['lead_status'], fn($q, $v) => $q->where('lead_status', $v))
+            ->when($filters['package_id'], fn($q, $v) => $q->where('package_id', $v))
+            ->when($filters['user_id'], fn($q, $v) => $q->where('user_id', $v))
+            ->when($filters['assigned_to'], fn($q, $v) => $q->whereHas('assignedUsers', fn($uq) => $uq->where('user_id', $v)))
+            ->when($filters['time'] && $filters['time'] != 'all', function ($q) use ($filters) {
+                if ($filters['time'] === 'today') {
+                    $q->whereBetween('updated_at', [now()->startOfDay(), now()->endOfDay()]);
+                } elseif ($filters['time'] === 'week') {
+                    $q->whereBetween('updated_at', [now()->startOfWeek(), now()->endOfWeek()]);
+                } elseif ($filters['time'] === 'month') {
+                    $q->whereBetween('updated_at', [now()->startOfMonth(), now()->endOfMonth()]);
+                }
             });
-        })
-        ->orderByRaw("
-            CASE
-                WHEN lead_status = 'Hot' THEN 1
-                WHEN lead_status = 'Warm' THEN 2
-                WHEN lead_status = 'Cold' THEN 3
-                ELSE 4
-            END
-        ")
-        ->latest('id')
-        ->get();
+        $leads = (clone $baseQuery)
+            ->when($filters['status'], fn($q, $v) => $q->where('status', $v))
+            ->orderByRaw(
+                "
+        CASE
+            WHEN lead_status = 'Hot' THEN 1
+            WHEN lead_status = 'Warm' THEN 2
+            WHEN lead_status = 'Cold' THEN 3
+            ELSE 4
+        END
+    ",
+            )
+            ->latest('id')
+            ->get();
 
-    return view('leads.index', compact('leads', 'packages', 'users'));
-}
+        // Get filtered leads
+        // Get counts for buttons (status + time)
+        $statusCounts = [
+            'All' => (clone $baseQuery)->count(),
+            'Follow-up Taken' => (clone $baseQuery)->where('status', 'Follow-up Taken')->count(),
+            'Converted' => (clone $baseQuery)->where('status', 'Converted')->count(),
+            'Rejected' => (clone $baseQuery)->where('status', 'Rejected')->count(),
+            'Approved' => (clone $baseQuery)->where('status', 'Approved')->count(),
+        ];
 
+        return view('leads.index', compact('leads', 'packages', 'users', 'filters', 'statusCounts'));
+    }
 
     public function create()
     {
@@ -82,7 +116,7 @@ class LeadController extends Controller
             'email' => 'nullable|email',
             'phone_number' => 'nullable|max:15',
         ]);
-        $lead = Lead::create($validated + $request->only(['company_name','people_count', 'district', 'country', 'phone_code', 'city', 'client_category', 'lead_status', 'lead_source', 'website', 'package_id', 'inquiry_text']) + ['user_id' => auth()->id()]);
+        $lead = Lead::create($validated + $request->only(['company_name', 'people_count', 'district', 'country', 'phone_code', 'city', 'client_category', 'lead_status', 'lead_source', 'website', 'package_id', 'inquiry_text']) + ['user_id' => auth()->id()]);
 
         LeadUser::create([
             'lead_id' => $lead->id,
@@ -112,7 +146,7 @@ class LeadController extends Controller
             'phone_number' => 'nullable|max:15',
         ]);
 
-        $lead->update($validated + $request->only(['company_name','people_count','child_count', 'district', 'country', 'phone_code', 'city', 'client_category', 'lead_status', 'lead_source', 'website', 'package_id', 'inquiry_text','status']));
+        $lead->update($validated + $request->only(['company_name', 'people_count', 'child_count', 'district', 'country', 'phone_code', 'city', 'client_category', 'lead_status', 'lead_source', 'website', 'package_id', 'inquiry_text', 'status']));
 
         // Return JSON response
         return response()->json([
@@ -122,22 +156,21 @@ class LeadController extends Controller
         ]);
     }
     public function updateStatus(Request $request, Lead $lead)
-{
-    $request->validate([
-        'status' => 'required|string|max:255'
-    ]);
+    {
+        $request->validate([
+            'status' => 'required|string|max:255',
+        ]);
 
-    $lead->update([
-        'status' => $request->status
-    ]);
+        $lead->update([
+            'status' => $request->status,
+        ]);
 
-    return response()->json([
-        'success' => true,
-        'message' => 'Lead status updated successfully',
-        'status'  => $lead->status
-    ]);
-}
-
+        return response()->json([
+            'success' => true,
+            'message' => 'Lead status updated successfully',
+            'status' => $lead->status,
+        ]);
+    }
 
     public function destroy(Lead $lead)
     {
@@ -224,7 +257,7 @@ class LeadController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Selected leads assigned successfully!'
+            'message' => 'Selected leads assigned successfully!',
         ]);
     }
 }
