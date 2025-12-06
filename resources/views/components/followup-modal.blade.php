@@ -21,7 +21,7 @@
         <div class="grid grid-cols-12 gap-6">
 
             <!-- Follow-Up Form -->
-            <div class="col-span-4 border rounded-xl p-6 space-y-4 shadow-sm bg-gray-50">
+            <div class="col-span-5 border rounded-xl p-6 space-y-4 shadow-sm bg-gray-50">
                 <form action="{{ route('followup.store') }}" method="POST" class="space-y-4">
                     @csrf
                     <input type="hidden" name="lead_id" x-model="leadId">
@@ -31,7 +31,7 @@
                         <label class="font-semibold text-gray-700">Followup Reason</label>
                         <template x-for="reason in reasons" :key="reason">
                             <div class="flex items-center gap-2">
-                                <input type="radio" :value="reason" name="reason" x-model="selectedReason" class="h-4 w-4">
+                                <input type="radio" :value="reason" name="reason" x-model="selectedReason" class="h-4 w-4" required>
                                 <span x-text="reason" class="text-gray-700"></span>
                             </div>
                         </template>
@@ -44,14 +44,14 @@
                     </div>
 
                     <!-- Next Followup Date & Time -->
-                    <div class="grid grid-cols-2 gap-4">
+                    <div class="grid grid-cols-2 gap-2">
                         <div>
                             <label class="block font-semibold mb-1">Next Followup Date</label>
-                            <input type="date" name="next_followup_date" class="w-full p-3 rounded-lg border">
+                            <input type="date" name="next_followup_date" class="w-full p-3 rounded-lg border" required>
                         </div>
                         <div>
                             <label class="block font-semibold mb-1">Time</label>
-                            <input type="time" name="next_followup_time" class="w-full p-3 rounded-lg border">
+                            <input type="time" name="next_followup_time" class="w-full p-3 rounded-lg border" required>
                         </div>
                     </div>
 
@@ -68,7 +68,7 @@
             </div>
 
             <!-- Follow-Ups Table -->
-            <div class="col-span-8 overflow-x-auto border rounded-xl p-4 shadow-sm bg-white">
+            <div class="col-span-7 overflow-x-auto border rounded-xl p-4 shadow-sm bg-white">
                 <table class="table-auto w-full border-collapse border border-gray-300">
                     <thead class="bg-gray-100">
                         <tr>
