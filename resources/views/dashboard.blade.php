@@ -1,3 +1,205 @@
 <x-app-layout>
-    
+    <div class="ml-64 flex justify-center items-start min-h-screen p-6 bg-gray-100 dark:bg-gray-900">
+        <div class="py-6">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+                <!-- Heading -->
+                <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-6">
+                    Dashboard Overview
+                </h2>
+
+                <!-- Top Stats -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+
+                    <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-5">
+                        <p class="text-gray-500 text-sm">Total Leads</p>
+                        <h3 class="text-3xl font-bold text-blue-600 mt-2">{{ $leadCount }}</h3>
+                    </div>
+
+                    <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-5">
+                        <p class="text-gray-500 text-sm">Total Invoices</p>
+                        <h3 class="text-3xl font-bold text-indigo-600 mt-2">{{ $invoiceCount }}</h3>
+                    </div>
+
+                    <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-5">
+                        <p class="text-gray-500 text-sm">Total Revenue</p>
+                        <h3 class="text-3xl font-bold text-green-600 mt-2">₹{{ number_format($totalRevenue, 2) }}</h3>
+                    </div>
+
+                    <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-5">
+                        <p class="text-gray-500 text-sm">Packages</p>
+                        <h3 class="text-3xl font-bold text-purple-600 mt-2">{{ $packageCount }}</h3>
+                    </div>
+
+                    <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-5">
+                        <p class="text-gray-500 text-sm">Users</p>
+                        <h3 class="text-3xl font-bold text-yellow-600 mt-2">{{ $userCount }}</h3>
+                    </div>
+
+                </div>
+
+
+                <!-- TODAY / WEEK SUMMARY -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mt-8">
+
+                    <div
+                        class="bg-blue-50 dark:bg-blue-900/40 border border-blue-200 dark:border-blue-700 rounded-xl p-5">
+                        <p class="text-gray-600 dark:text-gray-300 text-sm">Leads Today</p>
+                        <h3 class="text-3xl font-bold text-blue-700 dark:text-blue-300 mt-2">{{ $todayLeads }}</h3>
+                    </div>
+
+                    <div
+                        class="bg-blue-50 dark:bg-blue-900/40 border border-blue-200 dark:border-blue-700 rounded-xl p-5">
+                        <p class="text-gray-600 dark:text-gray-300 text-sm">Leads This Week</p>
+                        <h3 class="text-3xl font-bold text-blue-700 dark:text-blue-300 mt-2">{{ $weekLeads }}</h3>
+                    </div>
+
+                    <div
+                        class="bg-green-50 dark:bg-green-900/40 border border-green-200 dark:border-green-700 rounded-xl p-5">
+                        <p class="text-gray-600 dark:text-gray-300 text-sm">Invoices Today</p>
+                        <h3 class="text-3xl font-bold text-green-700 dark:text-green-300 mt-2">{{ $todayInvoices }}</h3>
+                    </div>
+
+                    <div
+                        class="bg-green-50 dark:bg-green-900/40 border border-green-200 dark:border-green-700 rounded-xl p-5">
+                        <p class="text-gray-600 dark:text-gray-300 text-sm">Invoices This Week</p>
+                        <h3 class="text-3xl font-bold text-green-700 dark:text-green-300 mt-2">{{ $weekInvoices }}</h3>
+                    </div>
+                </div>
+
+
+                <!-- GRAPH -->
+                <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-6 mt-10">
+                    <h3 class="text-lg font-bold text-gray-700 dark:text-gray-200 mb-4">
+                        Last 30 Days Activity
+                    </h3>
+
+                    <canvas id="leadsInvoicesChart" height="120"></canvas>
+                </div>
+
+
+                <!-- Lead Status Summary -->
+                <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-6 mt-10">
+                    <h3 class="text-lg font-bold text-gray-700 dark:text-gray-200 mb-4">Lead Status Summary</h3>
+
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                        @foreach ($leadStatusCounts as $status => $count)
+                            <div class="p-4 rounded-lg bg-gray-50 dark:bg-gray-900/40 border dark:border-gray-700">
+                                <p class="text-sm text-gray-500 dark:text-gray-400">{{ ucfirst($status) }}</p>
+                                <h3 class="text-2xl font-bold text-gray-700 dark:text-gray-200">{{ $count }}
+                                </h3>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+
+
+                <!-- UPCOMING FOLLOWUPS -->
+                <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-6 mt-10">
+                    <h3 class="text-lg font-bold text-gray-700 dark:text-gray-200 mb-4">Upcoming Followups</h3>
+
+                    @if ($upcomingFollowups->count())
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="text-gray-600 dark:text-gray-300 border-b">
+                                    <th class="py-2">Lead</th>
+                                    <th class="py-2">Assigned To</th>
+                                    <th class="py-2">Next Followup</th>
+                                    <th class="py-2">Remark</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($upcomingFollowups as $f)
+                                    <tr class="border-b border-gray-100 dark:border-gray-700">
+                                        <td class="py-2 font-medium text-gray-800 dark:text-gray-200">
+                                            {{ $f->lead->name }}
+                                        </td>
+                                        <td class="py-2 text-gray-600 dark:text-gray-300">
+                                            {{ $f->user->name }}
+                                        </td>
+                                        <td class="py-2 text-blue-600 dark:text-blue-300">
+                                            {{ $f->next_followup_date }}
+                                        </td>
+                                        <td class="py-2 text-gray-600 dark:text-gray-300">
+                                            {{ $f->remark ?? '-' }}
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    @else
+                        <p class="text-gray-500 dark:text-gray-400">No upcoming followups.</p>
+                    @endif
+                </div>
+
+
+                <!-- USER PERFORMANCE -->
+                <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-6 mt-10 mb-10">
+                    <h3 class="text-lg font-bold text-gray-700 dark:text-gray-200 mb-4">User Performance</h3>
+
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="text-gray-600 dark:text-gray-300 border-b">
+                                <th class="py-2">User</th>
+                                <th class="py-2">Leads Created</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($createdLeadsByUser as $stat)
+                                <tr class="border-b border-gray-100 dark:border-gray-700">
+                                    <td class="py-2 text-gray-800 dark:text-gray-200">
+                                        {{ $stat->createdBy->name ?? 'Unknown' }}
+                                    </td>
+                                    <td class="py-2 font-semibold text-indigo-600 dark:text-indigo-300">
+                                        {{ $stat->total }}
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+        <script>
+            window.chartData = @json($last30Days);
+        </script>
+
+
+
+
+        <script>
+            document.addEventListener("DOMContentLoaded", () => {
+                const ctx = document.getElementById("leadsInvoicesChart");
+
+                if (!ctx) return;
+
+                const data = window.chartData ?? [];
+
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: data.map(i => i.date),
+                        datasets: [{
+                                label: "Leads",
+                                data: data.map(i => i.leads),
+                                borderColor: "blue",
+                                borderWidth: 2,
+                                tension: 0.4,
+                            },
+                            {
+                                label: "Invoices",
+                                data: data.map(i => i.invoices),
+                                borderColor: "green",
+                                borderWidth: 2,
+                                tension: 0.4,
+                            }
+                        ]
+                    }
+                });
+            });
+        </script>
+
+
+    </div>
 </x-app-layout>
