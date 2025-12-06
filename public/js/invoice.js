@@ -118,34 +118,29 @@ function invoiceGenerator({ invoice = null, lead = null, packageItems = [] } = {
             this.recalculate();
         },
 
-recalculateAdditionalTravelers() {
-    // Total adults excluding primary
-    const extraAdults = Math.max(0, this.adultCount - 1); // primary is 1
-    const extraChildren = this.childCount;
+        recalculateAdditionalTravelers() {
+            const primaryTraveler = 1; // primary always exists
 
-    const maxAdults = 5;
-    const maxChildren = 5;
-    const maxTotal = 10;
+            // Extra adults and children
+            const extraAdults = Math.max(0, this.adultCount - primaryTraveler);
+            const extraChildren = Math.max(0, this.childCount);
 
-    // Enforce limits
-    const allowedExtraAdults = Math.min(extraAdults, maxAdults - 1); // primary counts
-    const allowedExtraChildren = Math.min(extraChildren, maxChildren);
+            let travelers = [];
 
-    let travelers = [];
+            // Add extra adult travelers
+            for (let i = 0; i < extraAdults; i++) {
+                travelers.push({ name: "", relation: "Adult", age: "" });
+            }
 
-    // Add adult travelers
-    for (let i = 0; i < allowedExtraAdults; i++) {
-        travelers.push({ name: "", relation: "Adult", age: "" });
-    }
+            // Add child travelers
+            for (let i = 0; i < extraChildren; i++) {
+                travelers.push({ name: "", relation: "Child", age: "" });
+            }
 
-    // Add child travelers
-    for (let i = 0; i < allowedExtraChildren; i++) {
-        travelers.push({ name: "", relation: "Child", age: "" });
-    }
+            // Keep additionalTravelers synced with adult + child counts
+            this.additionalTravelers = travelers;
+        },
 
-    // Ensure total travelers does not exceed maxTotal - 1 (primary counted separately)
-    this.additionalTravelers = travelers.slice(0, maxTotal - 1);
-},
 
 
         removeTraveler(index) {
@@ -254,13 +249,13 @@ recalculateAdditionalTravelers() {
                 this.manualBasePrice = null; // reset manual price on item change
                 this.updatePrices();
             });
-// Watch changes in adult/child count
-this.$watch(() => this.adultCount, () => {
-    this.recalculate();
-});
-this.$watch(() => this.childCount, () => {
-    this.recalculate();
-});
+            // Watch changes in adult/child count
+            this.$watch(() => this.adultCount, () => {
+                this.recalculate();
+            });
+            this.$watch(() => this.childCount, () => {
+                this.recalculate();
+            });
 
             this.$watch('selectedRoomType', (newVal) => {
                 this.manualBasePrice = null; // reset manual price on room type change

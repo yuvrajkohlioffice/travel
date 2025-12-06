@@ -100,9 +100,16 @@ public function store(Request $request)
     }
 
     // 3️⃣ Calculate derived fields
-    $subtotal = $request->price_per_person * $request->total_travelers;
+    $adultCount = $request->adult_count;
+    $childCount = $request->child_count ?? 0;
+    $pricePerPerson = $request->price_per_person;
+
+    // Subtotal calculation: adult full price + child half price
+    $subtotal = ($adultCount * $pricePerPerson) + ($childCount * ($pricePerPerson / 2));
+
     $discount = $request->discount_amount ?? 0;
     $tax = $request->tax_amount ?? 0;
+
     $finalPrice = max(0, $subtotal - $discount + $tax);
 
     // 4️⃣ Create the invoice
@@ -124,13 +131,13 @@ public function store(Request $request)
 
         'additional_travelers' => $additionalTravelers,
 
-        'adult_count' => $request->adult_count,
-        'child_count' => $request->child_count ?? 0,
-        'total_travelers' => $request->total_travelers,
+        'adult_count' => $adultCount,
+        'child_count' => $childCount,
+        'total_travelers' => $adultCount + $childCount,
 
         'package_name' => $request->package_name,
         'package_type' => $request->package_type,
-        'price_per_person' => $request->price_per_person,
+        'price_per_person' => $pricePerPerson,
 
         'subtotal_price' => $subtotal,
         'discount_amount' => $discount,
@@ -144,6 +151,7 @@ public function store(Request $request)
     return redirect()->route('invoices.show', $invoice->id)
                      ->with('success', 'Invoice created successfully.');
 }
+
 
     /**
      * Show Single Invoice

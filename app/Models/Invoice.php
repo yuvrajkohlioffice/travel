@@ -64,7 +64,14 @@ class Invoice extends Model
     public function package()
     {
         return $this->belongsTo(Package::class);
-    }
+    }public function getFormattedIssueDateAttribute() {
+    return \Carbon\Carbon::parse($this->issued_date)->format('M d, Y');
+}
+
+public function getFormattedTravelStartDateAttribute() {
+    return \Carbon\Carbon::parse($this->travel_start_date)->format('M d, Y');
+}
+
 
     public function packageItem()
     {

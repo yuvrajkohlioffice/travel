@@ -20,10 +20,12 @@
 <div class="mt-6 bg-white p-4 rounded-xl border">
     <div class="flex justify-between items-center mb-3">
         <h3 class="font-semibold text-lg">Additional Travelers</h3>
-        <button type="button" :disabled="!canAddTraveler()" @click="addTraveler()"
-            class="px-3 py-1 bg-blue-600 text-white rounded-lg">
-            + Add Traveler
-        </button>
+       <button type="button" :disabled="!canAddTraveler()" @click="addTraveler()"
+        class="px-3 py-1 bg-blue-600 text-white rounded-lg"
+        :class="{'opacity-50 cursor-not-allowed': !canAddTraveler()}">
+    + Add Traveler
+</button>
+
 
     </div>
 
