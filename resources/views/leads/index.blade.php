@@ -182,7 +182,7 @@
 
                     </div>
                 </form>
-              
+
 
                 <div class="flex flex-wrap gap-2 mb-4">
                     @php
@@ -196,22 +196,22 @@
                     @endphp
 
                     @foreach ($statuses as $value => $label)
-    <form method="GET" class="inline">
-        @foreach (request()->except('status') as $name => $val)
-            <input type="hidden" name="{{ $name }}" value="{{ $val }}">
-        @endforeach
-        @if ($value != '')
-            <input type="hidden" name="status" value="{{ $value }}">
-        @endif
-        <button type="submit"
-            class="px-4 py-2 rounded-lg border border-gray-300 text-sm {{ $filters['status'] == $value ? 'bg-blue-500 text-white' : 'bg-white' }}">
-            {{ $label }} ({{ $statusCounts[$value ?: 'All'] ?? 0 }})
-        </button>
-    </form>
-@endforeach
+                        <form method="GET" class="inline">
+                            @foreach (request()->except('status') as $name => $val)
+                                <input type="hidden" name="{{ $name }}" value="{{ $val }}">
+                            @endforeach
+                            @if ($value != '')
+                                <input type="hidden" name="status" value="{{ $value }}">
+                            @endif
+                            <button type="submit"
+                                class="px-4 py-2 rounded-lg border border-gray-300 text-sm {{ $filters['status'] == $value ? 'bg-blue-500 text-white' : 'bg-white' }}">
+                                {{ $label }} ({{ $statusCounts[$value ?: 'All'] ?? 0 }})
+                            </button>
+                        </form>
+                    @endforeach
 
                 </div>
-                  <div class="flex flex-wrap gap-2 mb-4">
+                <div class="flex flex-wrap gap-2 mb-4">
 
                     <!-- Time Filters -->
                     @php
@@ -219,17 +219,17 @@
                     @endphp
 
                     @foreach ($times as $key => $label)
-    <form method="GET" class="inline">
-        @foreach (request()->except('time') as $name => $value)
-            <input type="hidden" name="{{ $name }}" value="{{ $value }}">
-        @endforeach
-        <input type="hidden" name="time" value="{{ $key }}">
-        <button type="submit"
-            class="px-4 py-2 rounded-lg border border-gray-300 text-sm {{ $filters['time'] == $key ? 'bg-blue-500 text-white' : 'bg-white' }}">
-            {{ $label }} 
-        </button>
-    </form>
-@endforeach
+                        <form method="GET" class="inline">
+                            @foreach (request()->except('time') as $name => $value)
+                                <input type="hidden" name="{{ $name }}" value="{{ $value }}">
+                            @endforeach
+                            <input type="hidden" name="time" value="{{ $key }}">
+                            <button type="submit"
+                                class="px-4 py-2 rounded-lg border border-gray-300 text-sm {{ $filters['time'] == $key ? 'bg-blue-500 text-white' : 'bg-white' }}">
+                                {{ $label }}
+                            </button>
+                        </form>
+                    @endforeach
 
 
                 </div>
