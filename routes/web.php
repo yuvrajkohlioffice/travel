@@ -59,7 +59,9 @@ Route::get('/api/cars', [\App\Http\Controllers\Api\CarController::class, 'index'
 Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified'])->group(function () {
     Route::patch('/leads/{lead}/status', [LeadController::class, 'updateStatus'])
      ->name('leads.updateStatus');
-Route::get('/leads/data', [LeadController::class, 'data'])->name('leads.data');
+     // web.php
+Route::get('/leads/data', [LeadController::class, 'getLeadsData'])->name('leads.data');
+
 
     Route::delete('packages/item/{item}', [PackageController::class, 'deleteRelation'])->name('packages.item.delete');
     Route::get('/package-items/filter', [PackageController::class, 'filterPackageItems']);

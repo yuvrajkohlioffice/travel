@@ -9,6 +9,7 @@ use App\Models\LeadUser;
 use Illuminate\Http\Request;
 use App\Imports\LeadsImport;
 use Maatwebsite\Excel\Facades\Excel;
+use Yajra\DataTables\DataTables;
 
 class LeadController extends Controller
 {
@@ -36,101 +37,145 @@ class LeadController extends Controller
             'child_count' => $lead->child_count,
         ]);
     }
-public function index(Request $request)
-{
-    $user = auth()->user();
+    public function index(Request $request)
+    {
+        $user = auth()->user();
 
-    $users = User::select('id', 'name')->get();
-    $packages = Package::select('id', 'package_name')->orderBy('package_name')->get();
+        $users = User::select('id', 'name')->get();
+        $packages = Package::select('id', 'package_name')->orderBy('package_name')->get();
 
-    $filters = [
-        'country'     => $request->country,
-        'district'    => $request->district,
-        'city'        => $request->city,
-        'lead_status' => $request->lead_status,
-        'status'      => $request->status,
-        'package_id'  => $request->package_id,
-        'user_id'     => $request->user_id,
-        'assigned_to' => $request->assigned_to,
-        'time'        => $request->time ?? 'all',
-    ];
+        $filters = [
+            'country' => $request->country,
+            'district' => $request->district,
+            'city' => $request->city,
+            'lead_status' => $request->lead_status,
+            'status' => $request->status,
+            'package_id' => $request->package_id,
+            'user_id' => $request->user_id,
+            'assigned_to' => $request->assigned_to,
+            'time' => $request->time ?? 'all',
+        ];
 
-    // -----------------------------
-    // BASE QUERY WITHOUT TIME FILTER
-    // Used for both statusCounts and timeCounts
-    // -----------------------------
-    $baseNoTime = Lead::when($user->role_id != 1, fn($q) =>
-            $q->where(fn($q2) =>
-                $q2->where('user_id', $user->id)
-                   ->orWhereHas('assignedUsers', fn($uq) => $uq->where('user_id', $user->id))
-            )
-        )
-        ->when($filters['country'], fn($q,$v)=>$q->where('country',$v))
-        ->when($filters['district'], fn($q,$v)=>$q->where('district',$v))
-        ->when($filters['city'], fn($q,$v)=>$q->where('city',$v))
-        ->when($filters['lead_status'], fn($q,$v)=>$q->where('lead_status',$v))
-        ->when($filters['package_id'], fn($q,$v)=>$q->where('package_id',$v))
-        ->when($filters['user_id'], fn($q,$v)=>$q->where('user_id',$v))
-        ->when($filters['assigned_to'], fn($q,$v)=>
-            $q->whereHas('assignedUsers', fn($uq)=>$uq->where('user_id',$v))
-        );
+        // Base query with filters
+        $baseQuery = Lead::select('id', 'name', 'company_name', 'email', 'phone_number', 'status', 'lead_status', 'package_id', 'created_at')
+            ->when($user->role_id != 1, fn($q) => $q->where(fn($q2) => $q2->where('user_id', $user->id)->orWhereHas('assignedUsers', fn($uq) => $uq->where('user_id', $user->id))))
+            ->when($filters['country'], fn($q, $v) => $q->where('country', $v))
+            ->when($filters['district'], fn($q, $v) => $q->where('district', $v))
+            ->when($filters['city'], fn($q, $v) => $q->where('city', $v))
+            ->when($filters['lead_status'], fn($q, $v) => $q->where('lead_status', $v))
+            ->when($filters['package_id'], fn($q, $v) => $q->where('package_id', $v))
+            ->when($filters['user_id'], fn($q, $v) => $q->where('user_id', $v))
+            ->when($filters['assigned_to'], fn($q, $v) => $q->whereHas('assignedUsers', fn($uq) => $uq->where('user_id', $v)));
 
-    // -----------------------------
-    // STATUS COUNTS (NEVER CHANGE)
-    // DO NOT APPLY TIME FILTER HERE
-    // DO NOT APPLY STATUS FILTER HERE
-    // -----------------------------
-    $statusCounts = [
-        'All'              => (clone $baseNoTime)->count(),
-        'Follow-up Taken'  => (clone $baseNoTime)->where('status','Follow-up Taken')->count(),
-        'Converted'        => (clone $baseNoTime)->where('status','Converted')->count(),
-        'Approved'         => (clone $baseNoTime)->where('status','Approved')->count(),
-        'Rejected'         => (clone $baseNoTime)->where('status','Rejected')->count(),
-    ];
+        // Apply status filter for time counts
+        $timeBase = (clone $baseQuery)->when($filters['status'], fn($q, $v) => $q->where('status', $v));
 
-    // -----------------------------
-    // TIME COUNTS (APPLY STATUS FILTER ONLY)
-    // -----------------------------
-    $timeBase = (clone $baseNoTime)
-        ->when($filters['status'], fn($q,$v)=>$q->where('status',$v));
+        $timeCounts = [
+            'all' => (clone $timeBase)->count(),
+            'today' => (clone $timeBase)->whereBetween('created_at', [now()->startOfDay(), now()->endOfDay()])->count(),
+            'week' => (clone $timeBase)->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->count(),
+            'month' => (clone $timeBase)->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])->count(),
+        ];
 
-    $timeCounts = [
-        'all'   => (clone $timeBase)->count(),
-        'today' => (clone $timeBase)->whereBetween('created_at',[now()->startOfDay(),now()->endOfDay()])->count(),
-        'week'  => (clone $timeBase)->whereBetween('created_at',[now()->startOfWeek(),now()->endOfWeek()])->count(),
-        'month' => (clone $timeBase)->whereBetween('created_at',[now()->startOfMonth(),now()->endOfMonth()])->count(),
-    ];
+        // Status counts
+        $statusCounts = [
+            'All' => (clone $baseQuery)->count(),
+            'Follow-up Taken' => (clone $baseQuery)->where('status', 'Follow-up Taken')->count(),
+            'Converted' => (clone $baseQuery)->where('status', 'Converted')->count(),
+            'Approved' => (clone $baseQuery)->where('status', 'Approved')->count(),
+            'Rejected' => (clone $baseQuery)->where('status', 'Rejected')->count(),
+        ];
 
-    // -----------------------------
-    // MAIN QUERY FOR LIST (APPLY TIME + STATUS)
-    // -----------------------------
-    $leadsQuery = Lead::with(['package:id,package_name','lastFollowup.user:id,name',
-            'latestAssignedUser.user:id,name','createdBy:id,name'])
-        ->mergeConstraintsFrom($baseNoTime) // apply same conditions
-        ->when($filters['status'], fn($q,$v)=>$q->where('status',$v))
-        ->when($filters['time']!='all', function($q) use ($filters){
-            if ($filters['time']=='today') {
-                $q->whereBetween('created_at',[now()->startOfDay(),now()->endOfDay()]);
-            } elseif ($filters['time']=='week') {
-                $q->whereBetween('created_at',[now()->startOfWeek(),now()->endOfWeek()]);
-            } elseif ($filters['time']=='month') {
-                $q->whereBetween('created_at',[now()->startOfMonth(),now()->endOfMonth()]);
-            }
-        });
-
-    $leads = $leadsQuery
-        ->orderByRaw("
+        // Main query with pagination
+        $leadsQuery = $baseQuery
+            ->with(['package:id,package_name'])
+            ->when($filters['status'], fn($q, $v) => $q->where('status', $v))
+            ->when($filters['time'] != 'all', function ($q) use ($filters) {
+                if ($filters['time'] == 'today') {
+                    $q->whereBetween('created_at', [now()->startOfDay(), now()->endOfDay()]);
+                } elseif ($filters['time'] == 'week') {
+                    $q->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]);
+                } elseif ($filters['time'] == 'month') {
+                    $q->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()]);
+                }
+            })
+            ->orderByRaw(
+                "
             CASE
                 WHEN lead_status = 'Hot' THEN 1
                 WHEN lead_status = 'Warm' THEN 2
                 WHEN lead_status = 'Cold' THEN 3
                 ELSE 4
             END
-        ")
-        ->latest('id')
-        ->get();
+        ",
+            )
+            ->latest('id');
 
-    return view('leads.index', compact('leads','packages','users','filters','statusCounts','timeCounts'));
+        // Use pagination instead of get()
+        $leads = $leadsQuery->paginate(50)->withQueryString(); // 50 per page
+
+        return view('leads.index', compact('leads', 'packages', 'users', 'filters', 'statusCounts', 'timeCounts'));
+    }
+
+public function getLeadsData(Request $request)
+{
+    $user = auth()->user();
+
+    $query = Lead::with([
+        'package:id,package_name',
+        'latestAssignedUser.user:id,name',
+        'latestAssignedUser.assignedBy:id,name',
+        'createdBy:id,name',
+        'lastFollowup.user:id,name'
+    ])->when($user->role_id != 1, fn($q) => $q->where(fn($q2) =>
+        $q2->where('user_id', $user->id)
+           ->orWhereHas('assignedUsers', fn($uq) => $uq->where('user_id', $user->id))
+    ));
+
+    return DataTables::of($query)
+        ->addIndexColumn()
+        ->addColumn('checkbox', fn($lead) => '<input type="checkbox" class="h-4 w-4" value="'.$lead->id.'">')
+        ->addColumn('client_info', function($lead){
+            $maskedPhone = str_repeat('*', strlen($lead->phone_number)-4) . substr($lead->phone_number,-4);
+            $statusClass = [
+                'Hot' => 'bg-red-500',
+                'Warm' => 'bg-yellow-400',
+                'Cold' => 'bg-gray-400',
+                'Interested' => 'bg-green-500'
+            ][$lead->lead_status] ?? 'bg-gray-300';
+
+            return view('leads.columns.client_info', compact('lead','maskedPhone','statusClass'))->render();
+        })
+        ->addColumn('location', fn($lead) => $lead->country.'<br>'.$lead->district.'<br>'.$lead->city)
+        ->addColumn('reminder', function($lead){
+            return $lead->lastFollowup 
+                ? '<strong>Last:</strong> '.$lead->lastFollowup->reason.'<br><strong>By:</strong> '.$lead->lastFollowup->user->name 
+                : '';
+        })
+        ->addColumn('inquiry', fn($lead) => $lead->package->package_name ?? \Str::limit($lead->inquiry_text, 20))
+        ->addColumn('proposal', function($lead){
+            return view('leads.columns.proposal_buttons', compact('lead'))->render();
+        })
+        ->addColumn('status', function($lead){
+            $stageClass = [
+                'Pending'=>'bg-blue-400 text-white',
+                'Approved'=>'bg-green-500 text-white',
+                'Quotation Sent'=>'bg-indigo-500 text-white',
+                'Follow-up Taken'=>'bg-purple-500 text-white',
+                'Converted'=>'bg-teal-500 text-white',
+                'Lost'=>'bg-gray-500 text-white',
+                'On Hold'=>'bg-orange-400 text-white',
+                'Rejected'=>'bg-red-600 text-white'
+            ][$lead->status] ?? 'bg-gray-300 text-white';
+
+            return '<span class="'.$stageClass.' px-2 py-1 rounded text-xs">'.$lead->status.'</span>';
+        })
+        ->addColumn('assigned', fn($lead) => $lead->latestAssignedUser->user->name ?? 'N/A')
+        ->addColumn('action', function($lead){
+            return view('leads.columns.actions', compact('lead'))->render();
+        })
+        ->rawColumns(['checkbox','client_info','location','reminder','inquiry','proposal','status','assigned','action'])
+        ->make(true);
 }
 
 
