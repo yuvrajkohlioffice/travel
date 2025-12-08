@@ -88,7 +88,10 @@ class LeadController extends Controller
 
         // Main query with pagination
         $leadsQuery = $baseQuery
-            ->with(['package:id,package_name'])
+             ->with([
+        'package:id,package_name',
+        'invoice:id,invoice_no,lead_id' // eager load invoice
+    ])
             ->when($filters['status'], fn($q, $v) => $q->where('status', $v))
             ->when($filters['time'] != 'all', function ($q) use ($filters) {
                 if ($filters['time'] == 'today') {
@@ -153,8 +156,27 @@ public function getLeadsData(Request $request)
     }
 
     if ($request->filled('status')) {
-        $query->where('status', $request->status);
+    $query->where('status', $request->status);
+}
+
+// Filter by date range (created_at)
+if ($request->filled('date_range')) {
+    switch ($request->date_range) {
+        case 'today':
+            $query->whereDate('created_at', now());
+            break;
+        case 'yesterday':
+            $query->whereDate('created_at', now()->subDay());
+            break;
+        case 'week':
+            $query->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]);
+            break;
+        case 'month':
+            $query->whereMonth('created_at', now()->month)
+                  ->whereYear('created_at', now()->year);
+            break;
     }
+}
 
     if ($request->filled('assigned')) {
         $query->whereHas('latestAssignedUser.user', fn($q) => $q->where('name', $request->assigned));
@@ -197,15 +219,35 @@ public function getLeadsData(Request $request)
             return '<button @click="openFollowModal('.$lead->id.', \''.$lead->name.'\')" class="px-3 py-1 border border-gray-400 rounded text-gray-700 hover:bg-gray-200 transition text-sm">Followup</button>'.$last;
         })
         ->addColumn('inquiry', fn($lead) => $lead->package->package_name ?? \Str::limit($lead->inquiry_text, 20))
-        ->addColumn('proposal', function($lead){
-            return '
-            <button @click="handleShare('.$lead->id.', \''.$lead->name.'\', \''.($lead->package->id ?? '').'\', \''.$lead->email.'\')" class="px-3 py-1 border border-gray-400 rounded text-gray-700 hover:bg-gray-200 transition text-sm">
-                <i class="fa-solid fa-share"></i>
-            </button>
-            <button @click="openInvoiceModal('.$lead->id.', \''.$lead->name.'\', \''.$lead->people_count.'\', \''.$lead->child_count.'\', \''.($lead->package->id ?? '').'\', \''.$lead->email.'\')" class="px-3 py-1 border border-gray-400 rounded text-gray-700 hover:bg-gray-200 transition text-sm ml-1">
-                <i class="fa-solid fa-file-invoice"></i>
-            </button>';
-        })
+->addColumn('proposal', function($lead){
+    $packageId = $lead->package->id ?? '';
+    $invoiceId = $lead->invoice->id ?? null; // nullable
+    $invoiceNo = $lead->invoice->invoice_no ?? null;
+
+    $paymentButton = $invoiceId 
+        ? '<button @click=\'openPaymentModal({id: '.$invoiceId.', invoice_no: "'.$invoiceNo.'"})\' 
+            class="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700 ml-1">
+                <i class="fa-solid fa-money-bill-wave"></i> Add Payment
+           </button>'
+        : ''; // hide if no invoice
+
+    return '
+        <button @click="handleShare('.$lead->id.', \''.$lead->name.'\', \''.$packageId.'\', \''.$lead->email.'\')" 
+                class="px-3 py-1 border border-gray-400 rounded text-gray-700 hover:bg-gray-200 transition text-sm">
+            <i class="fa-solid fa-share"></i>
+        </button>
+
+        <button @click="openInvoiceModal('.$lead->id.', \''.$lead->name.'\', \''.$lead->people_count.'\', \''.$lead->child_count.'\', \''.$packageId.'\', \''.$lead->email.'\')" 
+                class="px-3 py-1 border border-gray-400 rounded text-gray-700 hover:bg-gray-200 transition text-sm ml-1">
+            <i class="fa-solid fa-file-invoice"></i>
+        </button>
+
+        '.$paymentButton.'
+    ';
+})
+
+
+
         ->addColumn('status', function($lead){
           $stageClass = [
     'Pending'         => 'bg-lime-500 text-white',     // Lime for Pending
@@ -252,7 +294,7 @@ public function getLeadsData(Request $request)
         })
         ->rawColumns([
         'checkbox','client_info','location','reminder','inquiry',
-        'proposal','status','assigned','action'
+        'proposal','status','assigned','action','date_range'
     ])
         ->make(true);
 }

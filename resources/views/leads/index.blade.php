@@ -257,42 +257,50 @@
                     <div class="w-full mb-4 flex flex-wrap gap-2 items-center">
                         <!-- Status counters -->
                         <div class="flex flex-wrap gap-2 mb-2 w-full">
-                            <div class="px-3 py-1 bg-gray-100 rounded text-sm font-semibold">Today: <span
+                            <div class="px-4 py-2 rounded-lg border border-gray-300 text-sm">Today: <span
                                     id="count-today">0</span></div>
-                            <div class="px-3 py-1 bg-gray-100 rounded text-sm font-semibold">This Week: <span
+                            <div class="px-4 py-2 rounded-lg border border-gray-300 text-sm">This Week: <span
                                     id="count-week">0</span></div>
-                            <div class="px-3 py-1 bg-gray-100 rounded text-sm font-semibold">This Month: <span
+                            <div class="px-4 py-2 rounded-lg border border-gray-300 text-sm">This Month: <span
                                     id="count-month">0</span></div>
-                            <div class="px-3 py-1 bg-gray-100 rounded text-sm font-semibold">All: <span
+                            <div class="px-4 py-2 rounded-lg border border-gray-300 text-sm">All: <span
                                     id="count-all">0</span></div>
                         </div>
 
                         <!-- Filters -->
                         <input type="text" id="filter-id" placeholder="Search ID"
-                            class="border px-2 py-1 text-xs">
+                            class="border px-4 py-2 rounded-lg border border-gray-300 text-sm">
                         <input type="text" id="filter-client" placeholder="Search Client"
-                            class="border px-2 py-1 text-xs">
+                            class="border px-4 py-2 rounded-lg border border-gray-300 text-sm">
                         <input type="text" id="filter-location" placeholder="Search Location"
-                            class="border px-2 py-1 text-xs">
+                            class="border px-4 py-2 rounded-lg border border-gray-300 text-sm">
 
                         <div id="status-buttons" class="flex flex-wrap gap-2 mb-4">
                             @php
                                 $btnStatuses = ['Follow-up Taken', 'Converted', 'Approved', 'Rejected'];
                             @endphp
 
-                            <button data-value="" class="status-btn px-3 py-1 text-xs rounded border bg-gray-200">
+                            <button data-value=""
+                                class="status-btn px-4 py-2 rounded-lg border border-gray-300 text-sm">
                                 All
                             </button>
 
                             @foreach ($btnStatuses as $s)
                                 <button data-value="{{ $s }}"
-                                    class="status-btn px-3 py-1 text-xs rounded border bg-gray-200">
+                                    class="status-btn px-4 py-2 rounded-lg border border-gray-300 text-sm">
                                     {{ $s }}
                             @endforeach
                         </div>
+<div id="date-range-buttons" class="flex flex-wrap gap-2 mb-4">
+    <button class="date-range-btn px-4 py-2 rounded-lg border border-gray-300 text-sm" data-value="today">Today</button>
+    <button class="date-range-btn px-4 py-2 rounded-lg border border-gray-300 text-sm" data-value="week">This Week</button>
+    <button class="date-range-btn px-4 py-2 rounded-lg border border-gray-300 text-sm" data-value="month">This Month</button>
+    <button class="date-range-btn px-4 py-2 rounded-lg border border-gray-300 text-sm" data-value="yesterday">Yesterday</button>
+</div>
 
 
-                        <select id="filter-assigned" class="border px-2 py-1 text-xs">
+                        <select id="filter-assigned"
+                            class="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm bg-white">
                             <option value="">All Assigned</option>
                             @foreach ($users as $u)
                                 <option value="{{ $u->name }}">{{ $u->name }}</option>
@@ -303,180 +311,130 @@
                     <table id="Leads-table" class="min-w-full border border-gray-200">
                         <thead>
                             <tr>
-                                <th>#</th>
-                                <th>ID</th>
-                                <th>Client Info</th>
-                                <th>Location</th>
-                                <th>Reminder</th>
-                                <th>Inquiry</th>
-                                <th>Proposal</th>
-                                <th>Status</th>
-                                <th>Assigned</th>
-                                <th>Action</th>
+                                <th class="w-10">#</th>
+                                <th class="w-20">ID</th>
+                                <th class="w-48">Client Info</th>
+                                <th class="w-40">Location</th>
+                                <th class="w-32">Reminder</th>
+                                <th class="w-40">Inquiry</th>
+                                <th class="w-40">Proposal</th>
+                                <th class="w-32">Status</th>
+                                <th class="w-40">Assigned</th>
+                                <th class="w-24">Action</th>
+
                             </tr>
                         </thead>
                         <tbody></tbody>
                     </table>
                     <script>
-                        $(document).ready(function() {
+$(document).ready(function() {
+    let selectedStatus = '';
+    let selectedDateRange = ''; // today, week, month, yesterday
 
-                            let selectedStatus = '';
+    // ----------------- Load Counts -----------------
+    function loadCounts() {
+        $.ajax({
+            url: "{{ route('leads.counts') }}",
+            data: {
+                id: $('#filter-id').val(),
+                client_name: $('#filter-client').val(),
+                location: $('#filter-location').val(),
+                assigned: $('#filter-assigned').val(),
+                status: selectedStatus,
+                date_range: selectedDateRange
+            },
+            success: function(res) {
+                $('#count-today').text(res.today ?? 0);
+                $('#count-week').text(res.week ?? 0);
+                $('#count-month').text(res.month ?? 0);
+                $('#count-yesterday').text(res.yesterday ?? 0);
+                $('#count-all').text(res.all ?? 0);
+            }
+        });
+    }
 
-                            // Load counts
-                            function loadCounts() {
-                                $.ajax({
-                                    url: "{{ route('leads.counts') }}",
-                                    data: {
-                                        id: $('#filter-id').val(),
-                                        client_name: $('#filter-client').val(),
-                                        location: $('#filter-location').val(),
-                                        assigned: $('#filter-assigned').val(),
-                                        status: selectedStatus
+    // ----------------- DataTable -----------------
+    let table = $('#Leads-table').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: "{{ route('leads.data') }}",
+            data: function(d) {
+                d.id = $('#filter-id').val();
+                d.client_name = $('#filter-client').val();
+                d.location = $('#filter-location').val();
+                d.status = selectedStatus;
+                d.assigned = $('#filter-assigned').val();
+                d.date_range = selectedDateRange;
+                d.search_query = $('.dataTables_filter input').val();
+            }
+        },
+        columns: [
+            { data: 'checkbox', orderable: false, searchable: false },
+            { data: 'id' },
+            { data: 'client_info', orderable: false },
+            { data: 'location', orderable: false },
+            { data: 'reminder', orderable: false },
+            { data: 'inquiry', orderable: false },
+            { data: 'proposal', orderable: false },
+            { data: 'status', orderable: false },
+            { data: 'assigned', orderable: false },
+            { data: 'action', orderable: false }
+        ],
+        dom: 'Blfrtip',
+        buttons: [
+            { extend: 'excelHtml5', text: 'Excel', exportOptions: { columns: ':not(:last-child)' } },
+            { extend: 'print', text: 'Print', exportOptions: { columns: ':not(:last-child)' } }
+        ],
+        pageLength: 50,
+        order: [[1, 'desc']],
+        autoWidth: false,
+        drawCallback: loadCounts
+    });
 
-                                    },
-                                    success: function(res) {
-                                        $('#count-today').text(res.today ?? 0);
-                                        $('#count-week').text(res.week ?? 0);
-                                        $('#count-month').text(res.month ?? 0);
-                                        $('#count-all').text(res.all ?? 0);
-                                    }
-                                });
-                            }
-                            $(".status-btn").on("click", function() {
-                                $(".status-btn").removeClass("bg-blue-500 text-white");
-                                $(this).addClass("bg-blue-500 text-white");
-                                selectedStatus = $(this).data("value");
-                                redrawTable();
-                            });
-                            drawCallback: loadCounts
+    function redrawTable() {
+        table.draw();
+        loadCounts();
+    }
 
+    // ----------------- Status Buttons -----------------
+    $(".status-btn").on("click", function() {
+        $(".status-btn").removeClass("bg-blue-500 text-white");
+        $(this).addClass("bg-blue-500 text-white");
+        selectedStatus = $(this).data("value");
+        redrawTable();
+    });
 
-                            // Initialize DataTable
-                            let table = $('#Leads-table').DataTable({
-                                processing: true,
-                                serverSide: true,
-                                ajax: {
-                                    url: "{{ route('leads.data') }}",
-                                    data: function(d) {
-                                        d.id = $('#filter-id').val();
-                                        d.client_name = $('#filter-client').val();
-                                        d.location = $('#filter-location').val();
-                                        d.status = selectedStatus;
-                                        d.assigned = $('#filter-assigned').val();
-                                        d.search_query = $('.dataTables_filter input').val();
-                                    }
-                                },
-                                columns: [{
-                                        data: 'checkbox',
-                                        orderable: false,
-                                        searchable: false
-                                    },
-                                    {
-                                        data: 'id'
-                                    },
-                                    {
-                                        data: 'client_info',
-                                        orderable: false
-                                    },
-                                    {
-                                        data: 'location',
-                                        orderable: false
-                                    },
-                                    {
-                                        data: 'reminder',
-                                        orderable: false
-                                    },
-                                    {
-                                        data: 'inquiry',
-                                        orderable: false
-                                    },
-                                    {
-                                        data: 'proposal',
-                                        orderable: false
-                                    },
-                                    {
-                                        data: 'status',
-                                        orderable: false
-                                    },
-                                    {
-                                        data: 'assigned',
-                                        orderable: false
-                                    },
-                                    {
-                                        data: 'action',
-                                        orderable: false
-                                    }
-                                ],
-                                dom: 'Blfrtip',
-                                buttons: [{
-                                        extend: 'excelHtml5',
-                                        text: 'Excel',
-                                        exportOptions: {
-                                            columns: ':not(:last-child)'
-                                        }
-                                    },
-                                    {
-                                        extend: 'print',
-                                        text: 'Print',
-                                        exportOptions: {
-                                            columns: ':not(:last-child)'
-                                        }
-                                    }
-                                ],
-                                pageLength: 50,
-                                order: [
-                                    [1, 'desc']
-                                ],
-                                drawCallback: loadCounts
-                            });
+    // ----------------- Date Range Buttons -----------------
+    $(".date-range-btn").on("click", function() {
+        $(".date-range-btn").removeClass("bg-blue-500 text-white");
+        $(this).addClass("bg-blue-500 text-white");
+        selectedDateRange = $(this).data("value"); // 'today', 'week', 'month', 'yesterday'
+        redrawTable();
+    });
 
-                            function redrawTable() {
-                                table.draw();
-                                loadCounts();
-                            }
+    // ----------------- Text Filters -----------------
+    $('#filter-id, #filter-client, #filter-location, #filter-assigned')
+        .on('keyup change', redrawTable);
 
-                            // Text filters
-                            $('#filter-id, #filter-client, #filter-location, #filter-assigned')
-                                .on('keyup change', redrawTable);
-                            $('.dataTables_filter input').on('keyup', function() {
-                                table.draw();
-                            });
+    $('.dataTables_filter input').on('keyup', function() {
+        table.draw();
+    });
 
-                            // Status buttons
-                            document.querySelectorAll(".status-btn").forEach(btn => {
-                                btn.addEventListener("click", function() {
+    // ----------------- Select All -----------------
+    $('#selectAll').on('click', function() {
+        $('.row-checkbox').prop('checked', this.checked);
+    });
 
-                                    // Remove active
-                                    document.querySelectorAll(".status-btn").forEach(b =>
-                                        b.classList.remove("bg-blue-500", "text-white")
-                                    );
+    $('#Leads-table tbody').on('change', '.row-checkbox', function() {
+        $('#selectAll').prop('checked', $('.row-checkbox:checked').length === $('.row-checkbox').length);
+    });
 
-                                    // Add active
-                                    this.classList.add("bg-blue-500", "text-white");
+    // ----------------- Initial load -----------------
+    loadCounts();
+});
+</script>
 
-                                    // Set selected status + reload table
-                                    selectedStatus = this.dataset.value;
-                                    redrawTable();
-                                });
-                            });
-
-                            // Select-all checkbox logic
-                            $('#selectAll').on('click', function() {
-                                $('.row-checkbox').prop('checked', this.checked);
-                            });
-                            $('#filter-id, #filter-client, #filter-location, #filter-assigned')
-                                .on('keyup change', redrawTable);
-
-                            $('#Leads-table tbody').on('change', '.row-checkbox', function() {
-                                $('#selectAll').prop('checked',
-                                    $('.row-checkbox:checked').length === $('.row-checkbox').length
-                                );
-                            });
-
-                            // Initial count load
-                            loadCounts();
-                        });
-                    </script>
 
 
 
@@ -494,6 +452,7 @@
         <x-followup-modal :packgaes="$packages" />
         <x-share-modal :packgaes="$packages" />
         <x-invoice-modal :packgaes="$packages" />
+        <x-payment-modal />
 
     </div>
 
@@ -502,21 +461,21 @@
     <script>
         function leadModals() {
             return {
-
-                /* ---------------- STATE ---------------- */
+                /* ---------------- MODAL STATES ---------------- */
                 invoiceOpen: false,
                 followOpen: false,
                 shareOpen: false,
                 editOpen: false,
+                paymentOpen: false,
 
-                /* Lead Info */
+                /* ---------------- LEAD INFO ---------------- */
                 leadId: "",
                 leadName: "",
                 leadEmail: "",
                 peopleCount: 1,
                 childCount: 0,
 
-                /* Package Data */
+                /* ---------------- PACKAGES ---------------- */
                 packages: @json($packages),
                 selectedPackageInvoice: "",
                 packageData: null,
@@ -524,7 +483,7 @@
                 selectedRoomType: 'standard_price',
                 filteredItems: [],
 
-                /* Pricing */
+                /* ---------------- PRICING ---------------- */
                 packagePrice: 0,
                 itemPrice: 0,
                 totalPrice: 0,
@@ -534,11 +493,11 @@
                 travelStartDate: "",
                 animatedPrice: 0,
 
-                /* Cars */
+                /* ---------------- CARS ---------------- */
                 cars: [],
                 selectedCar: "",
 
-                /* Follow-up */
+                /* ---------------- FOLLOW-UP ---------------- */
                 phoneNumber: '',
                 phoneCode: '',
                 fullNumber: '',
@@ -551,7 +510,7 @@
                     'Not Pickup', 'Other'
                 ],
 
-                /* Share */
+                /* ---------------- SHARE ---------------- */
                 shareLeadId: '',
                 shareLeadName: '',
                 selectedPackage: '',
@@ -563,12 +522,127 @@
                 showSelectedPackage: false,
                 allPackages: @json($packages),
 
-                /* Edit */
+                /* ---------------- EDIT ---------------- */
                 editForm: {},
 
-                /* Bulk */
+                /* ---------------- BULK ---------------- */
                 selected: [],
                 bulkUser: '',
+
+                /* ---------------- PAYMENT FIELDS ---------------- */
+                paymentInvoiceId: '', // Invoice ID
+                paymentInvoiceNumber: '', // Invoice number
+                amount: 0, // Total invoice amount
+                remainingAmount: 0, // Remaining amount
+                paidAmount: 0, // Paid amount input
+                paymentMethod: '', // Payment method
+                transactionId: '', // Transaction ID
+                nextPaymentDate: '', // Next payment date (for partial)
+                paymentNotes: '', // Notes
+                partialPaymentWithoutNextDate: false, // Validation flag
+
+                /* ---------------- PAYMENT MODAL FUNCTIONS ---------------- */
+
+                // Open payment modal with invoice data
+                openPaymentModal(invoice) {
+                    this.paymentInvoiceId = invoice.id || null;
+                    this.paymentInvoiceNumber = invoice.invoice_no || '';
+                    this.amount = Number(invoice.amount || invoice.remaining_amount || 0);
+                    this.remainingAmount = Number(invoice.remaining_amount || this.amount);
+                    this.paidAmount = 0; // reset input
+                    this.paymentMethod = '';
+                    this.transactionId = '';
+                    this.nextPaymentDate = '';
+                    this.paymentNotes = '';
+                    this.partialPaymentWithoutNextDate = false;
+                    this.paymentOpen = true;
+                },
+
+                // Close payment modal and reset fields
+                closePaymentModal() {
+                    this.paymentOpen = false;
+                    this.paymentInvoiceId = '';
+                    this.paymentInvoiceNumber = '';
+                    this.amount = 0;
+                    this.remainingAmount = 0;
+                    this.paidAmount = 0;
+                    this.paymentMethod = '';
+                    this.transactionId = '';
+                    this.nextPaymentDate = '';
+                    this.paymentNotes = '';
+                    this.partialPaymentWithoutNextDate = false;
+                },
+
+                // Reactive remaining amount display
+                get remainingAmountReactive() {
+                    return Math.max(this.remainingAmount - this.paidAmount, 0);
+                },
+
+                // Format numbers as currency
+                formatCurrency(value) {
+                    return parseFloat(value).toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    });
+                },
+
+                // Submit payment logic (handles full/partial)
+                submitPayment() {
+                    // Validation
+                    if (this.paidAmount <= 0) {
+                        alert('Paid amount must be greater than 0');
+                        return;
+                    }
+                    if (this.paidAmount > this.remainingAmount) {
+                        alert('Paid amount cannot exceed remaining amount');
+                        return;
+                    }
+                    if (this.paidAmount < this.remainingAmount && !this.nextPaymentDate) {
+                        this.partialPaymentWithoutNextDate = true;
+                        return;
+                    } else {
+                        this.partialPaymentWithoutNextDate = false;
+                    }
+
+                    // Prepare payload
+                    const payload = {
+                        invoice_id: this.paymentInvoiceId,
+                        amount: this.amount,
+                        paid_amount: this.paidAmount,
+                        remaining_amount: this.remainingAmount - this.paidAmount,
+                        status: this.paidAmount === this.remainingAmount ? 'paid' : 'partial',
+                        payment_method: this.paymentMethod,
+                        transaction_id: this.transactionId,
+                        notes: this.paymentNotes,
+                        next_payment_date: this.paidAmount < this.remainingAmount ? this.nextPaymentDate : null,
+                    };
+
+                    // Submit to backend
+                    fetch('/payments', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            },
+                            body: JSON.stringify(payload)
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.status === 'success') {
+                                alert('Payment recorded successfully!');
+                                this.closePaymentModal();
+                                // TODO: refresh table or update UI
+                            } else if (data.errors) {
+                                alert(Object.values(data.errors).flat().join('\n'));
+                            } else {
+                                alert('Failed to record payment.');
+                            }
+                        })
+                        .catch(err => {
+                            console.error(err);
+                            alert('Something went wrong.');
+                        });
+                },
 
 
                 /* ---------------- INIT HELPERS ---------------- */

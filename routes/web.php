@@ -15,11 +15,10 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\PackageController;
 use App\Http\Controllers\LeadController;
 use App\Http\Controllers\FollowupController;
-use App\Http\Controllers\WhatsAppController;
 
-Route::post('/send-text', [WhatsAppController::class, 'sendText']);
-Route::post('/send-media', [WhatsAppController::class, 'sendMedia']);
-Route::post('/send-media-json', [WhatsAppController::class, 'sendMediaJson']);
+use App\Http\Controllers\PaymentController;
+
+
 
 Route::get('/', function () {
     return view('welcome');
@@ -63,6 +62,15 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
 Route::get('/leads/data', [LeadController::class, 'getLeadsData'])->name('leads.data');
 // web.php
 Route::get('leads/counts', [LeadController::class, 'getLeadsCounts'])->name('leads.counts');
+
+
+Route::prefix('payments')->group(function () {
+    Route::get('/', [PaymentController::class, 'index']); // fetch payments
+    Route::post('/', [PaymentController::class, 'store']); // create payment
+    Route::put('/{id}', [PaymentController::class, 'update']); // update payment
+    Route::delete('/{id}', [PaymentController::class, 'destroy']); // delete payment
+    Route::get('/reminders', [PaymentController::class, 'reminders']); // pending reminders
+});
 
 
     Route::delete('packages/item/{item}', [PackageController::class, 'deleteRelation'])->name('packages.item.delete');

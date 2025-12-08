@@ -5,26 +5,63 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Faker\Factory as Faker;
+use Carbon\Carbon;
 
 class LeadsTableSeeder extends Seeder
 {
     public function run()
     {
-        // Clear table before seeding
         DB::table('leads')->delete();
 
-
         $faker = Faker::create();
-        $total = 40000;       // Total leads
-        $chunkSize = 1000;    // Insert in chunks for performance
+        $total = 40000;
+        $chunkSize = 1000;
 
         $leadStatuses = ['Hot', 'Warm', 'Cold', 'Interested'];
         $statuses = ['Pending', 'Approved', 'Quotation Sent', 'Follow-up Taken', 'Converted', 'Lost', 'On Hold', 'Rejected'];
+
+        // Reference "today" as 8 Dec 2025
+        $today = Carbon::create(2025, 12, 8);
+        $todayStart = $today->startOfDay();
+        $todayEnd = $today->endOfDay();
+
+        $yesterdayStart = $today->copy()->subDay()->startOfDay();
+        $yesterdayEnd = $today->copy()->subDay()->endOfDay();
+
+        $thisMonthStart = $today->copy()->startOfMonth();
+        $thisMonthEnd = $today->copy()->endOfMonth();
+
+        $lastMonthStart = $today->copy()->subMonth()->startOfMonth();
+        $lastMonthEnd = $today->copy()->subMonth()->endOfMonth();
 
         for ($i = 0; $i < $total; $i += $chunkSize) {
             $data = [];
 
             for ($j = 0; $j < $chunkSize; $j++) {
+                $rangeChoice = $faker->randomElement(['today', 'yesterday', 'this_month', 'last_month']);
+
+                switch ($rangeChoice) {
+                    case 'today':
+                        $createdAt = Carbon::instance($faker->dateTimeBetween($todayStart, $todayEnd));
+                        break;
+                    case 'yesterday':
+                        $createdAt = Carbon::instance($faker->dateTimeBetween($yesterdayStart, $yesterdayEnd));
+                        break;
+                    case 'this_month':
+                        $createdAt = Carbon::instance($faker->dateTimeBetween($thisMonthStart, $thisMonthEnd));
+                        break;
+                    case 'last_month':
+                        $createdAt = Carbon::instance($faker->dateTimeBetween($lastMonthStart, $lastMonthEnd));
+                        break;
+                    default:
+                        $createdAt = $todayStart;
+                        break;
+                }
+
+                // updated_at >= created_at
+                $updatedAtEnd = $todayEnd->greaterThan($createdAt) ? $todayEnd : $createdAt->copy()->addSecond();
+                $updatedAt = Carbon::instance($faker->dateTimeBetween($createdAt, $updatedAtEnd));
+
                 $data[] = [
                     'user_id'         => 1,
                     'name'            => $faker->name,
@@ -44,15 +81,13 @@ class LeadsTableSeeder extends Seeder
                     'people_count'    => $faker->numberBetween(1,10),
                     'child_count'     => $faker->numberBetween(0,5),
                     'inquiry_text'    => $faker->optional()->sentence(),
-                    'created_at'      => now(),
-                    'updated_at'      => now(),
+                    'created_at'      => $createdAt,
+                    'updated_at'      => $updatedAt,
                 ];
             }
 
             DB::table('leads')->insert($data);
             $this->command->info("Inserted $chunkSize leads...");
-
-            // Reset unique to prevent Faker overflow in large inserts
             $faker->unique($reset = true);
         }
 

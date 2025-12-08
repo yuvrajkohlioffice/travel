@@ -21,6 +21,7 @@ class FollowupController extends Controller
             'next_followup_time' => 'nullable',
         ]);
 
+        // Create follow-up first
         Followup::create([
             'lead_id' => $request->lead_id,
             'user_id' => auth()->id(),
@@ -31,8 +32,29 @@ class FollowupController extends Controller
             'last_followup_date' => now(),
         ]);
 
+        // Reason -> Lead Status mapping
+        $statusMap = [
+            'Interested' => 'Follow-up Taken',
+            'Payment Tomorrow' => 'Quotation Sent',
+            'Call Back Later' => 'Follow-up Taken',
+            'Call Me Tomorrow' => 'Follow-up Taken',
+
+            'Not Interested' => 'Rejected',
+            'Work with other company' => 'Rejected',
+            'Wrong Information' => 'Rejected',
+
+            // Optional
+            'Converted' => 'Converted',
+        ];
+
+        // If reason matches a status, update the lead
+        if (!empty($request->reason) && isset($statusMap[$request->reason])) {
+            Lead::where('id', $request->lead_id)->update(['status' => $statusMap[$request->reason]]);
+        }
+
         return back()->with('success', 'Followup Added Successfully');
     }
+
     public function getLeadDetails(Lead $lead)
     {
         $user = auth()->user();

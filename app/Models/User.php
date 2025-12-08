@@ -18,6 +18,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role_id', 
+        'whatsapp_api_key',
         'status', // <-- Add this
     ];
 

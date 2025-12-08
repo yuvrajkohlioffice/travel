@@ -89,6 +89,12 @@ class Lead extends Model
         return $this->views()->count();
     }
 
+
+public function invoice()
+{
+    return $this->hasOne(Invoice::class);
+}
+
     // Example for last followup date
     public function getLastFollowupDateAttribute()
     {
