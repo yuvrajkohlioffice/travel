@@ -291,12 +291,16 @@
                                     {{ $s }}
                             @endforeach
                         </div>
-<div id="date-range-buttons" class="flex flex-wrap gap-2 mb-4">
-    <button class="date-range-btn px-4 py-2 rounded-lg border border-gray-300 text-sm" data-value="today">Today</button>
-    <button class="date-range-btn px-4 py-2 rounded-lg border border-gray-300 text-sm" data-value="week">This Week</button>
-    <button class="date-range-btn px-4 py-2 rounded-lg border border-gray-300 text-sm" data-value="month">This Month</button>
-    <button class="date-range-btn px-4 py-2 rounded-lg border border-gray-300 text-sm" data-value="yesterday">Yesterday</button>
-</div>
+                        <div id="date-range-buttons" class="flex flex-wrap gap-2 mb-4">
+                            <button class="date-range-btn px-4 py-2 rounded-lg border border-gray-300 text-sm"
+                                data-value="today">Today</button>
+                            <button class="date-range-btn px-4 py-2 rounded-lg border border-gray-300 text-sm"
+                                data-value="week">This Week</button>
+                            <button class="date-range-btn px-4 py-2 rounded-lg border border-gray-300 text-sm"
+                                data-value="month">This Month</button>
+                            <button class="date-range-btn px-4 py-2 rounded-lg border border-gray-300 text-sm"
+                                data-value="yesterday">Yesterday</button>
+                        </div>
 
 
                         <select id="filter-assigned"
@@ -327,113 +331,156 @@
                         <tbody></tbody>
                     </table>
                     <script>
-$(document).ready(function() {
-    let selectedStatus = '';
-    let selectedDateRange = ''; // today, week, month, yesterday
+                        $(document).ready(function() {
+                            let selectedStatus = '';
+                            let selectedDateRange = ''; // today, week, month, yesterday
 
-    // ----------------- Load Counts -----------------
-    function loadCounts() {
-        $.ajax({
-            url: "{{ route('leads.counts') }}",
-            data: {
-                id: $('#filter-id').val(),
-                client_name: $('#filter-client').val(),
-                location: $('#filter-location').val(),
-                assigned: $('#filter-assigned').val(),
-                status: selectedStatus,
-                date_range: selectedDateRange
-            },
-            success: function(res) {
-                $('#count-today').text(res.today ?? 0);
-                $('#count-week').text(res.week ?? 0);
-                $('#count-month').text(res.month ?? 0);
-                $('#count-yesterday').text(res.yesterday ?? 0);
-                $('#count-all').text(res.all ?? 0);
-            }
-        });
-    }
+                            // ----------------- Load Counts -----------------
+                            function loadCounts() {
+                                $.ajax({
+                                    url: "{{ route('leads.counts') }}",
+                                    data: {
+                                        id: $('#filter-id').val(),
+                                        client_name: $('#filter-client').val(),
+                                        location: $('#filter-location').val(),
+                                        assigned: $('#filter-assigned').val(),
+                                        status: selectedStatus,
+                                        date_range: selectedDateRange
+                                    },
+                                    success: function(res) {
+                                        $('#count-today').text(res.today ?? 0);
+                                        $('#count-week').text(res.week ?? 0);
+                                        $('#count-month').text(res.month ?? 0);
+                                        $('#count-yesterday').text(res.yesterday ?? 0);
+                                        $('#count-all').text(res.all ?? 0);
+                                    }
+                                });
+                            }
 
-    // ----------------- DataTable -----------------
-    let table = $('#Leads-table').DataTable({
-        processing: true,
-        serverSide: true,
-        ajax: {
-            url: "{{ route('leads.data') }}",
-            data: function(d) {
-                d.id = $('#filter-id').val();
-                d.client_name = $('#filter-client').val();
-                d.location = $('#filter-location').val();
-                d.status = selectedStatus;
-                d.assigned = $('#filter-assigned').val();
-                d.date_range = selectedDateRange;
-                d.search_query = $('.dataTables_filter input').val();
-            }
-        },
-        columns: [
-            { data: 'checkbox', orderable: false, searchable: false },
-            { data: 'id' },
-            { data: 'client_info', orderable: false },
-            { data: 'location', orderable: false },
-            { data: 'reminder', orderable: false },
-            { data: 'inquiry', orderable: false },
-            { data: 'proposal', orderable: false },
-            { data: 'status', orderable: false },
-            { data: 'assigned', orderable: false },
-            { data: 'action', orderable: false }
-        ],
-        dom: 'Blfrtip',
-        buttons: [
-            { extend: 'excelHtml5', text: 'Excel', exportOptions: { columns: ':not(:last-child)' } },
-            { extend: 'print', text: 'Print', exportOptions: { columns: ':not(:last-child)' } }
-        ],
-        pageLength: 50,
-        order: [[1, 'desc']],
-        autoWidth: false,
-        drawCallback: loadCounts
-    });
+                            // ----------------- DataTable -----------------
+                            let table = $('#Leads-table').DataTable({
+                                processing: true,
+                                serverSide: true,
+                                ajax: {
+                                    url: "{{ route('leads.data') }}",
+                                    data: function(d) {
+                                        d.id = $('#filter-id').val();
+                                        d.client_name = $('#filter-client').val();
+                                        d.location = $('#filter-location').val();
+                                        d.status = selectedStatus;
+                                        d.assigned = $('#filter-assigned').val();
+                                        d.date_range = selectedDateRange;
+                                        d.search_query = $('.dataTables_filter input').val();
+                                    }
+                                },
+                                columns: [{
+                                        data: 'checkbox',
+                                        orderable: false,
+                                        searchable: false
+                                    },
+                                    {
+                                        data: 'id'
+                                    },
+                                    {
+                                        data: 'client_info',
+                                        orderable: false
+                                    },
+                                    {
+                                        data: 'location',
+                                        orderable: false
+                                    },
+                                    {
+                                        data: 'reminder',
+                                        orderable: false
+                                    },
+                                    {
+                                        data: 'inquiry',
+                                        orderable: false
+                                    },
+                                    {
+                                        data: 'proposal',
+                                        orderable: false
+                                    },
+                                    {
+                                        data: 'status',
+                                        orderable: false
+                                    },
+                                    {
+                                        data: 'assigned',
+                                        orderable: false
+                                    },
+                                    {
+                                        data: 'action',
+                                        orderable: false
+                                    }
+                                ],
+                                dom: 'Blfrtip',
+                                buttons: [{
+                                        extend: 'excelHtml5',
+                                        text: 'Excel',
+                                        exportOptions: {
+                                            columns: ':not(:last-child)'
+                                        }
+                                    },
+                                    {
+                                        extend: 'print',
+                                        text: 'Print',
+                                        exportOptions: {
+                                            columns: ':not(:last-child)'
+                                        }
+                                    }
+                                ],
+                                pageLength: 50,
+                                order: [
+                                    [1, 'desc']
+                                ],
+                                autoWidth: false,
+                                drawCallback: loadCounts
+                            });
 
-    function redrawTable() {
-        table.draw();
-        loadCounts();
-    }
+                            function redrawTable() {
+                                table.draw();
+                                loadCounts();
+                            }
 
-    // ----------------- Status Buttons -----------------
-    $(".status-btn").on("click", function() {
-        $(".status-btn").removeClass("bg-blue-500 text-white");
-        $(this).addClass("bg-blue-500 text-white");
-        selectedStatus = $(this).data("value");
-        redrawTable();
-    });
+                            // ----------------- Status Buttons -----------------
+                            $(".status-btn").on("click", function() {
+                                $(".status-btn").removeClass("bg-blue-500 text-white");
+                                $(this).addClass("bg-blue-500 text-white");
+                                selectedStatus = $(this).data("value");
+                                redrawTable();
+                            });
 
-    // ----------------- Date Range Buttons -----------------
-    $(".date-range-btn").on("click", function() {
-        $(".date-range-btn").removeClass("bg-blue-500 text-white");
-        $(this).addClass("bg-blue-500 text-white");
-        selectedDateRange = $(this).data("value"); // 'today', 'week', 'month', 'yesterday'
-        redrawTable();
-    });
+                            // ----------------- Date Range Buttons -----------------
+                            $(".date-range-btn").on("click", function() {
+                                $(".date-range-btn").removeClass("bg-blue-500 text-white");
+                                $(this).addClass("bg-blue-500 text-white");
+                                selectedDateRange = $(this).data("value"); // 'today', 'week', 'month', 'yesterday'
+                                redrawTable();
+                            });
 
-    // ----------------- Text Filters -----------------
-    $('#filter-id, #filter-client, #filter-location, #filter-assigned')
-        .on('keyup change', redrawTable);
+                            // ----------------- Text Filters -----------------
+                            $('#filter-id, #filter-client, #filter-location, #filter-assigned')
+                                .on('keyup change', redrawTable);
 
-    $('.dataTables_filter input').on('keyup', function() {
-        table.draw();
-    });
+                            $('.dataTables_filter input').on('keyup', function() {
+                                table.draw();
+                            });
 
-    // ----------------- Select All -----------------
-    $('#selectAll').on('click', function() {
-        $('.row-checkbox').prop('checked', this.checked);
-    });
+                            // ----------------- Select All -----------------
+                            $('#selectAll').on('click', function() {
+                                $('.row-checkbox').prop('checked', this.checked);
+                            });
 
-    $('#Leads-table tbody').on('change', '.row-checkbox', function() {
-        $('#selectAll').prop('checked', $('.row-checkbox:checked').length === $('.row-checkbox').length);
-    });
+                            $('#Leads-table tbody').on('change', '.row-checkbox', function() {
+                                $('#selectAll').prop('checked', $('.row-checkbox:checked').length === $('.row-checkbox')
+                                    .length);
+                            });
 
-    // ----------------- Initial load -----------------
-    loadCounts();
-});
-</script>
+                            // ----------------- Initial load -----------------
+                            loadCounts();
+                        });
+                    </script>
 
 
 
@@ -467,7 +514,10 @@ $(document).ready(function() {
                 shareOpen: false,
                 editOpen: false,
                 paymentOpen: false,
-
+                leadPhone: "",
+                whatsappMessage: "",
+                whatsappPdfUrl: "", // PDF URL you want to send
+                sending: false,
                 /* ---------------- LEAD INFO ---------------- */
                 leadId: "",
                 leadName: "",
@@ -837,12 +887,17 @@ $(document).ready(function() {
 
                 /* ---------------- SHARE MODAL ---------------- */
 
-                handleShare(id, name, packageId = null, email = '') {
-                    this.shareLeadId = id;
-                    this.shareLeadName = name;
-                    this.leadEmail = email;
+                handleShare(lead) {
+                    this.shareLeadId = lead.id;
+                    this.shareLeadName = lead.name;
+                    this.leadEmail = lead.email;
 
-                    this.selectedPackage = packageId || (this.allPackages[0]?.id ?? "");
+                    this.leadPhone = `${lead.phone_code}${lead.phone_number}`;
+
+                    this.peopleCount = lead.people_count ?? 1;
+                    this.childCount = lead.child_count ?? 0;
+
+                    this.selectedPackage = lead.package_id || (this.allPackages[0]?.id ?? "");
 
                     this.showDropdown = true;
                     this.showSelectedPackage = true;
@@ -850,6 +905,8 @@ $(document).ready(function() {
                     this.fetchPackageDocs(this.selectedPackage);
                     this.shareOpen = true;
                 },
+
+
 
                 fetchPackageDocs(packageId) {
                     fetch(`/packages/${packageId}/json`)
@@ -915,6 +972,65 @@ $(document).ready(function() {
                             alert("Error sending email.");
                         });
                 },
+                async sendWhatsApp() {
+    // Basic validations
+    if (!this.leadPhone || !this.selectedPackage) {
+        alert("Phone number & Package are required.");
+        return;
+    }
+
+    if (!this.selectedPackagePdf) {
+        alert("PDF URL is required to send WhatsApp message.");
+        return;
+    }
+
+    // Construct payload
+    const payload = {
+        recipient: this.leadPhone,
+        text: this.whatsappMessage?.trim() || "Please check the attached package details.",
+        mediaUrl: this.selectedPackagePdf,
+    };
+
+    this.sending = true;
+
+    try {
+        const res = await fetch("{{ url('whatsapp/send-media') }}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content
+            },
+            credentials: "same-origin",
+            body: JSON.stringify(payload),
+        });
+
+        let data;
+        try {
+            data = await res.json();
+        } catch {
+            throw new Error("Invalid JSON response from server");
+        }
+
+        // Success condition: check multiple possible responses
+        const successMessage = data.message?.toLowerCase() ?? "";
+        if (data.success || data.status === "success" || successMessage.includes("sent successfully")) {
+            alert("📨 WhatsApp sent successfully!");
+            this.closeShare();
+            return;
+        }
+
+        // If failed
+        console.error("WhatsApp API Error:", data);
+        alert(data.error ?? data.message ?? "Failed to send WhatsApp message.");
+
+    } catch (err) {
+        console.error("WhatsApp Error:", err);
+        alert("Error sending WhatsApp. Please check logs.");
+    } finally {
+        this.sending = false;
+    }
+},
+
 
 
 

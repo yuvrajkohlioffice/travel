@@ -219,32 +219,61 @@ if ($request->filled('date_range')) {
             return '<button @click="openFollowModal('.$lead->id.', \''.$lead->name.'\')" class="px-3 py-1 border border-gray-400 rounded text-gray-700 hover:bg-gray-200 transition text-sm">Followup</button>'.$last;
         })
         ->addColumn('inquiry', fn($lead) => $lead->package->package_name ?? \Str::limit($lead->inquiry_text, 20))
+
 ->addColumn('proposal', function($lead){
+
+    $leadJson = e(json_encode([
+        'id'            => $lead->id,
+        'name'          => $lead->name,
+        'email'         => $lead->email,
+        'phone_code'    => $lead->phone_code,
+        'phone_number'  => $lead->phone_number,
+        'package_id'    => $lead->package_id,
+        'people_count'  => $lead->people_count,
+        'child_count'   => $lead->child_count,
+    ]));
+
     $packageId = $lead->package->id ?? '';
-    $invoiceId = $lead->invoice->id ?? null; // nullable
+    $invoiceId = $lead->invoice->id ?? null;
     $invoiceNo = $lead->invoice->invoice_no ?? null;
 
     $paymentButton = $invoiceId 
-        ? '<button @click=\'openPaymentModal({id: '.$invoiceId.', invoice_no: "'.$invoiceNo.'"})\' 
-            class="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700 ml-1">
+        ? '<button 
+                @click=\'openPaymentModal({id: '.$invoiceId.', invoice_no: "'.$invoiceNo.'"})\' 
+                class="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700 ml-1"
+            >
                 <i class="fa-solid fa-money-bill-wave"></i> Add Payment
            </button>'
-        : ''; // hide if no invoice
+        : '';
 
-    return '
-        <button @click="handleShare('.$lead->id.', \''.$lead->name.'\', \''.$packageId.'\', \''.$lead->email.'\')" 
-                class="px-3 py-1 border border-gray-400 rounded text-gray-700 hover:bg-gray-200 transition text-sm">
-            <i class="fa-solid fa-share"></i>
-        </button>
+    return <<<HTML
 
-        <button @click="openInvoiceModal('.$lead->id.', \''.$lead->name.'\', \''.$lead->people_count.'\', \''.$lead->child_count.'\', \''.$packageId.'\', \''.$lead->email.'\')" 
-                class="px-3 py-1 border border-gray-400 rounded text-gray-700 hover:bg-gray-200 transition text-sm ml-1">
-            <i class="fa-solid fa-file-invoice"></i>
-        </button>
+<button 
+    @click='handleShare($leadJson)'
+    class="px-3 py-1 border border-gray-400 rounded text-gray-700 hover:bg-gray-200 transition text-sm"
+>
+    <i class="fa-solid fa-share"></i>
+</button>
 
-        '.$paymentButton.'
-    ';
+<button 
+    @click="openInvoiceModal(
+        {$lead->id}, 
+        '{$lead->name}', 
+        '{$lead->people_count}', 
+        '{$lead->child_count}', 
+        '{$packageId}', 
+        '{$lead->email}'
+    )"
+    class="px-3 py-1 border border-gray-400 rounded text-gray-700 hover:bg-gray-200 transition text-sm ml-1"
+>
+    <i class="fa-solid fa-file-invoice"></i>
+</button>
+
+$paymentButton
+
+HTML;
 })
+
 
 
 

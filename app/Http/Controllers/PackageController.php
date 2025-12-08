@@ -341,7 +341,7 @@ class PackageController extends Controller
             'package_price' => $package->package_price,
             'pickup_points' => $package->pickup_points,
             'package_banner_url' => $package->package_banner ? asset('storage/' . $package->package_banner) : null,
-            'package_docs_url' => $package->package_docs ? asset('storage/' . $package->package_docs) : null,
+            'package_docs_url' => $package->package_docs,
             'other_images_url' => collect($package->other_images ?? [])
                 ->map(fn($img) => asset('storage/' . $img))
                 ->toArray(),
