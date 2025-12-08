@@ -131,10 +131,33 @@ public function getLeadsData(Request $request)
         $q2->where('user_id', $user->id)
            ->orWhereHas('assignedUsers', fn($uq) => $uq->where('user_id', $user->id))
     ));
+ if ($request->filled('id')) {
+        $query->where('id', 'like', '%'.$request->id.'%');
+    }
 
+    if ($request->filled('client_info')) {
+        $query->where('name', 'like', '%'.$request->client_info.'%')
+              ->orWhere('email', 'like', '%'.$request->client_info.'%');
+    }
+
+    if ($request->filled('location')) {
+        $query->where(function($q) use ($request) {
+            $q->where('country', 'like', '%'.$request->location.'%')
+              ->orWhere('district', 'like', '%'.$request->location.'%')
+              ->orWhere('city', 'like', '%'.$request->location.'%');
+        });
+    }
+
+    if ($request->filled('status')) {
+        $query->where('status', $request->status);
+    }
+
+    if ($request->filled('assigned')) {
+        $query->whereHas('latestAssignedUser.user', fn($q) => $q->where('name', $request->assigned));
+    }
     return DataTables::of($query)
         ->addIndexColumn()
-        ->addColumn('checkbox', fn($lead) => '<input type="checkbox" class="h-4 w-4" value="'.$lead->id.'">')
+        ->addColumn('checkbox', fn($lead) => '<input type="checkbox" value="'.$lead->id.'" @change="toggleLead($event)" class="h-4 w-4 text-gray-700 border-gray-400">')
         ->addColumn('client_info', function($lead){
             $maskedPhone = str_repeat('*', strlen($lead->phone_number)-4) . substr($lead->phone_number,-4);
             $statusClass = [
@@ -144,40 +167,117 @@ public function getLeadsData(Request $request)
                 'Interested' => 'bg-green-500'
             ][$lead->lead_status] ?? 'bg-gray-300';
 
-            return view('leads.columns.client_info', compact('lead','maskedPhone','statusClass'))->render();
+            return '
+            <div class="font-medium flex items-center gap-2">
+                '.$lead->name.'
+                <span class="px-2 py-0.5 rounded text-white font-extrabold '.$statusClass.'">
+                    '.($lead->lead_status ?? 'N/A').'
+                </span>
+                <button @click="openEditModal('.$lead->id.')" class="text-gray-600 hover:text-black">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                </button>
+            </div>
+            <a href="mailto:'.$lead->email.'" class="text-gray-700 hover:underline text-sm">
+                '.$lead->email.'
+            </a>
+            <div class="text-gray-600 text-sm font-mono">
+                +'.$lead->phone_code.' '.$maskedPhone.'
+            </div>
+            <div class="text-gray-500 text-xs">
+                '.$lead->created_at->format('d-M-y').'
+            </div>';
         })
         ->addColumn('location', fn($lead) => $lead->country.'<br>'.$lead->district.'<br>'.$lead->city)
         ->addColumn('reminder', function($lead){
-            return $lead->lastFollowup 
-                ? '<strong>Last:</strong> '.$lead->lastFollowup->reason.'<br><strong>By:</strong> '.$lead->lastFollowup->user->name 
-                : '';
+            $last = $lead->lastFollowup ? '<div class="text-xs text-gray-600 mt-2"><strong>Last:</strong> '.$lead->lastFollowup->reason.'<br><strong>By:</strong> '.$lead->lastFollowup->user->name.'</div>' : '';
+            return '<button @click="openFollowModal('.$lead->id.', \''.$lead->name.'\')" class="px-3 py-1 border border-gray-400 rounded text-gray-700 hover:bg-gray-200 transition text-sm">Followup</button>'.$last;
         })
         ->addColumn('inquiry', fn($lead) => $lead->package->package_name ?? \Str::limit($lead->inquiry_text, 20))
         ->addColumn('proposal', function($lead){
-            return view('leads.columns.proposal_buttons', compact('lead'))->render();
+            return '
+            <button @click="handleShare('.$lead->id.', \''.$lead->name.'\', \''.($lead->package->id ?? '').'\', \''.$lead->email.'\')" class="px-3 py-1 border border-gray-400 rounded text-gray-700 hover:bg-gray-200 transition text-sm">
+                <i class="fa-solid fa-share"></i>
+            </button>
+            <button @click="openInvoiceModal('.$lead->id.', \''.$lead->name.'\', \''.$lead->people_count.'\', \''.$lead->child_count.'\', \''.($lead->package->id ?? '').'\', \''.$lead->email.'\')" class="px-3 py-1 border border-gray-400 rounded text-gray-700 hover:bg-gray-200 transition text-sm ml-1">
+                <i class="fa-solid fa-file-invoice"></i>
+            </button>';
         })
         ->addColumn('status', function($lead){
-            $stageClass = [
-                'Pending'=>'bg-blue-400 text-white',
-                'Approved'=>'bg-green-500 text-white',
-                'Quotation Sent'=>'bg-indigo-500 text-white',
-                'Follow-up Taken'=>'bg-purple-500 text-white',
-                'Converted'=>'bg-teal-500 text-white',
-                'Lost'=>'bg-gray-500 text-white',
-                'On Hold'=>'bg-orange-400 text-white',
-                'Rejected'=>'bg-red-600 text-white'
-            ][$lead->status] ?? 'bg-gray-300 text-white';
+          $stageClass = [
+    'Pending'         => 'bg-lime-500 text-white',     // Lime for Pending
+    'Approved'        => 'bg-green-500 text-white',    // Green for Approved
+    'Quotation Sent'  => 'bg-indigo-500 text-white',   // Indigo for Quotation Sent
+    'Follow-up Taken' => 'bg-purple-500 text-white',   // Purple for Follow-up Taken
+    'Converted'       => 'bg-teal-500 text-white',     // Teal for Converted
+    'Lost'            => 'bg-gray-500 text-white',     // Gray for Lost
+    'On Hold'         => 'bg-amber-500 text-white',    // Amber for On Hold
+    'Rejected'        => 'bg-red-500 text-white',      // Red for Rejected
+][$lead->status] ?? 'bg-gray-300 text-white';          // Default gray-300
+         // Default gray-300
 
-            return '<span class="'.$stageClass.' px-2 py-1 rounded text-xs">'.$lead->status.'</span>';
+
+            return '
+            <div x-data="{ open: false, value: \''.$lead->status.'\' }" class="relative">
+                <div x-show="!open" @click="open = true" class="cursor-pointer text-xs px-2 py-1 rounded '.$stageClass.'">
+                    <span x-text="value || \'Select Status\'"></span>
+                </div>
+                <select x-show="open" x-cloak @change="value = $event.target.value; open=false; updateStatus('.$lead->id.', value);" @click.outside="open=false" class="px-2 py-1 rounded text-xs border bg-white dark:bg-gray-800">
+                    <option value="">Select Status</option>
+                    '.collect(['Pending','Approved','Quotation Sent','Follow-up Taken','Lost','Converted','On Hold','Rejected'])
+                        ->map(fn($status) => '<option value="'.$status.'"'.($lead->status==$status?' selected':'').'>'.$status.'</option>')
+                        ->implode(' ').'
+                </select>
+            </div>';
         })
-        ->addColumn('assigned', fn($lead) => $lead->latestAssignedUser->user->name ?? 'N/A')
+        ->addColumn('assigned', function($lead){
+            return '
+            <div><strong>Assigned:</strong> '.($lead->latestAssignedUser->user->name ?? 'N/A').'</div>
+            <div><strong>By:</strong> '.($lead->latestAssignedUser->assignedBy->name ?? 'N/A').'</div>
+            <div><strong>Created:</strong> '.($lead->createdBy->name ?? 'System').'</div>';
+        })
         ->addColumn('action', function($lead){
-            return view('leads.columns.actions', compact('lead'))->render();
+            return '
+            <a href="'.route('leads.show', $lead->id).'" class="px-3 py-1 border border-gray-400 rounded text-gray-700 hover:bg-gray-200 transition text-sm ml-1"><i class="fa-solid fa-eye"></i></a>
+            <a href="'.route('leads.assign.form', $lead->id).'" class="px-3 py-1 border border-gray-400 rounded text-gray-700 hover:bg-gray-200 transition text-sm ml-1"><i class="fa-solid fa-user-plus"></i></a>
+            <form action="'.route('leads.destroy', $lead->id).'" method="POST" onsubmit="return confirm(\'Delete this lead?\')" class="inline">
+                '.csrf_field().method_field('DELETE').'
+                <button type="submit" class="px-3 py-1 border border-gray-400 rounded text-gray-700 hover:bg-gray-200 transition text-sm ml-1">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
+            </form>';
         })
-        ->rawColumns(['checkbox','client_info','location','reminder','inquiry','proposal','status','assigned','action'])
+         ->rawColumns(['checkbox','client_info','location','reminder','inquiry','proposal','status','assigned','action'])
         ->make(true);
 }
 
+
+// LeadController.php
+public function getLeadsCounts(Request $request)
+{
+    $user = auth()->user();
+
+    $query = Lead::query()
+        ->when($user->role_id != 1, fn($q) => $q->where(fn($q2) =>
+            $q2->where('user_id', $user->id)
+               ->orWhereHas('assignedUsers', fn($uq) => $uq->where('user_id', $user->id))
+        ))
+        ->when($request->id, fn($q) => $q->where('id', $request->id))
+        ->when($request->client_name, fn($q) => $q->where('name', 'like', "%{$request->client_name}%"))
+        ->when($request->location, fn($q) => $q->where(function($q2) use($request){
+            $q2->where('country','like', "%{$request->location}%")
+               ->orWhere('district','like', "%{$request->location}%")
+               ->orWhere('city','like', "%{$request->location}%");
+        }))
+        ->when($request->status, fn($q) => $q->where('status', $request->status))
+        ->when($request->assigned, fn($q) => $q->whereHas('latestAssignedUser.user', fn($uq) => $uq->where('name', $request->assigned)));
+
+    return response()->json([
+        'today' => (clone $query)->whereDate('created_at', today())->count(),
+        'week'  => (clone $query)->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->count(),
+        'month' => (clone $query)->whereMonth('created_at', now()->month)->count(),
+        'all'   => (clone $query)->count(),
+    ]);
+}
 
 
     public function create()

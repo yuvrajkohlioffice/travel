@@ -61,6 +61,8 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
      ->name('leads.updateStatus');
      // web.php
 Route::get('/leads/data', [LeadController::class, 'getLeadsData'])->name('leads.data');
+// web.php
+Route::get('leads/counts', [LeadController::class, 'getLeadsCounts'])->name('leads.counts');
 
 
     Route::delete('packages/item/{item}', [PackageController::class, 'deleteRelation'])->name('packages.item.delete');

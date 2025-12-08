@@ -254,107 +254,166 @@
 
 
                 <div class="bg-white rounded-lg border p-4 overflow-x-auto">
+<div class="w-full mb-4 flex flex-wrap gap-2 items-center">
+    <!-- Status counters -->
+    <div class="flex flex-wrap gap-2 mb-2 w-full">
+        <div class="px-3 py-1 bg-gray-100 rounded text-sm font-semibold">Today: <span id="count-today">0</span></div>
+        <div class="px-3 py-1 bg-gray-100 rounded text-sm font-semibold">This Week: <span id="count-week">0</span></div>
+        <div class="px-3 py-1 bg-gray-100 rounded text-sm font-semibold">This Month: <span id="count-month">0</span></div>
+        <div class="px-3 py-1 bg-gray-100 rounded text-sm font-semibold">All: <span id="count-all">0</span></div>
+    </div>
 
-                    <x-data-table id="Leads-table" :headers="[
-                        '#',
-                        'ID',
-                        'Client Info',
-                        'Location',
-                        'Reminder',
-                        'Inquiry',
-                        'Proposal',
-                        'Status',
-                        'Assigned',
-                        'Action',
-                    ]" :excel="true" :print="true"
-                        title="Leads" resourceName="Leads">
-                    </x-data-table>
-                    <script>
-                        $(document).ready(function() {
-                            let actionColumnIndex = $('#Leads-table thead th')
-                                .filter(function() {
-                                    return $(this).text().trim().toLowerCase() === 'action';
-                                })
-                                .index();
+    <!-- Filters -->
+    <input type="text" id="filter-id" placeholder="Search ID" class="border px-2 py-1 text-xs">
+    <input type="text" id="filter-client" placeholder="Search Client" class="border px-2 py-1 text-xs">
+    <input type="text" id="filter-location" placeholder="Search Location" class="border px-2 py-1 text-xs">
 
-                            $('#Leads-table').DataTable({
-                                processing: true,
-                                serverSide: true,
-                                destroy: true, // <-- ADD THIS
-                                ajax: "{{ route('leads.data') }}",
-                                columns: [{
-                                        data: 'checkbox',
-                                        orderable: false,
-                                        searchable: false
-                                    },
-                                    {
-                                        data: 'id'
-                                    },
-                                    {
-                                        data: 'client_info',
-                                        orderable: false,
-                                        searchable: false
-                                    },
-                                    {
-                                        data: 'location',
-                                        orderable: false,
-                                        searchable: false
-                                    },
-                                    {
-                                        data: 'reminder',
-                                        orderable: false,
-                                        searchable: false
-                                    },
-                                    {
-                                        data: 'inquiry',
-                                        orderable: false,
-                                        searchable: false
-                                    },
-                                    {
-                                        data: 'proposal',
-                                        orderable: false,
-                                        searchable: false
-                                    },
-                                    {
-                                        data: 'status',
-                                        orderable: false,
-                                        searchable: false
-                                    },
-                                    {
-                                        data: 'assigned',
-                                        orderable: false,
-                                        searchable: false
-                                    },
-                                    {
-                                        data: 'action',
-                                        orderable: false,
-                                        searchable: false
-                                    },
-                                ],
-                                dom: 'Blfrtip',
-                                buttons: [{
-                                        extend: 'excelHtml5',
-                                        text: 'Excel',
-                                        exportOptions: {
-                                            columns: ':not(:last-child)'
-                                        }
-                                    },
-                                    {
-                                        extend: 'print',
-                                        text: 'Print',
-                                        exportOptions: {
-                                            columns: ':not(:last-child)'
-                                        }
-                                    }
-                                ],
-                                pageLength: 50,
-                                lengthMenu: [5, 10, 25, 50, 100],
-                                order: [
-                                    [1, 'desc']
-                                ]
-                            });
-                        });
-                    </script>
+    <select id="filter-status" class="border px-2 py-1 text-xs">
+        <option value="">All Status</option>
+        @foreach(['Pending','Approved','Quotation Sent','Follow-up Taken','Converted','Lost','On Hold','Rejected'] as $s)
+            <option value="{{ $s }}">{{ $s }}</option>
+        @endforeach
+    </select>
+
+    <select id="filter-assigned" class="border px-2 py-1 text-xs">
+        <option value="">All Assigned</option>
+        @foreach($users as $u)
+            <option value="{{ $u->name }}">{{ $u->name }}</option>
+        @endforeach
+    </select>
+</div>
+
+<table id="Leads-table" class="min-w-full border border-gray-200">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>ID</th>
+            <th>Client Info</th>
+            <th>Location</th>
+            <th>Reminder</th>
+            <th>Inquiry</th>
+            <th>Proposal</th>
+            <th>Status</th>
+            <th>Assigned</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+<script>
+$(document).ready(function() {
+
+    // Current selected status filter
+    let selectedStatus = '';
+
+    /**
+     * Load timeline and status counts
+     */
+    function loadCounts() {
+        $.ajax({
+            url: "{{ route('leads.counts') }}",
+            data: {
+                id: $('#filter-id').val(),
+                client_name: $('#filter-client').val(),
+                location: $('#filter-location').val(),
+                assigned: $('#filter-assigned').val(),
+                status: selectedStatus
+            },
+            success: function(res) {
+                $('#count-today').text(res.today ?? 0);
+                $('#count-week').text(res.week ?? 0);
+                $('#count-month').text(res.month ?? 0);
+                $('#count-all').text(res.all ?? 0);
+            }
+        });
+    }
+
+    /**
+     * Initialize DataTable
+     */
+    let table = $('#Leads-table').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: "{{ route('leads.data') }}",
+            data: function(d) {
+                d.id = $('#filter-id').val();
+                d.client_name = $('#filter-client').val();
+                d.location = $('#filter-location').val();
+                d.status = selectedStatus;
+                d.assigned = $('#filter-assigned').val();
+            }
+        },
+        columns: [
+            { data: 'checkbox', orderable: false, searchable: false },
+            { data: 'id' },
+            { data: 'client_info', orderable: false, searchable: false },
+            { data: 'location', orderable: false, searchable: false },
+            { data: 'reminder', orderable: false, searchable: false },
+            { data: 'inquiry', orderable: false, searchable: false },
+            { data: 'proposal', orderable: false, searchable: false },
+            { data: 'status', orderable: false, searchable: false },
+            { data: 'assigned', orderable: false, searchable: false },
+            { data: 'action', orderable: false, searchable: false }
+        ],
+        dom: 'Blfrtip',
+        buttons: [
+            { extend: 'excelHtml5', text: 'Excel', exportOptions: { columns: ':not(:last-child)' } },
+            { extend: 'print', text: 'Print', exportOptions: { columns: ':not(:last-child)' } }
+        ],
+        pageLength: 50,
+        lengthMenu: [5,10,25,50,100],
+        order: [[1,'desc']],
+        drawCallback: function() {
+            loadCounts();
+        }
+    });
+
+    /**
+     * Redraw table + counts
+     */
+    function redrawTable() {
+        table.draw();
+        loadCounts();
+    }
+
+    // 🔹 Filters: text and assigned dropdown
+    $('#filter-id, #filter-client, #filter-location, #filter-assigned').on('keyup change', redrawTable);
+
+    // 🔹 Status dropdown
+    $('#filter-status').on('change', function() {
+        selectedStatus = $(this).val();
+        redrawTable();
+    });
+
+    // 🔹 Status buttons
+    $('.status-filter').on('click', function() {
+        $('.status-filter').removeClass('bg-blue-500 text-white');
+        $(this).addClass('bg-blue-500 text-white');
+
+        selectedStatus = $(this).data('status');
+        $('#filter-status').val('');
+        redrawTable();
+    });
+
+    // 🔹 Select All checkbox logic
+    $('#selectAll').on('click', function() {
+        $('.row-checkbox').prop('checked', this.checked);
+    });
+
+    $('#Leads-table tbody').on('change', '.row-checkbox', function() {
+        $('#selectAll').prop('checked', $('.row-checkbox:checked').length === $('.row-checkbox').length);
+    });
+
+    // Initial load
+    loadCounts();
+});
+</script>
+
+
+
+
+
 
                 </div>
 
