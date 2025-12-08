@@ -90,10 +90,10 @@
                 </table>
             </div>
 
-            <!-- Phone Views (Admin Only) -->
+            <!-- Followup Views (Admin Only) -->
             @if ($user->role_id == 1)
             <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-6 overflow-x-auto">
-                <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-3">Phone Views</h3>
+                <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-3">Followup Views</h3>
                 <table class="w-full border-collapse border text-left">
                     <thead class="bg-gray-100 dark:bg-gray-700">
                         <tr>
