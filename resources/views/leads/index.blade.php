@@ -66,191 +66,6 @@
                 </div>
 
                 <!-- Table -->
-                <form method="GET" x-data class="mb-4 bg-white p-4 rounded-lg shadow">
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-
-                        <!-- Country -->
-                        <select name="country" x-on:change="$el.form.submit()"
-                            class="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm bg-white">
-                            <option value="">Country</option>
-                            @foreach ($leads->pluck('country')->unique() as $country)
-                                <option value="{{ $country }}"
-                                    {{ request('country') == $country ? 'selected' : '' }}>
-                                    {{ $country }}
-                                </option>
-                            @endforeach
-                        </select>
-
-                        <!-- District -->
-                        <select name="district" x-on:change="$el.form.submit()"
-                            class="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm bg-white">
-                            <option value="">District</option>
-                            @foreach ($leads->pluck('district')->unique() as $district)
-                                <option value="{{ $district }}"
-                                    {{ request('district') == $district ? 'selected' : '' }}>
-                                    {{ $district }}
-                                </option>
-                            @endforeach
-                        </select>
-
-                        <!-- City -->
-                        <select name="city" x-on:change="$el.form.submit()"
-                            class="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm bg-white">
-                            <option value="">City</option>
-                            @foreach ($leads->pluck('city')->unique() as $city)
-                                <option value="{{ $city }}" {{ request('city') == $city ? 'selected' : '' }}>
-                                    {{ $city }}
-                                </option>
-                            @endforeach
-                        </select>
-
-                        <!-- Lead Status -->
-                        <select name="lead_status" x-on:change="$el.form.submit()"
-                            class="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm bg-white">
-                            <option value="">Lead Status</option>
-                            <option value="Hot" {{ request('lead_status') == 'Hot' ? 'selected' : '' }}>Hot</option>
-                            <option value="Warm" {{ request('lead_status') == 'Warm' ? 'selected' : '' }}>Warm
-                            </option>
-                            <option value="Cold" {{ request('lead_status') == 'Cold' ? 'selected' : '' }}>Cold
-                            </option>
-                        </select>
-
-                        <!-- Stage -->
-                        <select name="status" x-on:change="$el.form.submit()"
-                            class="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm bg-white">
-                            <option value="">Stage</option>
-                            <option value="Pending" {{ request('status') == 'Pending' ? 'selected' : '' }}>Pending
-                            </option>
-                            <option value="Approved" {{ request('status') == 'Approved' ? 'selected' : '' }}>Approved
-                            </option>
-                            <option value="Quotation Sent"
-                                {{ request('status') == 'Quotation Sent' ? 'selected' : '' }}>Quotation Sent</option>
-                            <option value="Follow-up Taken"
-                                {{ request('status') == 'Follow-up Taken' ? 'selected' : '' }}>Follow-up Taken</option>
-
-                            <option value="Lost" {{ request('status') == 'Lost' ? 'selected' : '' }}>Lost</option>
-                            <option value="Converted" {{ request('status') == 'Converted' ? 'selected' : '' }}>
-                                Converted</option>
-                            <option value="On Hold" {{ request('status') == 'On Hold' ? 'selected' : '' }}>On Hold
-                            </option>
-                            <option value="Rejected" {{ request('status') == 'Rejected' ? 'selected' : '' }}>Rejected
-                            </option>
-                        </select>
-
-
-                        <!-- Package -->
-                        <select name="package_id" x-on:change="$el.form.submit()"
-                            class="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm bg-white">
-                            <option value="">Package</option>
-                            @foreach ($packages as $package)
-                                <option value="{{ $package->id }}"
-                                    {{ request('package_id') == $package->id ? 'selected' : '' }}>
-                                    {{ $package->package_name }}
-                                </option>
-                            @endforeach
-                        </select>
-
-                        <!-- Created By -->
-                        <select name="user_id" x-on:change="$el.form.submit()"
-                            class="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm bg-white">
-                            <option value="">Created By</option>
-                            @foreach ($users as $u)
-                                <option value="{{ $u->id }}"
-                                    {{ request('user_id') == $u->id ? 'selected' : '' }}>
-                                    {{ $u->name }}
-                                </option>
-                            @endforeach
-                        </select>
-
-                        <!-- Assigned To -->
-                        <select name="assigned_to" x-on:change="$el.form.submit()"
-                            class="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm bg-white">
-                            <option value="">Assigned To</option>
-                            @foreach ($users as $u)
-                                <option value="{{ $u->id }}"
-                                    {{ request('assigned_to') == $u->id ? 'selected' : '' }}>
-                                    {{ $u->name }}
-                                </option>
-                            @endforeach
-                        </select>
-
-                        <!-- Reset button -->
-                        <a href="{{ route('leads.index') }}"
-                            class="w-full px-4 py-2 bg-gray-500 text-white rounded text-sm flex items-center justify-center">
-                            Reset
-                        </a>
-
-                    </div>
-                </form>
-
-
-                <div class="flex flex-wrap gap-2 mb-4">
-                    @php
-                        $statuses = [
-                            '' => 'All',
-                            'Follow-up Taken' => 'Follow-up Taken',
-                            'Converted' => 'Converted',
-                            'Approved' => 'Approved',
-                            'Rejected' => 'Rejected',
-                        ];
-                    @endphp
-
-                    @foreach ($statuses as $value => $label)
-                        <form method="GET" class="inline">
-                            {{-- Keep all GET params except status --}}
-                            @foreach (request()->except('status') as $name => $val)
-                                <input type="hidden" name="{{ $name }}" value="{{ $val }}">
-                            @endforeach
-
-                            {{-- Only add status when not All --}}
-                            @if ($value !== '')
-                                <input type="hidden" name="status" value="{{ $value }}">
-                            @endif
-
-                            <button type="submit"
-                                class="px-4 py-2 rounded-lg border border-gray-300 text-sm
-                {{ ($filters['status'] ?? '') == $value ? 'bg-blue-500 text-white' : 'bg-white' }}">
-                                {{ $label }} ({{ $statusCounts[$value ?: 'All'] ?? 0 }})
-                            </button>
-                        </form>
-                    @endforeach
-                </div>
-                @if (!empty($filters['status']))
-                    <div class="flex flex-wrap gap-2 mb-4">
-                        @php
-                            $times = [
-                                'all' => 'All',
-                                'today' => 'Today',
-                                'week' => 'This Week',
-                                'month' => 'This Month',
-                            ];
-                        @endphp
-
-                        @foreach ($times as $key => $label)
-                            <form method="GET" class="inline">
-
-                                {{-- Keep all GET params except time --}}
-                                @foreach (request()->except('time') as $name => $value)
-                                    <input type="hidden" name="{{ $name }}" value="{{ $value }}">
-                                @endforeach
-
-                                <input type="hidden" name="time" value="{{ $key }}">
-
-                                <button type="submit"
-                                    class="px-4 py-2 rounded-lg border text-sm
-                    {{ ($filters['time'] ?? 'all') == $key ? 'bg-blue-500 text-white' : 'bg-white' }}">
-                                    {{ $label }} ({{ $timeCounts[$key] ?? 0 }})
-                                </button>
-                            </form>
-                        @endforeach
-                    </div>
-                @endif
-
-
-
-
-
 
 
                 <div class="bg-white rounded-lg border p-4 overflow-x-auto">
@@ -595,18 +410,19 @@
 
                 // Open payment modal with invoice data
                 openPaymentModal(invoice) {
-                    this.paymentInvoiceId = invoice.id || null;
-                    this.paymentInvoiceNumber = invoice.invoice_no || '';
-                    this.amount = Number(invoice.amount || invoice.remaining_amount || 0);
-                    this.remainingAmount = Number(invoice.remaining_amount || this.amount);
-                    this.paidAmount = 0; // reset input
-                    this.paymentMethod = '';
-                    this.transactionId = '';
-                    this.nextPaymentDate = '';
-                    this.paymentNotes = '';
-                    this.partialPaymentWithoutNextDate = false;
-                    this.paymentOpen = true;
-                },
+    this.paymentInvoiceId = invoice.id;
+    this.paymentInvoiceNumber = invoice.invoice_no;
+    this.amount = Number(invoice.amount || invoice.remaining_amount || 0);
+    this.remainingAmount = Number(invoice.remaining_amount || this.amount);
+    this.paidAmount = 0;
+    this.paymentMethod = '';
+    this.transactionId = '';
+    this.nextPaymentDate = '';
+    this.paymentNotes = '';
+    this.partialPaymentWithoutNextDate = false;
+    this.paymentOpen = true;
+},
+
 
                 // Close payment modal and reset fields
                 closePaymentModal() {
@@ -973,63 +789,63 @@
                         });
                 },
                 async sendWhatsApp() {
-    // Basic validations
-    if (!this.leadPhone || !this.selectedPackage) {
-        alert("Phone number & Package are required.");
-        return;
-    }
+                    // Basic validations
+                    if (!this.leadPhone || !this.selectedPackage) {
+                        alert("Phone number & Package are required.");
+                        return;
+                    }
 
-    if (!this.selectedPackagePdf) {
-        alert("PDF URL is required to send WhatsApp message.");
-        return;
-    }
+                    if (!this.selectedPackagePdf) {
+                        alert("PDF URL is required to send WhatsApp message.");
+                        return;
+                    }
 
-    // Construct payload
-    const payload = {
-        recipient: this.leadPhone,
-        text: this.whatsappMessage?.trim() || "Please check the attached package details.",
-        mediaUrl: this.selectedPackagePdf,
-    };
+                    // Construct payload
+                    const payload = {
+                        recipient: this.leadPhone,
+                        text: this.whatsappMessage?.trim() || "Please check the attached package details.",
+                        mediaUrl: this.selectedPackagePdf,
+                    };
 
-    this.sending = true;
+                    this.sending = true;
 
-    try {
-        const res = await fetch("{{ url('whatsapp/send-media') }}", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content
-            },
-            credentials: "same-origin",
-            body: JSON.stringify(payload),
-        });
+                    try {
+                        const res = await fetch("{{ url('whatsapp/send-media') }}", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content
+                            },
+                            credentials: "same-origin",
+                            body: JSON.stringify(payload),
+                        });
 
-        let data;
-        try {
-            data = await res.json();
-        } catch {
-            throw new Error("Invalid JSON response from server");
-        }
+                        let data;
+                        try {
+                            data = await res.json();
+                        } catch {
+                            throw new Error("Invalid JSON response from server");
+                        }
 
-        // Success condition: check multiple possible responses
-        const successMessage = data.message?.toLowerCase() ?? "";
-        if (data.success || data.status === "success" || successMessage.includes("sent successfully")) {
-            alert("📨 WhatsApp sent successfully!");
-            this.closeShare();
-            return;
-        }
+                        // Success condition: check multiple possible responses
+                        const successMessage = data.message?.toLowerCase() ?? "";
+                        if (data.success || data.status === "success" || successMessage.includes("sent successfully")) {
+                            alert("📨 WhatsApp sent successfully!");
+                            this.closeShare();
+                            return;
+                        }
 
-        // If failed
-        console.error("WhatsApp API Error:", data);
-        alert(data.error ?? data.message ?? "Failed to send WhatsApp message.");
+                        // If failed
+                        console.error("WhatsApp API Error:", data);
+                        alert(data.error ?? data.message ?? "Failed to send WhatsApp message.");
 
-    } catch (err) {
-        console.error("WhatsApp Error:", err);
-        alert("Error sending WhatsApp. Please check logs.");
-    } finally {
-        this.sending = false;
-    }
-},
+                    } catch (err) {
+                        console.error("WhatsApp Error:", err);
+                        alert("Error sending WhatsApp. Please check logs.");
+                    } finally {
+                        this.sending = false;
+                    }
+                },
 
 
 

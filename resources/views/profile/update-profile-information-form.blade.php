@@ -53,6 +53,20 @@
         @endif
 
         <!-- Name -->
+        <!-- WhatsApp API Key -->
+<div class="col-span-6 sm:col-span-4">
+    <x-label for="whatsapp_api_key" value="{{ __('WhatsApp API Key') }}" />
+    <x-input 
+        id="whatsapp_api_key" 
+        type="text" 
+        class="mt-1 block w-full" 
+        wire:model.defer="state.whatsapp_api_key" 
+        autocomplete="off" 
+        placeholder="Enter your WhatsApp API key" 
+    />
+    <x-input-error for="whatsapp_api_key" class="mt-2" />
+</div>
+
         <div class="col-span-6 sm:col-span-4">
             <x-label for="name" value="{{ __('Name') }}" />
             <x-input id="name" type="text" class="mt-1 block w-full" wire:model="state.name" required autocomplete="name" />

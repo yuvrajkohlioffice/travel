@@ -220,36 +220,60 @@ if ($request->filled('date_range')) {
         })
         ->addColumn('inquiry', fn($lead) => $lead->package->package_name ?? \Str::limit($lead->inquiry_text, 20))
 
-->addColumn('proposal', function($lead){
-
-    $leadJson = e(json_encode([
+->addColumn('proposal', function ($lead) {
+    // Encode lead safely for handleShare()
+    $leadJson = htmlspecialchars(json_encode([
         'id'            => $lead->id,
         'name'          => $lead->name,
         'email'         => $lead->email,
         'phone_code'    => $lead->phone_code,
         'phone_number'  => $lead->phone_number,
-        'package_id'    => $lead->package_id,
-        'people_count'  => $lead->people_count,
-        'child_count'   => $lead->child_count,
-    ]));
+        'package_id'    => $lead->package_id ?? null,
+        'people_count'  => $lead->people_count ?? 1,
+        'child_count'   => $lead->child_count ?? 0,
+    ], JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8');
 
+    // Package & Invoice details
     $packageId = $lead->package->id ?? '';
-    $invoiceId = $lead->invoice->id ?? null;
-    $invoiceNo = $lead->invoice->invoice_no ?? null;
+    $invoice = $lead->invoice ?? null;
 
-    $paymentButton = $invoiceId 
-        ? '<button 
-                @click=\'openPaymentModal({id: '.$invoiceId.', invoice_no: "'.$invoiceNo.'"})\' 
-                class="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700 ml-1"
-            >
-                <i class="fa-solid fa-money-bill-wave"></i> Add Payment
-           </button>'
-        : '';
+    $paymentButton = '';
+    if ($invoice) {
+        $invoiceId = $invoice->id;
+        $invoiceNo = $invoice->invoice_no ?? '';
+        $invoiceFinalPrice = (float) ($invoice->final_price ?? 0);
 
-    return <<<HTML
+        // Calculate remaining amount from payments table
+        $totalPaid = \DB::table('payments')
+            ->where('invoice_id', $invoiceId)
+            ->sum('paid_amount');
 
+        $remainingAmount = max($invoiceFinalPrice - $totalPaid, 0);
+
+        // Only show payment button if remaining amount > 0
+        if ($remainingAmount > 0) {
+            $invoiceJson = htmlspecialchars(json_encode([
+                'id' => $invoiceId,
+                'invoice_no' => $invoiceNo,
+                'amount' => $invoiceFinalPrice,
+                'remaining_amount' => $remainingAmount,
+            ], JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8');
+
+            $paymentButton = <<<HTML
 <button 
-    @click='handleShare($leadJson)'
+    @click='openPaymentModal({$invoiceJson})'
+    class="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700 ml-1"
+>
+    <i class="fa-solid fa-money-bill-wave"></i> Add Payment
+</button>
+HTML;
+        }
+    }
+
+    // Render all buttons
+    return <<<HTML
+<button 
+    @click='handleShare({$leadJson})'
     class="px-3 py-1 border border-gray-400 rounded text-gray-700 hover:bg-gray-200 transition text-sm"
 >
     <i class="fa-solid fa-share"></i>
@@ -269,10 +293,10 @@ if ($request->filled('date_range')) {
     <i class="fa-solid fa-file-invoice"></i>
 </button>
 
-$paymentButton
-
+{$paymentButton}
 HTML;
 })
+
 
 
 

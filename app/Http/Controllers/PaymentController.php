@@ -4,13 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\Payment;
 use App\Models\Invoice;
+use App\Models\Followup;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
 class PaymentController extends Controller
 {
     /**
-     * Get all payments for AJAX (optionally by invoice)
+     * Get all payments (optionally by invoice)
      */
     public function index(Request $request)
     {
@@ -33,7 +34,6 @@ class PaymentController extends Controller
      */
     public function store(Request $request)
     {
-        // Validate request
         $validator = Validator::make($request->all(), [
             'invoice_id' => 'required|exists:invoices,id',
             'amount' => 'required|numeric|min:0.01',
@@ -42,30 +42,39 @@ class PaymentController extends Controller
             'transaction_id' => 'nullable|string',
             'notes' => 'nullable|string',
             'next_payment_date' => 'nullable|date',
+            'next_payment_time' => 'nullable',
             'reminder_date' => 'nullable|date',
         ]);
 
         if ($validator->fails()) {
-            return response()->json(
-                [
-                    'status' => 'error',
-                    'errors' => $validator->errors(),
-                ],
-                422,
-            );
+            return response()->json([
+                'status' => 'error',
+                'errors' => $validator->errors(),
+            ], 422);
         }
 
-        // Fetch invoice and lead
         $invoice = Invoice::findOrFail($request->invoice_id);
-        $lead = $invoice->lead; // assuming Invoice belongsTo Lead
+        $lead = $invoice->lead;
 
-        // Calculate remaining amount and payment status
-        $remaining = max($request->amount - $request->paid_amount, 0);
-        $status = $request->paid_amount == 0 ? 'pending' : ($request->paid_amount < $request->amount ? 'partial' : 'completed');
+        // Total paid so far
+        $totalPaidSoFar = Payment::where('invoice_id', $invoice->id)->sum('paid_amount');
+        $newTotalPaid = $totalPaidSoFar + $request->paid_amount;
 
-        // Create Payment
+        // Remaining amount
+        $remaining = max($invoice->final_price - $newTotalPaid, 0);
+
+        // Determine payment status
+        if ($newTotalPaid == 0) {
+            $status = 'pending';
+        } elseif ($newTotalPaid < $invoice->final_price) {
+            $status = 'partial';
+        } else {
+            $status = 'paid';
+        }
+
+        // Create payment record
         $payment = Payment::create([
-            'invoice_id' => $request->invoice_id,
+            'invoice_id' => $invoice->id,
             'user_id' => auth()->id(),
             'amount' => $request->amount,
             'paid_amount' => $request->paid_amount,
@@ -78,19 +87,13 @@ class PaymentController extends Controller
             'reminder_date' => $request->reminder_date,
         ]);
 
-        // Update Lead status based on payment
+        // Update lead status
         if ($lead) {
-            if ($status === 'completed') {
-                $lead->update(['lead_status' => 'paid']);
-            } elseif ($status === 'partial') {
-                $lead->update(['lead_status' => 'partial']);
-            } else {
-                $lead->update(['lead_status' => 'pending']);
-            }
+            $lead->update(['lead_status' => $status]);
         }
 
-        // Create follow-up if next_payment_date is provided
-        if ($request->next_payment_date && $lead) {
+        // Create follow-up if partial payment and next payment date provided
+        if ($status === 'partial' && $request->next_payment_date && $lead) {
             Followup::create([
                 'lead_id' => $lead->id,
                 'user_id' => auth()->id(),
@@ -105,11 +108,13 @@ class PaymentController extends Controller
         return response()->json([
             'status' => 'success',
             'payment' => $payment,
+            'remaining' => $remaining,
+            'status_label' => $status,
         ]);
     }
 
     /**
-     * Update an existing payment (for partial/full updates)
+     * Update an existing payment
      */
     public function update(Request $request, $id)
     {
@@ -121,28 +126,76 @@ class PaymentController extends Controller
             'transaction_id' => 'nullable|string',
             'notes' => 'nullable|string',
             'next_payment_date' => 'nullable|date',
+            'next_payment_time' => 'nullable',
             'reminder_date' => 'nullable|date',
         ]);
 
         if ($validator->fails()) {
-            return response()->json(
-                [
-                    'status' => 'error',
-                    'errors' => $validator->errors(),
-                ],
-                422,
-            );
+            return response()->json([
+                'status' => 'error',
+                'errors' => $validator->errors(),
+            ], 422);
         }
 
+        $invoice = $payment->invoice;
+        $lead = $invoice->lead;
+
+        // Update paid amount if provided
         if ($request->has('paid_amount')) {
-            $payment->recordPayment($request->paid_amount, $request->payment_method, $request->transaction_id, $request->notes);
+            $payment->paid_amount = $request->paid_amount;
+            $payment->amount = $request->amount ?? $payment->amount;
+        }
+
+        // Update other fields
+        $payment->update($request->only([
+            'payment_method',
+            'transaction_id',
+            'notes',
+            'next_payment_date',
+            'next_payment_time',
+            'reminder_date',
+        ]));
+
+        // Recalculate total paid for invoice
+        $totalPaid = Payment::where('invoice_id', $invoice->id)->sum('paid_amount');
+        $remaining = max($invoice->final_price - $totalPaid, 0);
+
+        if ($totalPaid == 0) {
+            $status = 'pending';
+        } elseif ($totalPaid < $invoice->final_price) {
+            $status = 'partial';
         } else {
-            $payment->update($request->only(['payment_method', 'transaction_id', 'notes', 'next_payment_date', 'reminder_date']));
+            $status = 'paid';
+        }
+
+        $payment->update([
+            'remaining_amount' => $remaining,
+            'status' => $status,
+        ]);
+
+        // Update lead status
+        if ($lead) {
+            $lead->update(['lead_status' => $status]);
+        }
+
+        // Create follow-up if partial
+        if ($status === 'partial' && $request->next_payment_date && $lead) {
+            Followup::create([
+                'lead_id' => $lead->id,
+                'user_id' => auth()->id(),
+                'reason' => 'Payment Follow-up',
+                'remark' => 'Next payment scheduled',
+                'next_followup_date' => $request->next_payment_date,
+                'next_followup_time' => $request->next_payment_time ?? null,
+                'last_followup_date' => now(),
+            ]);
         }
 
         return response()->json([
             'status' => 'success',
             'payment' => $payment,
+            'remaining' => $remaining,
+            'status_label' => $status,
         ]);
     }
 
@@ -161,11 +214,14 @@ class PaymentController extends Controller
     }
 
     /**
-     * Get payments that need reminders (for cron/AJAX check)
+     * Get payments that need reminders
      */
     public function reminders()
     {
-        $payments = Payment::with('invoice')->where('status', 'partial')->whereDate('reminder_date', '<=', now())->get();
+        $payments = Payment::with('invoice')
+            ->where('status', 'partial')
+            ->whereDate('reminder_date', '<=', now())
+            ->get();
 
         return response()->json([
             'status' => 'success',
