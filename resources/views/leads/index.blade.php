@@ -49,8 +49,7 @@
                 <div x-show="selected.length > 0" class="mb-3 flex items-center gap-3">
                     <span class="font-medium text-gray-700">Assign Selected Leads:</span>
 
-                    <select x-model="bulkUser"
-                        class="w-1/6 rounded-lg border border-gray-300 px-4 py-2 text-sm bg-white">
+                    <select x-model="bulkUser" class="w-1/6 rounded-lg border border-gray-300 px-4 py-2 text-sm bg-white">
                         <option value="">Select User</option>
                         @foreach ($users as $user)
                             <option value="{{ $user->id }}">{{ $user->name }}</option>
@@ -70,43 +69,118 @@
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
 
-                        <x-filter-select name="country" label="Country" :options="$leads->pluck('country', 'country')->unique()" :selected="request('country')" />
+                        <!-- Country -->
+                        <select name="country" x-on:change="$el.form.submit()"
+                            class="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm bg-white">
+                            <option value="">Country</option>
+                            @foreach ($leads->pluck('country')->unique() as $country)
+                                <option value="{{ $country }}"
+                                    {{ request('country') == $country ? 'selected' : '' }}>
+                                    {{ $country }}
+                                </option>
+                            @endforeach
+                        </select>
 
-                        <x-filter-select name="district" label="District" :options="$leads->pluck('district', 'district')->unique()" :selected="request('district')" />
+                        <!-- District -->
+                        <select name="district" x-on:change="$el.form.submit()"
+                            class="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm bg-white">
+                            <option value="">District</option>
+                            @foreach ($leads->pluck('district')->unique() as $district)
+                                <option value="{{ $district }}"
+                                    {{ request('district') == $district ? 'selected' : '' }}>
+                                    {{ $district }}
+                                </option>
+                            @endforeach
+                        </select>
 
-                        <x-filter-select name="city" label="City" :options="$leads->pluck('city', 'city')->unique()" :selected="request('city')" />
+                        <!-- City -->
+                        <select name="city" x-on:change="$el.form.submit()"
+                            class="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm bg-white">
+                            <option value="">City</option>
+                            @foreach ($leads->pluck('city')->unique() as $city)
+                                <option value="{{ $city }}" {{ request('city') == $city ? 'selected' : '' }}>
+                                    {{ $city }}
+                                </option>
+                            @endforeach
+                        </select>
 
-                        <x-filter-select name="lead_status" label="Lead Status" :options="[
-                            'Hot' => 'Hot',
-                            'Warm' => 'Warm',
-                            'Cold' => 'Cold',
-                        ]" :selected="request('lead_status')" />
+                        <!-- Lead Status -->
+                        <select name="lead_status" x-on:change="$el.form.submit()"
+                            class="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm bg-white">
+                            <option value="">Lead Status</option>
+                            <option value="Hot" {{ request('lead_status') == 'Hot' ? 'selected' : '' }}>Hot</option>
+                            <option value="Warm" {{ request('lead_status') == 'Warm' ? 'selected' : '' }}>Warm
+                            </option>
+                            <option value="Cold" {{ request('lead_status') == 'Cold' ? 'selected' : '' }}>Cold
+                            </option>
+                        </select>
 
-                        <x-filter-select name="status" label="Stage" :options="[
-                            'Pending' => 'Pending',
-                            'Approved' => 'Approved',
-                            'Quotation Sent' => 'Quotation Sent',
-                            'Follow-up Taken' => 'Follow-up Taken',
-                            'Lost' => 'Lost',
-                            'Converted' => 'Converted',
-                            'On Hold' => 'On Hold',
-                            'Rejected' => 'Rejected',
-                        ]" :selected="request('status')" />
+                        <!-- Stage -->
+                        <select name="status" x-on:change="$el.form.submit()"
+                            class="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm bg-white">
+                            <option value="">Stage</option>
+                            <option value="Pending" {{ request('status') == 'Pending' ? 'selected' : '' }}>Pending
+                            </option>
+                            <option value="Approved" {{ request('status') == 'Approved' ? 'selected' : '' }}>Approved
+                            </option>
+                            <option value="Quotation Sent"
+                                {{ request('status') == 'Quotation Sent' ? 'selected' : '' }}>Quotation Sent</option>
+                            <option value="Follow-up Taken"
+                                {{ request('status') == 'Follow-up Taken' ? 'selected' : '' }}>Follow-up Taken</option>
 
-                        <x-filter-select name="package_id" label="Package" :options="$packages->pluck('package_name', 'id')" :selected="request('package_id')" />
+                            <option value="Lost" {{ request('status') == 'Lost' ? 'selected' : '' }}>Lost</option>
+                            <option value="Converted" {{ request('status') == 'Converted' ? 'selected' : '' }}>
+                                Converted</option>
+                            <option value="On Hold" {{ request('status') == 'On Hold' ? 'selected' : '' }}>On Hold
+                            </option>
+                            <option value="Rejected" {{ request('status') == 'Rejected' ? 'selected' : '' }}>Rejected
+                            </option>
+                        </select>
 
-                        <x-filter-select name="user_id" label="Created By" :options="$users->pluck('name', 'id')" :selected="request('user_id')" />
 
-                        <x-filter-select name="assigned_to" label="Assigned To" :options="$users->pluck('name', 'id')" :selected="request('assigned_to')" />
+                        <!-- Package -->
+                        <select name="package_id" x-on:change="$el.form.submit()"
+                            class="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm bg-white">
+                            <option value="">Package</option>
+                            @foreach ($packages as $package)
+                                <option value="{{ $package->id }}"
+                                    {{ request('package_id') == $package->id ? 'selected' : '' }}>
+                                    {{ $package->package_name }}
+                                </option>
+                            @endforeach
+                        </select>
 
-                        <!-- Reset -->
+                        <!-- Created By -->
+                        <select name="user_id" x-on:change="$el.form.submit()"
+                            class="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm bg-white">
+                            <option value="">Created By</option>
+                            @foreach ($users as $u)
+                                <option value="{{ $u->id }}"
+                                    {{ request('user_id') == $u->id ? 'selected' : '' }}>
+                                    {{ $u->name }}
+                                </option>
+                            @endforeach
+                        </select>
+
+                        <!-- Assigned To -->
+                        <select name="assigned_to" x-on:change="$el.form.submit()"
+                            class="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm bg-white">
+                            <option value="">Assigned To</option>
+                            @foreach ($users as $u)
+                                <option value="{{ $u->id }}"
+                                    {{ request('assigned_to') == $u->id ? 'selected' : '' }}>
+                                    {{ $u->name }}
+                                </option>
+                            @endforeach
+                        </select>
+
+                        <!-- Reset button -->
                         <a href="{{ route('leads.index') }}"
                             class="w-full px-4 py-2 bg-gray-500 text-white rounded text-sm flex items-center justify-center">
                             Reset
                         </a>
 
                     </div>
-
                 </form>
 
 
@@ -244,7 +318,8 @@
                                         </button>
                                     </div>
 
-                                    <a href="mailto:{{ $lead->email }}" class="text-gray-700 hover:underline text-sm">
+                                    <a href="mailto:{{ $lead->email }}"
+                                        class="text-gray-700 hover:underline text-sm">
                                         {{ $lead->email }}
                                     </a>
 
