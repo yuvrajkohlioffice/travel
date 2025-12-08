@@ -135,10 +135,14 @@ public function getLeadsData(Request $request)
         $query->where('id', 'like', '%'.$request->id.'%');
     }
 
-    if ($request->filled('client_info')) {
-        $query->where('name', 'like', '%'.$request->client_info.'%')
-              ->orWhere('email', 'like', '%'.$request->client_info.'%');
-    }
+    if ($request->filled('client_name')) {
+    $query->where(function ($q) use ($request) {
+        $q->where('name', 'like', '%'.$request->client_name.'%')
+          ->orWhere('email', 'like', '%'.$request->client_name.'%')
+          ->orWhere('phone_number', 'like', '%'.$request->client_name.'%');
+    });
+}
+
 
     if ($request->filled('location')) {
         $query->where(function($q) use ($request) {
@@ -246,7 +250,10 @@ public function getLeadsData(Request $request)
                 </button>
             </form>';
         })
-         ->rawColumns(['checkbox','client_info','location','reminder','inquiry','proposal','status','assigned','action'])
+        ->rawColumns([
+        'checkbox','client_info','location','reminder','inquiry',
+        'proposal','status','assigned','action'
+    ])
         ->make(true);
 }
 
