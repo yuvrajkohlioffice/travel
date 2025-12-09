@@ -12,6 +12,7 @@
             $links = [
                 ['route' => 'dashboard', 'label' => 'Dashboard', 'icon' => 'fas fa-home'],
                 ['route' => 'profile.show', 'label' => 'Profile', 'icon' => 'fas fa-user'],
+                ['route' => 'companies.index', 'label' => 'Companies', 'icon' => 'fas fa-building'],
 
                 ['route' => 'leads.index', 'label' => 'Leads', 'icon' => 'fas fa-people-group'],
                 ['route' => 'packages.index', 'label' => 'Packages', 'icon' => 'fas fa-box-open'],

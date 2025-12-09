@@ -18,13 +18,13 @@
                 <!-- Package Name -->
                 <div class="col-span-1 lg:col-span-3">
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-400">Package Name</label>
-                    <input type="text" name="package_name" value="{{ $package->package_name }}" class="mt-1 block w-full border rounded px-4 py-2" required>
+                    <input type="text" name="package_name" value="{{ $package->package_name }}" class="border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-2 w-full text-sm w-40 dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition" required>
                 </div>
 
                 <!-- Type -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-400">Type</label>
-                    <select name="package_type_id" class="mt-1 block w-full border rounded px-4 py-2" required>
+                    <select name="package_type_id" class="border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-2 w-full text-sm w-40 dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition" required>
                         <option value="">Select Type</option>
                         @foreach($types as $type)
                             <option value="{{ $type->id }}" {{ $package->package_type_id == $type->id ? 'selected' : '' }}>
@@ -37,7 +37,7 @@
                 <!-- Category -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-400">Category</label>
-                    <select name="package_category_id" class="mt-1 block w-full border rounded px-4 py-2" required>
+                    <select name="package_category_id" class="border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-2 w-full text-sm w-40 dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition" required>
                         <option value="">Select Category</option>
                         @foreach($categories as $category)
                             <option value="{{ $category->id }}" {{ $package->package_category_id == $category->id ? 'selected' : '' }}>
@@ -50,7 +50,7 @@
                 <!-- Difficulty -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-400">Difficulty</label>
-                    <select name="difficulty_type_id" class="mt-1 block w-full border rounded px-4 py-2" required>
+                    <select name="difficulty_type_id" class="border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-2 w-full text-sm w-40 dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition" required>
                         <option value="">Select Difficulty</option>
                         @foreach($difficulties as $difficulty)
                             <option value="{{ $difficulty->id }}" {{ $package->difficulty_type_id == $difficulty->id ? 'selected' : '' }}>
@@ -63,49 +63,49 @@
                 <!-- Days -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-400">Days</label>
-                    <input type="number" name="package_days" value="{{ $package->package_days }}" class="mt-1 block w-full border rounded px-4 py-2" required>
+                    <input type="number" name="package_days" value="{{ $package->package_days }}" class="border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-2 w-full text-sm w-40 dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition" required>
                 </div>
 
                 <!-- Nights -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-400">Nights</label>
-                    <input type="number" name="package_nights" value="{{ $package->package_nights }}" class="mt-1 block w-full border rounded px-4 py-2" required>
+                    <input type="number" name="package_nights" value="{{ $package->package_nights }}" class="border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-2 w-full text-sm w-40 dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition" required>
                 </div>
 
                 <!-- Price -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-400">Price</label>
-                    <input type="number" step="0.01" name="package_price" value="{{ $package->package_price }}" class="mt-1 block w-full border rounded px-4 py-2" required>
+                    <input type="number" step="0.01" name="package_price" value="{{ $package->package_price }}" class="border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-2 w-full text-sm w-40 dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition" required>
                 </div>
 
                 <!-- Pickup Points -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-400">Pickup Points</label>
-                    <input type="text" name="pickup_points" value="{{ $package->pickup_points }}" class="mt-1 block w-full border rounded px-4 py-2">
+                    <input type="text" name="pickup_points" value="{{ $package->pickup_points }}" class="border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-2 w-full text-sm w-40 dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
                 </div>
 
                 <!-- Altitude -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-400">Altitude</label>
-                    <input type="text" name="altitude" value="{{ $package->altitude }}" class="mt-1 block w-full border rounded px-4 py-2">
+                    <input type="text" name="altitude" value="{{ $package->altitude }}" class="border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-2 w-full text-sm w-40 dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
                 </div>
 
                 <!-- Age Min -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-400">Min Age</label>
-                    <input type="number" name="min_age" value="{{ $package->min_age }}" class="mt-1 block w-full border rounded px-4 py-2">
+                    <input type="number" name="min_age" value="{{ $package->min_age }}" class="border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-2 w-full text-sm w-40 dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
                 </div>
 
                 <!-- Age Max -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-400">Max Age</label>
-                    <input type="number" name="max_age" value="{{ $package->max_age }}" class="mt-1 block w-full border rounded px-4 py-2">
+                    <input type="number" name="max_age" value="{{ $package->max_age }}" class="border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-2 w-full text-sm w-40 dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
                 </div>
 
                 <!-- Best Time -->
                 <div class="col-span-1 lg:col-span-3">
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-400">Best Time to Visit</label>
-                    <input type="text" name="best_time_to_visit" value="{{ $package->best_time_to_visit }}" class="mt-1 block w-full border rounded px-4 py-2">
+                    <input type="text" name="best_time_to_visit" value="{{ $package->best_time_to_visit }}" class="border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-2 w-full text-sm w-40 dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
                 </div>
 
                 <!-- Package Docs -->
@@ -116,7 +116,7 @@
                             <a href="{{ asset('storage/'.$package->package_docs) }}" target="_blank" class="text-blue-600 underline">View Current Doc</a>
                         </div>
                     @endif
-                    <input type="file" name="package_docs" class="mt-1 block w-full border rounded px-4 py-2" accept=".pdf,.doc,.docx">
+                    <input type="file" name="package_docs" class="border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-2 w-full text-sm w-40 dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition" accept=".pdf,.doc,.docx">
                 </div>
 
                 <!-- Package Banner -->
@@ -127,7 +127,7 @@
                             <img src="{{ asset('storage/'.$package->package_banner) }}" alt="Banner" class="h-32 w-full object-cover rounded">
                         </div>
                     @endif
-                    <input type="file" name="package_banner" class="mt-1 block w-full border rounded px-4 py-2" accept="image/*">
+                    <input type="file" name="package_banner" class="border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-2 w-full text-sm w-40 dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition" accept="image/*">
                 </div>
 
                 <!-- Other Images -->
@@ -140,13 +140,13 @@
             @endforeach
         @endif
     </div>
-    <input type="file" name="other_images[]" class="mt-1 block w-full border rounded px-4 py-2" accept="image/*" multiple>
+    <input type="file" name="other_images[]" class="border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-2 w-full text-sm w-40 dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition" accept="image/*" multiple>
 </div>
 
                 <!-- Content -->
                 <div class="col-span-1 lg:col-span-3">
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-400">Content</label>
-                    <textarea id="package-content" name="content" rows="6" class="mt-1 block w-full border rounded px-4 py-2 tinymce-editor" required>{{ $package->content }}</textarea>
+                    <textarea id="package-content" name="content" rows="6" class="border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-2 w-full text-sm w-40 dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition tinymce-editor" required>{{ $package->content }}</textarea>
                 </div>
 
                 <!-- Submit -->
