@@ -57,7 +57,15 @@ class LeadController extends Controller
         ];
 
         // Base query with filters
-        $baseQuery = Lead::select('id', 'name', 'company_name', 'email', 'phone_number', 'status', 'lead_status', 'package_id', 'created_at')
+        $baseQuery = Lead::query();
+
+        // Include soft deleted only for role_id = 1
+        if ($user->role_id == 1) {
+            $baseQuery = $baseQuery->withTrashed();
+        }
+
+        $baseQuery = $baseQuery
+            ->select('id', 'name', 'company_name', 'email', 'phone_number', 'status', 'lead_status', 'package_id', 'created_at')
             ->when($user->role_id != 1, fn($q) => $q->where(fn($q2) => $q2->where('user_id', $user->id)->orWhereHas('assignedUsers', fn($uq) => $uq->where('user_id', $user->id))))
             ->when($filters['country'], fn($q, $v) => $q->where('country', $v))
             ->when($filters['district'], fn($q, $v) => $q->where('district', $v))
@@ -67,7 +75,7 @@ class LeadController extends Controller
             ->when($filters['user_id'], fn($q, $v) => $q->where('user_id', $v))
             ->when($filters['assigned_to'], fn($q, $v) => $q->whereHas('assignedUsers', fn($uq) => $uq->where('user_id', $v)));
 
-        // Apply status filter for time counts
+        // Time-based counts
         $timeBase = (clone $baseQuery)->when($filters['status'], fn($q, $v) => $q->where('status', $v));
 
         $timeCounts = [
@@ -86,8 +94,8 @@ class LeadController extends Controller
             'Rejected' => (clone $baseQuery)->where('status', 'Rejected')->count(),
         ];
 
-        // Main query with pagination
-        $leadsQuery = $baseQuery
+        // Main query with relationships and filters
+        $leadsQuery = (clone $baseQuery)
             ->with([
                 'package:id,package_name',
                 'invoice:id,invoice_no,lead_id', // eager load invoice
@@ -103,19 +111,17 @@ class LeadController extends Controller
                 }
             })
             ->orderByRaw(
-                "
-            CASE
+                "CASE
                 WHEN lead_status = 'Hot' THEN 1
                 WHEN lead_status = 'Warm' THEN 2
                 WHEN lead_status = 'Cold' THEN 3
                 ELSE 4
-            END
-        ",
+            END",
             )
             ->latest('id');
 
-        // Use pagination instead of get()
-        $leads = $leadsQuery->paginate(50)->withQueryString(); // 50 per page
+        // Pagination
+        $leads = $leadsQuery->paginate(50)->withQueryString();
 
         return view('leads.index', compact('leads', 'packages', 'users', 'filters', 'statusCounts', 'timeCounts'));
     }
@@ -124,7 +130,20 @@ class LeadController extends Controller
     {
         $user = auth()->user();
 
-        $query = Lead::with(['package:id,package_name', 'latestAssignedUser.user:id,name', 'latestAssignedUser.assignedBy:id,name', 'createdBy:id,name', 'lastFollowup.user:id,name'])->when($user->role_id != 1, fn($q) => $q->where(fn($q2) => $q2->where('user_id', $user->id)->orWhereHas('assignedUsers', fn($uq) => $uq->where('user_id', $user->id))));
+        // Base query with relationships
+        $query = Lead::with(['package:id,package_name', 'latestAssignedUser.user:id,name', 'latestAssignedUser.assignedBy:id,name', 'createdBy:id,name', 'lastFollowup.user:id,name']);
+
+        // Include soft-deleted leads for role_id 1
+        if ($user->role_id == 1) {
+            $query = $query->withTrashed();
+        }
+
+        // Apply role-based restrictions for other users
+        if ($user->role_id != 1) {
+            $query->where(function ($q) use ($user) {
+                $q->where('user_id', $user->id)->orWhereHas('assignedUsers', fn($uq) => $uq->where('user_id', $user->id));
+            });
+        }
         if ($request->filled('id')) {
             $query->where('id', 'like', '%' . $request->id . '%');
         }
@@ -181,7 +200,7 @@ class LeadController extends Controller
                         'Warm' => 'bg-yellow-400',
                         'Cold' => 'bg-gray-400',
                         'Interested' => 'bg-green-500',
-                    ][$lead->lead_status] ?? 'bg-gray-300';
+                    ][$lead->lead_status] ?? 'bg-gray-300 text-black font-extrabold';
 
                 return '
             <div class="font-medium flex items-center gap-2">
@@ -328,10 +347,10 @@ class LeadController extends Controller
                         'Lost' => 'bg-gray-500 text-white', // Gray for Lost
                         'On Hold' => 'bg-amber-500 text-white', // Amber for On Hold
                         'Rejected' => 'bg-red-500 text-white', // Red for Rejected
-                    ][$lead->status] ?? 'bg-gray-300 text-white'; // Default gray-300
+                    ][$lead->status] ?? 'bg-gray-300 text-black font-extrabold'; // Default gray-300
                 // Default gray-300
 
-              return '
+                 return '
             <div x-data="{ open: false, value: \''.$lead->status.'\' }" class="relative">
                 <div x-show="!open" @click="open = true" class="cursor-pointer text-xs px-2 py-1 rounded '.$stageClass.'">
                     <span x-text="value || \'Select Status\'"></span>
@@ -360,10 +379,10 @@ class LeadController extends Controller
                 return '
             <a href="' .
                     route('leads.show', $lead->id) .
-                    '" class="px-3 py-1 border border-gray-400 rounded text-gray-700 hover:bg-gray-200 transition text-sm ml-1"><i class="fa-solid fa-eye"></i></a>
+                    '" class="px-3 py-1  rounded text-gray-700 hover:bg-gray-200 transition text-sm ml-1"><i class="fa-solid fa-eye"></i></a>
             <a href="' .
                     route('leads.assign.form', $lead->id) .
-                    '" class="px-3 py-1 border border-gray-400 rounded text-gray-700 hover:bg-gray-200 transition text-sm ml-1"><i class="fa-solid fa-user-plus"></i></a>
+                    '" class="px-3 py-1  rounded text-gray-700 hover:bg-gray-200 transition text-sm ml-1"><i class="fa-solid fa-user-plus"></i></a>
             <form action="' .
                     route('leads.destroy', $lead->id) .
                     '" method="POST" onsubmit="return confirm(\'Delete this lead?\')" class="inline">
@@ -371,7 +390,7 @@ class LeadController extends Controller
                     csrf_field() .
                     method_field('DELETE') .
                     '
-                <button type="submit" class="px-3 py-1 border border-gray-400 rounded text-gray-700 hover:bg-gray-200 transition text-sm ml-1">
+                <button type="submit" class="px-3 py-1  rounded text-gray-700 hover:bg-gray-200 transition text-sm ml-1">
                     <i class="fa-solid fa-trash"></i>
                 </button>
             </form>';
@@ -382,31 +401,31 @@ class LeadController extends Controller
 
     // LeadController.php
     public function getLeadsCounts(Request $request)
-    {
-        $user = auth()->user();
+{
+    $user = auth()->user();
 
-        $query = Lead::query()
-            ->when($user->role_id != 1, fn($q) => $q->where(fn($q2) => $q2->where('user_id', $user->id)->orWhereHas('assignedUsers', fn($uq) => $uq->where('user_id', $user->id))))
-            ->when($request->id, fn($q) => $q->where('id', $request->id))
-            ->when($request->client_name, fn($q) => $q->where('name', 'like', "%{$request->client_name}%"))
-            ->when(
-                $request->location,
-                fn($q) => $q->where(function ($q2) use ($request) {
-                    $q2->where('country', 'like', "%{$request->location}%")
-                        ->orWhere('district', 'like', "%{$request->location}%")
-                        ->orWhere('city', 'like', "%{$request->location}%");
-                }),
-            )
-            ->when($request->status, fn($q) => $q->where('status', $request->status))
-            ->when($request->assigned, fn($q) => $q->whereHas('latestAssignedUser.user', fn($uq) => $uq->where('name', $request->assigned)));
+    $query = Lead::query()
+        ->when($user->role_id != 1, fn($q) => $q->where(fn($q2) => $q2->where('user_id', $user->id)
+            ->orWhereHas('assignedUsers', fn($uq) => $uq->where('user_id', $user->id))))
+        ->when($request->id, fn($q) => $q->where('id', $request->id))
+        ->when($request->client_name, fn($q) => $q->where('name', 'like', "%{$request->client_name}%"))
+        ->when($request->location, fn($q) => $q->where(function ($q2) use ($request) {
+            $q2->where('country', 'like', "%{$request->location}%")
+               ->orWhere('district', 'like', "%{$request->location}%")
+               ->orWhere('city', 'like', "%{$request->location}%");
+        }))
+        ->when($request->status, fn($q) => $q->where('status', $request->status))
+        ->when($request->assigned, fn($q) => $q->whereHas('latestAssignedUser.user', fn($uq) => $uq->where('name', $request->assigned)));
 
-        return response()->json([
-            'today' => (clone $query)->whereDate('created_at', today())->count(),
-            'week' => (clone $query)->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->count(),
-            'month' => (clone $query)->whereMonth('created_at', now()->month)->count(),
-            'all' => (clone $query)->count(),
-        ]);
-    }
+    return response()->json([
+        'today' => (clone $query)->whereDate('created_at', today())->count(),
+        'yesterday' => (clone $query)->whereDate('created_at', today()->subDay())->count(),
+        'week' => (clone $query)->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->count(),
+        'month' => (clone $query)->whereMonth('created_at', now()->month)->count(),
+        'all' => (clone $query)->count(),
+    ]);
+}
+
 
     public function create()
     {
@@ -476,10 +495,14 @@ class LeadController extends Controller
             'status' => $lead->status,
         ]);
     }
-
     public function destroy(Lead $lead)
     {
-        $lead->assignedUsers()->delete();
+        // Soft delete related assigned users (if the relationship exists)
+        if ($lead->assignedUsers()->exists()) {
+            $lead->assignedUsers()->delete(); // soft delete if assignedUsers uses SoftDeletes
+        }
+
+        // Soft delete the lead itself
         $lead->delete();
 
         return redirect()->route('leads.index')->with('success', 'Lead deleted successfully.');
@@ -538,31 +561,50 @@ class LeadController extends Controller
         return back()->with('success', 'Leads imported successfully!');
     }
     public function bulkAssign(Request $request)
-    {
-        $request->validate([
-            'lead_ids' => 'required|array|min:1',
-            'user_id' => 'required|exists:users,id',
-        ]);
+{
+    $request->validate([
+        'lead_ids' => 'required|array|min:1',
+        'lead_ids.*' => 'integer|exists:leads,id',
+        'user_id' => 'required|exists:users,id',
+    ]);
 
-        $leadIds = $request->lead_ids;
-        $userId = $request->user_id;
-        $assignedBy = auth()->id();
+    $leadIds = $request->lead_ids;
+    $userId = $request->user_id;
+    $assignedBy = auth()->id();
 
-        foreach ($leadIds as $leadId) {
-            // Check if already assigned
-            $exists = LeadUser::where('lead_id', $leadId)->where('user_id', $userId)->exists();
-            if (!$exists) {
-                LeadUser::create([
-                    'lead_id' => $leadId,
-                    'user_id' => $userId,
-                    'assigned_by' => $assignedBy,
-                ]);
-            }
+    // Step 1: Get already assigned leads to this user
+    $alreadyAssigned = LeadUser::whereIn('lead_id', $leadIds)
+        ->where('user_id', $userId)
+        ->pluck('lead_id')
+        ->toArray();
+
+    // Step 2: Filter unassigned leads
+    $toAssign = array_diff($leadIds, $alreadyAssigned);
+
+    if (count($toAssign) > 0) {
+        $insertData = [];
+        $now = now();
+
+        foreach ($toAssign as $leadId) {
+            $insertData[] = [
+                'lead_id' => $leadId,
+                'user_id' => $userId,
+                'assigned_by' => $assignedBy,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
         }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Selected leads assigned successfully!',
-        ]);
+        // Bulk insert (fast)
+        LeadUser::insert($insertData);
     }
+
+    return response()->json([
+        'success' => true,
+        'assigned_count' => count($toAssign),
+        'skipped' => count($alreadyAssigned),
+        'message' => 'Selected leads assigned successfully!',
+    ]);
+}
+
 }

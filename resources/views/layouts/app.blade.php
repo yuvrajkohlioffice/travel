@@ -36,15 +36,16 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" rel="stylesheet">
     <link href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css" rel="stylesheet">
+     <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.2/tinymce.min.js"></script>
 
     <!-- Styles -->
     @livewireStyles
 </head>
 
-<body class="font-sans antialiased" data-user-id="{{ auth()->id() }}">
+<body class="font-sans antialiased bg-white dark:bg-gray-800" data-user-id="{{ auth()->id() }}">
 
 
-    <div class="min-h-screen bg-gray-100">
+    <div class="min-h-screen bg-white dark:bg-gray-800">
 
         <x-navigation-menu />
 
@@ -52,7 +53,7 @@
 
 
         <!-- Page Content -->
-        <main class="mt-[60px] z-48">
+        <main class="mt-[60px] z-48 bg-white dark:bg-gray-800">
             {{ $slot }}
         </main>
     </div>

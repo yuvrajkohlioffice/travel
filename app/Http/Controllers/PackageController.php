@@ -16,11 +16,21 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 class PackageController extends Controller
 {
-    public function index()
-    {
-        $packages = Package::with(['packageType', 'packageCategory', 'difficultyType'])->get();
-        return view('packages.index', compact('packages'));
+   public function index()
+{
+    // Base query with relationships
+    $query = Package::with(['packageType', 'packageCategory', 'difficultyType']);
+
+    // If user is role_id 1, include soft-deleted packages
+    if (auth()->user()->role_id == 1) {
+        $packages = $query->withTrashed()->get();
+    } else {
+        $packages = $query->get(); // only non-deleted for other roles
     }
+
+    return view('packages.index', compact('packages'));
+}
+
 
     public function create()
     {
@@ -150,20 +160,37 @@ class PackageController extends Controller
 
     public function destroy(Package $package)
     {
-        // Delete associated files
-        if ($package->package_banner) {
+        // Delete associated files from storage
+        if ($package->package_banner && Storage::disk('public')->exists($package->package_banner)) {
             Storage::disk('public')->delete($package->package_banner);
         }
+
         if ($package->package_docs) {
-            Storage::disk('public')->delete($package->package_docs);
-        }
-        if ($package->other_images) {
-            foreach ($package->other_images as $img) {
-                Storage::disk('public')->delete($img);
+            // package_docs could be array or string, handle both
+            if (is_array($package->package_docs)) {
+                foreach ($package->package_docs as $doc) {
+                    if (Storage::disk('public')->exists($doc)) {
+                        Storage::disk('public')->delete($doc);
+                    }
+                }
+            } else {
+                if (Storage::disk('public')->exists($package->package_docs)) {
+                    Storage::disk('public')->delete($package->package_docs);
+                }
             }
         }
 
+        if ($package->other_images && is_array($package->other_images)) {
+            foreach ($package->other_images as $img) {
+                if (Storage::disk('public')->exists($img)) {
+                    Storage::disk('public')->delete($img);
+                }
+            }
+        }
+
+        // Soft delete the package
         $package->delete();
+
         return redirect()->route('packages.index')->with('success', 'Package deleted successfully!');
     }
 
@@ -394,61 +421,59 @@ class PackageController extends Controller
             'message' => 'Package email sent successfully!',
         ]);
     }
-public function filterPackageItems(Request $request)
-{
-    $packageId = $request->package_id;
-    $carId = $request->car_id;
+    public function filterPackageItems(Request $request)
+    {
+        $packageId = $request->package_id;
+        $carId = $request->car_id;
 
-    $totalPeople = ($request->adult_count ?? 0) + ($request->child_count ?? 0);
+        $totalPeople = ($request->adult_count ?? 0) + ($request->child_count ?? 0);
 
-    // ------------------------------------------
-    // Validate package
-    // ------------------------------------------
-    if (!$packageId) {
+        // ------------------------------------------
+        // Validate package
+        // ------------------------------------------
+        if (!$packageId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Package ID is required.',
+                'data' => [],
+            ]);
+        }
+
+        // ------------------------------------------
+        // Build base query
+        // ------------------------------------------
+        $query = PackageItem::with('car')->where('package_id', $packageId);
+
+        // ------------------------------------------
+        // Filter by people count if provided
+        // ------------------------------------------
+        if ($totalPeople > 0) {
+            $query->where('person_count', $totalPeople);
+        }
+
+        // ------------------------------------------
+        // Filter by car only if car_id is provided
+        // ------------------------------------------
+        if ($carId) {
+            $query->where('car_id', $carId);
+        }
+
+        $items = $query->orderBy('id', 'desc')->get();
+
+        if ($items->count() > 0) {
+            return response()->json([
+                'success' => true,
+                'data' => $items,
+            ]);
+        }
+
+        // ------------------------------------------
+        // Nothing found
+        // ------------------------------------------
         return response()->json([
             'success' => false,
-            'message' => 'Package ID is required.',
+            'message' => 'No items found for the selected criteria.',
             'data' => [],
         ]);
     }
-
-    // ------------------------------------------
-    // Build base query
-    // ------------------------------------------
-    $query = PackageItem::with('car')->where('package_id', $packageId);
-
-    // ------------------------------------------
-    // Filter by people count if provided
-    // ------------------------------------------
-    if ($totalPeople > 0) {
-        $query->where('person_count', $totalPeople);
-    }
-
-    // ------------------------------------------
-    // Filter by car only if car_id is provided
-    // ------------------------------------------
-    if ($carId) {
-        $query->where('car_id', $carId);
-    }
-
-    $items = $query->orderBy('id', 'desc')->get();
-
-    if ($items->count() > 0) {
-        return response()->json([
-            'success' => true,
-            'data' => $items,
-        ]);
-    }
-
-    // ------------------------------------------
-    // Nothing found
-    // ------------------------------------------
-    return response()->json([
-        'success' => false,
-        'message' => 'No items found for the selected criteria.',
-        'data' => [],
-    ]);
-}
-
-
 }

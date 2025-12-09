@@ -22,10 +22,10 @@
                         {{ $invoice->adult_count ?? 0 }} Adults, {{ $invoice->child_count ?? 0 }} Children
                     </td>
                     <td class="px-6 py-5 whitespace-nowrap font-bold text-gray-900">
-                        ${{ number_format($invoice->price_per_person ?? 0, 2) }}
+                        ₹{{ number_format($invoice->price_per_person ?? 0, 2) }}
                     </td>
                     <td class="px-6 py-5 whitespace-nowrap font-bold text-blue-700">
-                        ${{ number_format($invoice->final_price ?? 0, 2) }}
+                        ₹{{ number_format($invoice->final_price ?? 0, 2) }}
                     </td>
                 </tr>
             </tbody>

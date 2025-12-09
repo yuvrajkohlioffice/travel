@@ -28,7 +28,7 @@
                     <p class="text-gray-700 dark:text-gray-300"><span class="font-semibold">Days / Nights:</span> {{ $package->package_days }} / {{ $package->package_nights }}</p>
                 </div>
                 <div class="space-y-2">
-                    <p class="text-gray-700 dark:text-gray-300"><span class="font-semibold">Price:</span> ${{ number_format($package->package_price, 2) }}</p>
+                    <p class="text-gray-700 dark:text-gray-300"><span class="font-semibold">Price:</span> ₹{{ number_format($package->package_price, 2) }}</p>
                     <p class="text-gray-700 dark:text-gray-300"><span class="font-semibold">Pickup Points:</span> {{ $package->pickup_points ?? '-' }}</p>
                     <p class="text-gray-700 dark:text-gray-300"><span class="font-semibold">Altitude:</span> {{ $package->altitude ?? '-' }}</p>
                     <p class="text-gray-700 dark:text-gray-300"><span class="font-semibold">Age Range:</span> {{ $package->min_age ?? '-' }} - {{ $package->max_age ?? '-' }}</p>
@@ -75,7 +75,7 @@
 
             <!-- Total Price -->
             <div class="text-right text-xl font-bold text-gray-800 dark:text-white mb-4">
-                Total Price: $<span id="total-price">{{ number_format($package->package_price, 2) }}</span>
+                Total Price: ₹<span id="total-price">{{ number_format($package->package_price, 2) }}</span>
             </div>
 
             <!-- Package Items -->
@@ -101,7 +101,7 @@
                                     Add-On Price
                                 </label>
                                 <span id="price_{{ $index }}" class="text-gray-700 dark:text-gray-200 font-semibold">
-                                    ${{ number_format($item->custom_price, 2) }}
+                                    ₹{{ number_format($item->custom_price, 2) }}
                                 </span>
                             </div>
 

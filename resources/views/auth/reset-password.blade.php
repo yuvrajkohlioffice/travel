@@ -1,36 +1,95 @@
 <x-guest-layout>
-    <x-authentication-card>
-        <x-slot name="logo">
-            <x-authentication-card-logo />
-        </x-slot>
-
-        <x-validation-errors class="mb-4" />
-
-        <form method="POST" action="{{ route('password.update') }}">
-            @csrf
-
-            <input type="hidden" name="token" value="{{ $request->route('token') }}">
-
-            <div class="block">
-                <x-label for="email" value="{{ __('Email') }}" />
-                <x-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email', $request->email)" required autofocus autocomplete="username" />
+    <!-- Full page wrapper with background gradient -->
+    <div class="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4 sm:px-6 lg:px-8">
+        
+        <!-- Card container -->
+        <div class="max-w-md w-full space-y-8 bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 transition-all duration-300">
+            
+            <!-- Logo -->
+            <div class="flex justify-center">
+                <x-authentication-card-logo class="h-16 w-auto" />
             </div>
 
-            <div class="mt-4">
-                <x-label for="password" value="{{ __('Password') }}" />
-                <x-input id="password" class="block mt-1 w-full" type="password" name="password" required autocomplete="new-password" />
-            </div>
+            <!-- Page heading -->
+            <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-gray-100">
+                Reset Your Password
+            </h2>
+            <p class="mt-2 text-center text-sm text-gray-600 dark:text-gray-300">
+                Enter your new password below
+            </p>
 
-            <div class="mt-4">
-                <x-label for="password_confirmation" value="{{ __('Confirm Password') }}" />
-                <x-input id="password_confirmation" class="block mt-1 w-full" type="password" name="password_confirmation" required autocomplete="new-password" />
-            </div>
+            <!-- Validation Errors -->
+            <x-validation-errors class="mt-4" />
 
-            <div class="flex items-center justify-end mt-4">
-                <x-button>
-                    {{ __('Reset Password') }}
-                </x-button>
-            </div>
-        </form>
-    </x-authentication-card>
+            <!-- Password Reset Form -->
+            <form class="mt-8 space-y-6" method="POST" action="{{ route('password.update') }}">
+                @csrf
+                <input type="hidden" name="token" value="{{ $request->route('token') }}">
+
+                <div class="rounded-md shadow-sm -space-y-px">
+                    <!-- Email Input -->
+                    <div>
+                        <x-label for="email" value="{{ __('Email') }}" class="sr-only" />
+                        <x-input
+                            id="email"
+                            name="email"
+                            type="email"
+                            :value="old('email', $request->email)"
+                            required
+                            autofocus
+                            autocomplete="username"
+                            placeholder="Email address"
+                            class="appearance-none rounded-lg relative block w-full px-4 py-3 border border-gray-300 dark:border-gray-700 placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm transition-all"
+                        />
+                    </div>
+
+                    <!-- New Password Input -->
+                    <div class="mt-4">
+                        <x-label for="password" value="{{ __('Password') }}" class="sr-only" />
+                        <x-input
+                            id="password"
+                            name="password"
+                            type="password"
+                            required
+                            autocomplete="new-password"
+                            placeholder="New Password"
+                            class="appearance-none rounded-lg relative block w-full px-4 py-3 border border-gray-300 dark:border-gray-700 placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm transition-all"
+                        />
+                    </div>
+
+                    <!-- Confirm Password Input -->
+                    <div class="mt-4">
+                        <x-label for="password_confirmation" value="{{ __('Confirm Password') }}" class="sr-only" />
+                        <x-input
+                            id="password_confirmation"
+                            name="password_confirmation"
+                            type="password"
+                            required
+                            autocomplete="new-password"
+                            placeholder="Confirm Password"
+                            class="appearance-none rounded-lg relative block w-full px-4 py-3 border border-gray-300 dark:border-gray-700 placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm transition-all"
+                        />
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="flex items-center justify-end mt-4">
+                    <x-button class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all">
+                        Reset Password
+                    </x-button>
+                </div>
+
+                <!-- Livewire Loading State Placeholder -->
+                <div wire:loading wire:target="resetPassword" class="mt-4 text-center text-gray-500 dark:text-gray-400 text-sm">
+                    Resetting password...
+                </div>
+
+                <!-- Livewire Error State Placeholder -->
+                <div wire:loading.remove wire:target="resetPassword">
+                    @error('email')<p class="text-red-600 text-sm mt-2">{{ $message }}</p>@enderror
+                    @error('password')<p class="text-red-600 text-sm mt-2">{{ $message }}</p>@enderror
+                </div>
+            </form>
+        </div>
+    </div>
 </x-guest-layout>
