@@ -98,10 +98,7 @@
             </div>
 
             <!-- Optional: Error state -->
-            <div wire:loading.remove wire:target="login">
-                @error('email')<p class="text-red-600 text-sm mt-2">{{ $message }}</p>@enderror
-                @error('password')<p class="text-red-600 text-sm mt-2">{{ $message }}</p>@enderror
-            </div>
+           
         </div>
     </div>
 </x-guest-layout>
