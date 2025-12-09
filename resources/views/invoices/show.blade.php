@@ -3,9 +3,10 @@
 
         <!-- Print Button -->
         <div class="no-print flex justify-end mb-6">
-            <button onclick="window.print()" class="bg-gradient-to-r from-blue-600 to-cyan-600 
-                hover:from-blue-700 hover:to-cyan-700 text-white font-semibold py-3 px-6 
-                rounded-xl shadow-lg flex items-center transition-all duration-300 transform hover:scale-105">
+            <button onclick="window.print()" 
+                class="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 
+                text-white font-semibold py-3 px-6 rounded-xl shadow-lg flex items-center 
+                transition-all duration-300 transform hover:scale-105">
                 <i class="fas fa-print mr-3"></i> Print Invoice
             </button>
         </div>
@@ -22,32 +23,33 @@
 
             {{-- Package Details --}}
             <x-invoice.package-details :invoice="$invoice" />
-<div class="p-2  border-b border-blue-100">
-            <div class="mt-8 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl p-6 border border-blue-200">
-                <h4 class="font-bold text-gray-900 mb-4 flex items-center">
-                    <i class="fas fa-star text-yellow-500 mr-3"></i> Special Instructions for Your Trip
+
+            <!-- Special Instructions -->
+            <div class="border-t border-blue-100 bg-gradient-to-r from-blue-50 to-cyan-50 p-6">
+                <h4 class="font-bold text-gray-900 text-lg mb-4 flex items-center">
+                    <i class="fas fa-star text-yellow-500 mr-3"></i>
+                    Special Instructions for Your Trip
                 </h4>
-                <ul class="list-disc pl-5 text-gray-700 space-y-2">
-                    @forelse($invoice->special_instructions ?? [] as $instruction)
-                    <li>{{ $instruction }}</li>
-                    @empty
-                    <li>Enjoy your trip! All arrangements have been made according to your booking.</li>
 
+                <div class="bg-white p-5 rounded-xl border border-blue-200 shadow-sm">
+                    <ul class="list-disc pl-5 text-gray-700 space-y-2">
+                        @forelse($invoice->special_instructions ?? [] as $instruction)
+                            <li>{{ $instruction }}</li>
+                        @empty
+                            <li>Enjoy your trip! All arrangements have been made according to your booking.</li>
+                        @endforelse
 
-                    <li> {{ $invoice->additional_details }}</li>
-
-                    @endforelse
-                </ul>
+                        @if($invoice->additional_details)
+                            <li class="font-medium text-gray-800">{{ $invoice->additional_details }}</li>
+                        @endif
+                    </ul>
+                </div>
             </div>
 
-</div>
-
-
-
-
             {{-- Summary --}}
-            <x-invoice.summary :invoice="$invoice" />
-
+            <div class="border-t border-blue-100 p-6 bg-gray-50">
+                <x-invoice.summary :invoice="$invoice" />
+            </div>
 
             {{-- Footer --}}
             <x-invoice.footer :invoice="$invoice" />
@@ -57,31 +59,20 @@
 
     {{-- Print CSS --}}
     <style>
-        /* Hide everything except invoice container when printing */
         @media print {
             body * {
                 visibility: hidden;
             }
-
             #invoice-container,
             #invoice-container * {
                 visibility: visible;
             }
-
             #invoice-container {
                 position: absolute;
                 left: 0;
                 top: 0;
                 width: 100%;
             }
-
-            /* Optional: remove shadows for printing */
-            .shadow-2xl,
-            .shadow-lg,
-            .shadow-sm {
-                box-shadow: none !important;
-            }
-
             .no-print {
                 display: none !important;
             }

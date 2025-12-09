@@ -71,16 +71,7 @@
                 <div class="bg-white rounded-lg border p-4 overflow-x-auto">
                     <div class="w-full mb-4 flex flex-wrap gap-2 items-center">
                         <!-- Status counters -->
-                        <div class="flex flex-wrap gap-2 mb-2 w-full">
-                            <div class="px-4 py-2 rounded-lg border border-gray-300 text-sm">Today: <span
-                                    id="count-today">0</span></div>
-                            <div class="px-4 py-2 rounded-lg border border-gray-300 text-sm">This Week: <span
-                                    id="count-week">0</span></div>
-                            <div class="px-4 py-2 rounded-lg border border-gray-300 text-sm">This Month: <span
-                                    id="count-month">0</span></div>
-                            <div class="px-4 py-2 rounded-lg border border-gray-300 text-sm">All: <span
-                                    id="count-all">0</span></div>
-                        </div>
+
 
                         <!-- Filters -->
                         <input type="text" id="filter-id" placeholder="Search ID"
@@ -108,13 +99,13 @@
                         </div>
                         <div id="date-range-buttons" class="flex flex-wrap gap-2 mb-4">
                             <button class="date-range-btn px-4 py-2 rounded-lg border border-gray-300 text-sm"
-                                data-value="today">Today</button>
+                                data-value="today">Today <span id="count-today">0</span></button>
                             <button class="date-range-btn px-4 py-2 rounded-lg border border-gray-300 text-sm"
-                                data-value="week">This Week</button>
+                                data-value="week">This Week <span id="count-week">0</span></button>
                             <button class="date-range-btn px-4 py-2 rounded-lg border border-gray-300 text-sm"
-                                data-value="month">This Month</button>
-                            <button class="date-range-btn px-4 py-2 rounded-lg border border-gray-300 text-sm"
-                                data-value="yesterday">Yesterday</button>
+                                data-value="month">This Month <span id="count-month">0</span< /button>
+                                    <button class="date-range-btn px-4 py-2 rounded-lg border border-gray-300 text-sm"
+                                        data-value="yesterday">Yesterday</button>
                         </div>
 
 
@@ -410,18 +401,18 @@
 
                 // Open payment modal with invoice data
                 openPaymentModal(invoice) {
-    this.paymentInvoiceId = invoice.id;
-    this.paymentInvoiceNumber = invoice.invoice_no;
-    this.amount = Number(invoice.amount || invoice.remaining_amount || 0);
-    this.remainingAmount = Number(invoice.remaining_amount || this.amount);
-    this.paidAmount = 0;
-    this.paymentMethod = '';
-    this.transactionId = '';
-    this.nextPaymentDate = '';
-    this.paymentNotes = '';
-    this.partialPaymentWithoutNextDate = false;
-    this.paymentOpen = true;
-},
+                    this.paymentInvoiceId = invoice.id;
+                    this.paymentInvoiceNumber = invoice.invoice_no;
+                    this.amount = Number(invoice.amount || invoice.remaining_amount || 0);
+                    this.remainingAmount = Number(invoice.remaining_amount || this.amount);
+                    this.paidAmount = 0;
+                    this.paymentMethod = '';
+                    this.transactionId = '';
+                    this.nextPaymentDate = '';
+                    this.paymentNotes = '';
+                    this.partialPaymentWithoutNextDate = false;
+                    this.paymentOpen = true;
+                },
 
 
                 // Close payment modal and reset fields

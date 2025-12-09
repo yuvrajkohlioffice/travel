@@ -34,10 +34,15 @@ public function create(Request $request)
     $package = null;
     $packageItems = collect();
 
-    // Load invoice if editing
-    if ($request->invoice_id) {
-        $invoice = Invoice::with(['package', 'packageItem'])->find($request->invoice_id);
+    // ---------------------------------------------
+    // 1️⃣ If invoice_id is present → EDIT invoice
+    // ---------------------------------------------
+    if ($request->filled('invoice_id')) {
 
+        $invoice = Invoice::with(['package', 'packageItem', 'lead'])
+            ->find($request->invoice_id);
+
+        // If invoice exists, load its related data
         if ($invoice) {
             $lead = $invoice->lead;
             $package = $invoice->package;
@@ -45,13 +50,22 @@ public function create(Request $request)
         }
     }
 
-    // Load normally if creating from lead
-    if ($request->lead_id && !$invoice) {
-        $lead = Lead::find($request->lead_id);
-        $package = $lead?->package;
-        $packageItems = $package ? $package->packageItems : collect();
+    // -------------------------------------------------
+    // 2️⃣ If creating from a lead and NOT editing invoice
+    // -------------------------------------------------
+    if (!$invoice && $request->filled('lead_id')) {
+
+        $lead = Lead::with('package')->find($request->lead_id);
+
+        if ($lead) {
+            $package = $lead->package;
+            $packageItems = $package ? $package->packageItems : collect();
+        }
     }
 
+    // ---------------------------------------------
+    // 3️⃣ Return view
+    // ---------------------------------------------
     return view('invoices.create', [
         'invoice' => $invoice,
         'lead' => $lead,
@@ -59,6 +73,7 @@ public function create(Request $request)
         'packageItems' => $packageItems,
     ]);
 }
+
 
 
     /**

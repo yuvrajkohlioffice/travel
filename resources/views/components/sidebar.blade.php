@@ -1,4 +1,4 @@
-<div class="h-screen w-64 bg-white text-gray-800 flex flex-col fixed left-0 top-0  z-50">
+<div class="h-screen w-64 bg-white text-gray-800 flex flex-col fixed left-0 top-0 z-50">
 
     <!-- Logo -->
     <div class="p-4 text-2xl font-bold border-b border-gray-200 tracking-wide flex items-center space-x-2">

@@ -11,39 +11,40 @@
     'resourceName' => 'entries',
 ])
 
-<div class="w-full overflow-x-auto  relative z-10">
+<div class="w-full overflow-x-auto relative z-10">
     <table id="{{ $id }}" class="min-w-full border border-gray-200">
         <thead>
             <tr>
                 @foreach ($headers as $header)
-                    <th class="px-4 py-2 text-center font-extrabold" style="border: 0.2px solid rgb(136, 136, 136) !important;">
+                    <th class="px-4 py-2 text-center font-extrabold"
+                        style="border: 0.2px solid #888 !important;">
                         {{ $header }}
                     </th>
                 @endforeach
             </tr>
         </thead>
-
         <tbody>
             {{ $slot }}
         </tbody>
     </table>
 </div>
 
-{{-- DATA TABLES CSS --}}
-
-
-
-
-
 <script>
-    $(document).ready(function() {
-        let actionColumnIndex = -1;
+    $(document).ready(function () {
 
-        $('#{{ $id }} thead th').each(function(index) {
-            if ($(this).text().trim().toLowerCase() === 'action') {
-                actionColumnIndex = index;
-            }
-        });
+        /* ----------------------------------------------------
+         *  Detect Action Column Index
+         * ---------------------------------------------------- */
+        const actionColumnIndex = $('#{{ $id }} thead th')
+            .toArray()
+            .findIndex(th => $(th).text().trim().toLowerCase() === 'action');
+
+        /* ----------------------------------------------------
+         *  Prepare Export Buttons
+         * ---------------------------------------------------- */
+        const exportColumns = actionColumnIndex === -1
+            ? ':visible'
+            : `:not(:eq(${actionColumnIndex}))`;
 
         const buttons = [];
 
@@ -51,12 +52,9 @@
             buttons.push({
                 extend: "excelHtml5",
                 text: "Excel",
-                className: "dt-button",
                 title: "{{ $title }}",
-                exportOptions: {
-                    columns: actionColumnIndex === -1 ? ':visible' : ':not(:eq(' + actionColumnIndex +
-                        '))'
-                }
+                className: "dt-button",
+                exportOptions: { columns: exportColumns },
             });
         @endif
 
@@ -64,29 +62,29 @@
             buttons.push({
                 extend: "print",
                 text: "Print",
-                className: "dt-button",
                 title: "{{ $title }}",
-                exportOptions: {
-                    columns: actionColumnIndex === -1 ? ':visible' : ':not(:eq(' + actionColumnIndex +
-                        '))'
-                }
+                className: "dt-button",
+                exportOptions: { columns: exportColumns },
             });
         @endif
 
+        /* ----------------------------------------------------
+         *  Init DataTable
+         * ---------------------------------------------------- */
         $('#{{ $id }}').DataTable({
             dom: `
-            <"flex flex-col md:flex-row justify-between items-center mb-4"
-                <"mb-2 md:mb-0"l>
-                <"mb-2 md:mb-0"f>
-            >
-            <"mb-4" B>
-            <"w-full" tr>
-            <"flex flex-col md:flex-row justify-between items-center mt-4"
-                <"mb-2 md:mb-0" i>
-                <"mb-2 md:mb-0" p>
-            >
-        `,
-            buttons: buttons,
+                <"flex flex-col md:flex-row justify-between items-center mb-4"
+                    <"md:mb-0 mb-2" l>
+                    <"md:mb-0 mb-2" f>
+                >
+                <"mb-4" B>
+                <"w-full" tr>
+                <"flex flex-col md:flex-row justify-between items-center mt-4"
+                    <"md:mb-0 mb-2" i>
+                    <"md:mb-0 mb-2" p>
+                >
+            `,
+            buttons,
             responsive: true,
             pageLength: {{ $pageLength }},
             lengthMenu: [@json($lengthMenu), @json($lengthMenuLabels)],
@@ -95,12 +93,11 @@
                 searchPlaceholder: "{{ $searchPlaceholder }}",
                 lengthMenu: "Show _MENU_ {{ $resourceName }}",
             },
-            columnDefs: [{
+            columnDefs: actionColumnIndex !== -1 ? [{
                 targets: actionColumnIndex,
                 orderable: false,
-                className: 'text-center'
-            }],
+                className: "text-center",
+            }] : [],
         });
-
     });
 </script>
