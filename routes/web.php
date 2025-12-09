@@ -57,6 +57,8 @@ Route::get('/api/cars', [\App\Http\Controllers\Api\CarController::class, 'index'
 | Authenticated Application Routes
 |--------------------------------------------------------------------------
 */
+
+Route::get('/packages/partial-item-row', [PackageController::class, 'partialItemRow'])->name('packages.partial-item-row');
 Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified'])->group(function () {
     /*
         |--------------------------------------------------------------------------
@@ -134,8 +136,7 @@ Route::resource('companies', CompanyController::class);
         Route::get('{package}/edit-relations', [PackageController::class, 'editRelations'])->name('packages.edit-relations');
         Route::post('{package}/update-relations', [PackageController::class, 'updateRelations'])->name('packages.update-relations');
 
-        Route::get('/partial-item-row', [PackageController::class, 'partialItemRow'])->name('packages.partialItemRow');
-
+        
         Route::get('/{package}/json', [PackageController::class, 'apiShow']);
     });
 

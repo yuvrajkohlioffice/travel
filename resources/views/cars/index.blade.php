@@ -45,7 +45,7 @@
                     <div class="p-4 overflow-x-auto">
                         <x-data-table
                             id="cars-table"
-                            :headers="['ID','Name', 'Type', 'Capacity', 'Price/KM', 'Price/Day', 'Actions']"
+                            :headers="['ID','Type', 'Capacity', 'Price/KM', 'Price/Day', 'Actions']"
                             :excel="true"
                             :print="true"
                             title="Cars List"
@@ -54,8 +54,8 @@
                             @foreach($cars as $car)
                                 <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                                     <td class="text-center">{{ $car->id }}</td>
-                                    <td>{{ $car->name }}</td>
-                                    <td>{{ $car->type }}</td>
+                                    
+                                    <td>{{ $car->car_type }}</td>
                                     <td>{{ $car->capacity }}</td>
                                     <td>{{ $car->price_per_km }}</td>
                                     <td>{{ $car->price_per_day }}</td>

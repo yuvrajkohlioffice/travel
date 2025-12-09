@@ -50,7 +50,7 @@
                         <div class="overflow-x-auto">
                             {{-- Keep x-data-table as requested. Styled the slot rows/cells below. --}}
                             <x-data-table id="packages-table"
-                                          :headers="['ID', 'Name', 'Type', 'Category', 'Difficulty', 'Days', 'Nights', 'Price', 'Action']"
+                                          :headers="['ID', 'Name', 'Type', 'Category', 'Company','Difficulty', 'Days', 'Nights', 'Price', 'Action']"
                                           :excel="true" :print="true" title="Packages List" resourceName="Packages">
 
                                 @foreach ($packages as $package)
@@ -65,7 +65,6 @@
                                             <div class="flex flex-col md:flex-row md:items-center md:gap-3">
                                                 <div class="leading-tight">
                                                     <div class="text-sm font-semibold truncate max-w-[260px]">{{ $package->package_name }}</div>
-                                                    <div class="text-xs text-gray-500 mt-0.5">{{ Str::limit($package->package_docs ?? '', 60) }}</div>
                                                 </div>
                                             </div>
                                         </td>
@@ -78,6 +77,9 @@
                                         {{-- Category --}}
                                         <td class="p-3 text-center text-sm text-gray-600">
                                             {{ $package->packageCategory->name ?? '-' }}
+                                        </td>
+                                        <td class="p-3 text-center text-sm text-gray-600">
+                                            {{ $package->company->company_name ?? '-' }}
                                         </td>
 
                                         {{-- Difficulty --}}

@@ -1,5 +1,5 @@
 <x-app-layout>
-    <div class="flex h-screen ">
+    <div class="flex min-h-screen bg-gray-100 dark:bg-gray-900">
 
         <!-- Sidebar -->
         <aside class="w-64 bg-white dark:bg-gray-800 shadow-lg hidden md:block">
@@ -18,7 +18,6 @@
                             Cars
                         </a>
                     </li>
-                    <!-- Add more sidebar links -->
                 </ul>
             </nav>
         </aside>
@@ -26,7 +25,7 @@
         <!-- Main Content -->
         <div class="flex-1 overflow-auto p-6">
 
-            <!-- Top Header -->
+            <!-- Header -->
             <header class="flex items-center justify-between mb-6">
                 <h2 class="text-2xl font-semibold text-gray-800 dark:text-white">Edit Car</h2>
                 <a href="{{ route('cars.index') }}"
@@ -39,45 +38,44 @@
                 </a>
             </header>
 
-            <!-- Card Container -->
+            <!-- Form Card -->
             <div class="bg-white dark:bg-gray-800 shadow-lg rounded-lg overflow-hidden">
-
-                <!-- Form -->
                 <div class="p-6">
+                    @if ($errors->any())
+                        <div class="mb-4 p-4 text-red-700 bg-red-100 rounded-lg dark:bg-red-800 dark:text-red-200">
+                            <ul class="list-disc pl-5">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+
                     <form action="{{ route('cars.update', $car->id) }}" method="POST" class="space-y-5">
                         @csrf
                         @method('PUT')
 
-                        <!-- Car Name -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-400">Car Name</label>
-                            <input type="text" name="name" value="{{ $car->name }}"
-                                   class="mt-1 block w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-800 shadow-sm
-                                          focus:border-blue-500 focus:ring focus:ring-blue-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
-                                   required>
-                        </div>
-
                         <!-- Car Type -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-400">Car Type</label>
-                            <select name="type" 
+                            <select name="car_type"
                                     class="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-800 shadow-sm
                                            focus:border-blue-500 focus:ring focus:ring-blue-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
                                     required>
                                 <option value="" disabled>Select car type</option>
-                                <option value="sedan" {{ $car->type == 'sedan' ? 'selected' : '' }}>Sedan</option>
-                                <option value="suv" {{ $car->type == 'suv' ? 'selected' : '' }}>SUV</option>
-                                <option value="hatchback" {{ $car->type == 'hatchback' ? 'selected' : '' }}>Hatchback</option>
-                                <option value="convertible" {{ $car->type == 'convertible' ? 'selected' : '' }}>Convertible</option>
-                                <option value="coupe" {{ $car->type == 'coupe' ? 'selected' : '' }}>Coupe</option>
-                                <option value="van" {{ $car->type == 'van' ? 'selected' : '' }}>Van</option>
+                                <option value="sedan" {{ $car->car_type == 'sedan' ? 'selected' : '' }}>Sedan</option>
+                                <option value="suv" {{ $car->car_type == 'suv' ? 'selected' : '' }}>SUV</option>
+                                <option value="hatchback" {{ $car->car_type == 'hatchback' ? 'selected' : '' }}>Hatchback</option>
+                                <option value="convertible" {{ $car->car_type == 'convertible' ? 'selected' : '' }}>Convertible</option>
+                                <option value="coupe" {{ $car->car_type == 'coupe' ? 'selected' : '' }}>Coupe</option>
+                                <option value="van" {{ $car->car_type == 'van' ? 'selected' : '' }}>Van</option>
                             </select>
                         </div>
 
                         <!-- Capacity -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-400">Capacity</label>
-                            <input type="number" name="capacity" value="{{ $car->capacity }}"
+                            <input type="number" name="capacity" value="{{ $car->capacity }}" min="1"
                                    class="mt-1 block w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-800 shadow-sm
                                           focus:border-blue-500 focus:ring focus:ring-blue-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
                                    required>
@@ -86,7 +84,7 @@
                         <!-- Price per KM -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-400">Price per KM</label>
-                            <input type="number" step="0.01" name="price_per_km" value="{{ $car->price_per_km }}"
+                            <input type="number" step="0.01" name="price_per_km" value="{{ $car->price_per_km }}" min="0"
                                    class="mt-1 block w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-800 shadow-sm
                                           focus:border-blue-500 focus:ring focus:ring-blue-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
                                    required>
@@ -95,7 +93,7 @@
                         <!-- Price per Day -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-400">Price per Day</label>
-                            <input type="number" step="0.01" name="price_per_day" value="{{ $car->price_per_day }}"
+                            <input type="number" step="0.01" name="price_per_day" value="{{ $car->price_per_day }}" min="0"
                                    class="mt-1 block w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-800 shadow-sm
                                           focus:border-blue-500 focus:ring focus:ring-blue-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
                                    required>
@@ -105,12 +103,11 @@
                         <div>
                             <button type="submit"
                                     class="w-full px-4 py-3 text-white bg-blue-600 rounded-lg shadow hover:bg-blue-700 transition-colors">
-                                Update
+                                Update Car
                             </button>
                         </div>
                     </form>
                 </div>
-
             </div>
 
         </div>

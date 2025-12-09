@@ -15,11 +15,16 @@
     </h3>
 
     {{-- Select Car --}}
+    <div>
     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
         Select Car
     </label>
-    <select name="{{ $isEdit ? 'car_id' : "items[$index][car_id]" }}"
-            class="w-full p-2 border rounded-lg dark:bg-gray-700 dark:text-white">
+    <select 
+        name="{{ $isEdit ? 'car_id' : "items[$index][car_id]" }}" 
+        class="w-full p-3 border border-gray-300 rounded-lg shadow-sm text-gray-800 dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+        
+        <option value="" disabled selected>Select a car</option>
+
         @foreach ($allCars as $car)
             <option value="{{ $car->id }}" 
                 @if($isEdit)
@@ -27,10 +32,15 @@
                 @else
                     @selected(isset($item) && $item->car_id == $car->id)
                 @endif>
-                {{ $car->name }}
+                {{ $car->car_type }} 
+                | Capacity: {{ $car->capacity }} 
+                | Per Day: ₹{{ number_format($car->price_per_day, 2) }} 
+                | Per KM: ₹{{ number_format($car->price_per_km, 2) }}
             </option>
         @endforeach
     </select>
+</div>
+
 
     {{-- Person, Vehicle, Room --}}
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">

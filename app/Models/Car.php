@@ -9,18 +9,22 @@ class Car extends Model
 {
     use HasFactory;
 
+    // Table name
     protected $table = 'cars';
 
+    // Fillable fields
     protected $fillable = [
-        'name',
-        'type',
+        'car_type',
         'capacity',
-        'price',
+        'price_per_km',
+        'price_per_day',
     ];
 
+    // Casts
     protected $casts = [
         'capacity' => 'integer',
-        'price' => 'array',
+        'price_per_km' => 'decimal:2',
+        'price_per_day' => 'decimal:2',
     ];
 
     /**
@@ -28,23 +32,37 @@ class Car extends Model
      */
     public function packages()
     {
-        return $this->belongsToMany(Package::class, 'package_items', 'car_id', 'package_id')
-                    ->withPivot('custom_price', 'already_price')
-                    ->withTimestamps();
+        return $this->belongsToMany(
+            Package::class,       // Related model
+            'package_items',      // Pivot table
+            'car_id',             // Foreign key on pivot for this model
+            'package_id'          // Foreign key on pivot for related model
+        )
+        ->withPivot('custom_price', 'already_price')
+        ->withTimestamps();
     }
 
-    public function getPricePerKmAttribute()
+    /**
+     * Get price per km
+     */
+    public function getPricePerKmAttribute($value)
     {
-        return $this->price['per_km'] ?? 0;
+        return number_format($value, 2);
     }
 
-    public function getPricePerDayAttribute()
+    /**
+     * Get price per day
+     */
+    public function getPricePerDayAttribute($value)
     {
-        return $this->price['per_day'] ?? 0;
+        return number_format($value, 2);
     }
 
+    /**
+     * Availability placeholder
+     */
     public function isAvailable()
     {
-        return true; // placeholder
+        return true; // Placeholder, implement your logic here
     }
 }
