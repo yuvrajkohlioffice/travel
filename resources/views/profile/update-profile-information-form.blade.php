@@ -66,6 +66,18 @@
     />
     <x-input-error for="whatsapp_api_key" class="mt-2" />
 </div>
+<!-- Company Selection -->
+<div class="col-span-6 sm:col-span-4">
+    <x-label for="company_id" value="{{ __('Company') }}" />
+    <select id="company_id" wire:model.defer="state.company_id"
+            class="mt-1 block w-full border-gray-300 dark:border-gray-700 rounded-md shadow-sm focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+        <option value="">{{ __('Select Company') }}</option>
+        @foreach(\App\Models\Company::all() as $company)
+            <option value="{{ $company->id }}">{{ $company->company_name }}</option>
+        @endforeach
+    </select>
+    <x-input-error for="company_id" class="mt-2" />
+</div>
 
         <div class="col-span-6 sm:col-span-4">
             <x-label for="name" value="{{ __('Name') }}" />

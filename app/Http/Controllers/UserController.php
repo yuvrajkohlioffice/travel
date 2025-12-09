@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Role;
+use App\Models\Company;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
@@ -14,7 +15,7 @@ class UserController extends Controller
      */
     public function index()
     {
-        $users = User::all();
+        $users = User::with(['role', 'company'])->get(); // eager load relationships
         return view('users.index', compact('users'));
     }
 
@@ -24,7 +25,8 @@ class UserController extends Controller
     public function create()
     {
         $roles = Role::all();
-        return view('users.create', compact('roles'));
+        $companies = Company::all();
+        return view('users.create', compact('roles', 'companies'));
     }
 
     /**
@@ -32,18 +34,14 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'name' => 'required',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|min:6',
-            'role_id' => 'required|exists:roles,id',
-        ]);
+        $validated = $this->validateUser($request);
 
         User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
-            'password' => bcrypt($validated['password']),
+            'password' => Hash::make($validated['password']),
             'role_id' => $validated['role_id'],
+            'company_id' => $validated['company_id'] ?? null,
         ]);
 
         return redirect()->route('users.index')->with('success', 'User created successfully!');
@@ -52,35 +50,34 @@ class UserController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit(User $user)
     {
-        $user = User::findOrFail($id);
         $roles = Role::all();
-        return view('users.edit', compact('user', 'roles'));
+        $companies = Company::all();
+        return view('users.edit', compact('user', 'roles', 'companies'));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, User $user)
     {
-        $user = User::findOrFail($id);
+        $validated = $this->validateUser($request, $user->id);
 
-        $validated = $request->validate([
-            'name' => 'required',
-            'email' => 'required|email|unique:users,email,' . $user->id,
-            'password' => 'nullable|min:6',
-            'role_id' => 'required|exists:roles,id',
-        ]);
+        $updateData = [
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'role_id' => $validated['role_id'],
+            'company_id' => $validated['company_id'] ?? null,
+            'status' =>$validated['status']
+        ];
 
-        // Update password only if provided
+        // Only hash password if provided
         if (!empty($validated['password'])) {
-            $validated['password'] = bcrypt($validated['password']);
-        } else {
-            unset($validated['password']); // don't update
+            $updateData['password'] = Hash::make($validated['password']);
         }
 
-        $user->update($validated);
+        $user->update($updateData);
 
         return redirect()->route('users.index')->with('success', 'User updated successfully!');
     }
@@ -88,9 +85,24 @@ class UserController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(User $user)
     {
-        User::findOrFail($id)->delete();
+        $user->delete();
         return redirect()->route('users.index')->with('success', 'User deleted successfully!');
+    }
+
+    /**
+     * Validate user data for create or update.
+     */
+    protected function validateUser(Request $request, int $userId = null): array
+    {
+        return $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:users,email,' . $userId,
+            'password' => $userId ? 'nullable|min:6' : 'required|min:6',
+            'role_id' => 'required|exists:roles,id',
+            'status' => 'required',
+            'company_id' => 'nullable|exists:companies,id',
+        ]);
     }
 }

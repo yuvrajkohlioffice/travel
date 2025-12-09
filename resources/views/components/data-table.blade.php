@@ -15,7 +15,7 @@
 <div class="row">
     <div class="col-12">
         <div class="table-responsive">
-            <table id="{{ $id }}" class="min-w-full divide-y divide-gray-100 text-sm" style="width:100%">
+            <table id="{{ $id }}" class="min-w-full divide-y divide-gray-100 text-sm pt-5" style="width:100%">
                 <thead class="table-success bg-gray-50">
                     <tr>
                         @foreach ($headers as $header)
