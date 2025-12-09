@@ -1,6 +1,7 @@
 @props([
     'id' => 'data-table',
     'headers' => [],
+    'rows' => [],
     'excel' => true,
     'print' => true,
     'pageLength' => 10,
@@ -11,100 +12,128 @@
     'resourceName' => 'entries',
 ])
 
-<div class="w-full overflow-x-auto relative z-10  rounded-lg">
-    <!-- Table Header -->
-    <table id="{{ $id }}" class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-        <thead class="bg-gray-50 dark:bg-gray-700">
-            <tr>
-                @foreach ($headers as $header)
-                    <th class="px-4 py-2 text-center text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                        {{ $header }}
-                    </th>
-                @endforeach
-            </tr>
-        </thead>
-        <tbody class=" divide-y divide-gray-200 dark:divide-gray-700">
-            {{ $slot }}
-        </tbody>
-    </table>
+<div class="row">
+    <div class="col-12">
+        <div class="table-responsive">
+            <table id="{{ $id }}" class="min-w-full divide-y divide-gray-100 text-sm" style="width:100%">
+                <thead class="table-success bg-gray-50">
+                    <tr>
+                        @foreach ($headers as $header)
+                            <th class="px-4 py-3 text-left font-medium text-xs text-gray-600 uppercase tracking-wider">{{ $header }}</th>
+                        @endforeach
+                    </tr>
+                </thead>
+                <tbody>
+                    {{ $slot }}
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 
+
+
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<!-- DataTables JS -->
 <script>
-    $(document).ready(function () {
+    $(document).ready(function() {
+        let actionColumnIndex = -1;
+        $('#{{ $id }} thead th').each(function(index) {
+            if ($(this).text().trim().toLowerCase() === 'action') {
+                actionColumnIndex = index;
+            }
+        });
 
-        /* ----------------------------------------------------
-         *  Detect Action Column Index
-         * ---------------------------------------------------- */
-        const actionColumnIndex = $('#{{ $id }} thead th')
-            .toArray()
-            .findIndex(th => $(th).text().trim().toLowerCase() === 'action');
-
-        /* ----------------------------------------------------
-         *  Prepare Export Buttons with FontAwesome Icons
-         * ---------------------------------------------------- */
-        const exportColumns = actionColumnIndex === -1
-            ? ':visible'
-            : `:not(:eq(${actionColumnIndex}))`;
-
-        const buttons = [];
+        var buttons = [];
 
         @if ($excel)
             buttons.push({
-                extend: "excelHtml5",
-                text: '<i class="fas fa-file-excel mr-2"></i> Excel',
-                title: "{{ $title }}",
-                className: "dt-button bg-green-600 hover:bg-green-700 text-white rounded shadow px-3 py-1",
-                exportOptions: { columns: exportColumns },
+                extend: 'excelHtml5',
+                text: '<i class="fas fa-file-excel me-1"></i> Excel',
+                className: 'btn btn-success btn-sm',
+                title: '{{ $title }}',
+                exportOptions: {
+                    columns: actionColumnIndex === -1 ? ':visible' : ':not(:eq(' + actionColumnIndex +
+                        '))'
+                },
+                customize: function(xlsx) {
+                    // Access worksheet
+                    var sheet = xlsx.xl.worksheets['sheet1.xml'];
+
+                    // Change all header (first row) font color to black
+                    $('row:first c', sheet).attr('s', '2'); // Style index 2 usually is black text
+
+                    // Alternatively, to ensure black color:
+                    $('row:first c', sheet).each(function() {
+                        var cell = $(this);
+                        var style = cell.attr('s');
+                        if (!style) style = '2';
+                        cell.attr('s', style);
+                    });
+                }
             });
         @endif
 
         @if ($print)
             buttons.push({
-                extend: "print",
-                text: '<i class="fas fa-print mr-2"></i> Print',
-                title: "{{ $title }}",
-                className: "dt-button bg-gray-600 hover:bg-gray-700 text-white rounded shadow px-3 py-1",
-                exportOptions: { columns: exportColumns },
+                extend: 'print',
+                text: '<i class="fas fa-print me-1"></i> Print',
+                className: 'btn btn-primary btn-sm',
+                title: '{{ $title }}',
+                exportOptions: {
+                    columns: actionColumnIndex === -1 ? ':visible' : ':not(:eq(' + actionColumnIndex +
+                        '))'
+                },
+                customize: function(win) {
+                    $(win.document.body)
+                        .find('table thead th')
+                        .css('color', 'black')
+                        .css('background-color', '#ffffff')
+                        .find('table thead td')
+                        .css('color', 'black')
+                        .css('background-color', '#ffffff')
+                }
+
             });
         @endif
 
-        /* ----------------------------------------------------
-         *  Init DataTable with Tailwind Styling
-         * ---------------------------------------------------- */
+
         $('#{{ $id }}').DataTable({
-            dom: `
-                <"flex flex-col md:flex-row justify-between items-center mb-4"
-                    <"md:mb-0 mb-2" l>
-                    <"md:mb-0 mb-2" f>
-                >
-                <"mb-4 flex space-x-2"B>
-                <"w-full" tr>
-                <"flex flex-col md:flex-row justify-between items-center mt-4"
-                    <"md:mb-0 mb-2" i>
-                    <"md:mb-0 mb-2" p>
-                >
-            `,
-            buttons,
+            dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
+                '<"row"<"col-sm-12"B>>' +
+                '<"row"<"col-sm-12"tr>>' +
+                '<"row"<"col-sm-12 col-md-6"i><"col-sm-12 col-md-6"p>>',
+            buttons: buttons,
             responsive: true,
+            order: [],
             pageLength: {{ $pageLength }},
             lengthMenu: [@json($lengthMenu), @json($lengthMenuLabels)],
             language: {
                 search: "_INPUT_",
                 searchPlaceholder: "{{ $searchPlaceholder }}",
                 lengthMenu: "Show _MENU_ {{ $resourceName }}",
+                info: "Showing _START_ to _END_ of _TOTAL_ {{ $resourceName }}",
+                infoEmpty: "No {{ $resourceName }} available",
+                paginate: {
+                    previous: '<i class="fas fa-angle-left"></i>',
+                    next: '<i class="fas fa-angle-right"></i>'
+                }
             },
-            columnDefs: actionColumnIndex !== -1 ? [{
-                targets: actionColumnIndex,
-                orderable: false,
-                className: "text-center",
-            }] : [],
-            drawCallback: function(settings) {
-                // Apply Tailwind classes to pagination
-                $('.dataTables_paginate .paginate_button').addClass('px-3 py-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors');
+            columnDefs: [{
+                    orderable: false,
+                    targets: actionColumnIndex,
+                    className: 'text-center'
+                },
+                {
+                    targets: '_all',
+                    className: 'align-middle'
+                }
+            ],
+            initComplete: function() {
+                $('.btn').removeClass('btn-secondary dt-button');
+                $('.dataTables_filter input').addClass('form-control form-control-sm');
+                $('.dataTables_length select').addClass('form-control form-control-sm');
             }
         });
-
-        // Style the search input
-        $(`#{{ $id }}_filter input`).addClass('mt-1 block w-full md:w-64 rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90');
     });
 </script>

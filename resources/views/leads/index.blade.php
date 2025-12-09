@@ -238,6 +238,8 @@
             datatable = $('#Leads-table').DataTable({
                 processing: true,
                 serverSide: true,
+                searching: false,
+
                 ajax: {
                     url: "{{ route('leads.data') }}",
                     data: function(d) {

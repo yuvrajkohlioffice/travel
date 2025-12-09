@@ -28,7 +28,8 @@
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
     <!-- Scripts -->
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @vite(['resources/css/app.css', 'resources/css/tinymce/js/tinymce/tinymce.min.js', 'resources/js/app.js', 'resources/js/buttons.html5.min.js', 'resources/js/buttons.print.min.js', 'resources/js/dataTables.buttons.min.js', 'resources/js/invoice.js', 'resources/js/jquery-3.7.0.min.js', 'resources/js/jquery.dataTables.min.js', 'resources/js/jszip.min.js', 'resources/css/app.css', 'resources/css/buttons.dataTables.min.css', 'resources/css/jquery.dataTables.min.css'])
+
 
     <!-- Styles -->
     @livewireStyles

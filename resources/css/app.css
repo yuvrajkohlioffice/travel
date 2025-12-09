@@ -80,11 +80,17 @@ table.dataTable.no-footer {
             border-bottom: 1px solid #e5e7eb !important;
         }
 
-        table.dataTable tbody th,
-        table.dataTable tbody td {
-            border: 0.2px solid rgb(136, 136, 136) !important;
+        table.dataTable tbody td,
+    table.dataTable tbody th {
+        @apply h-6 align-middle;
+    }
 
-        }
+    /* Clean thin border for all cells */
+    table.dataTable tbody td,
+    table.dataTable tbody th,
+    table.dataTable thead th {
+        border: 1px solid #d1d5db !important; /* Tailwind gray-300 */
+    }
 
         /* Tailwind Pagination Buttons */
         .dataTables_wrapper .dataTables_paginate .paginate_button {

@@ -8,80 +8,39 @@
 
     <nav class="flex-1 p-4 space-y-2 shadow-lg ">
 
-        <!-- Dashboard -->
-        <a href="{{ route('dashboard') }}" class="sidebar-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
-            <i class="fas fa-home w-6 text-lg"></i>
-            Dashboard
-        </a>
+        @php
+            $links = [
+                ['route' => 'dashboard', 'label' => 'Dashboard', 'icon' => 'fas fa-home'],
+                ['route' => 'profile.show', 'label' => 'Profile', 'icon' => 'fas fa-user'],
 
-        <!-- Profile -->
-        <a href="{{ route('profile.show') }}" class="sidebar-link {{ request()->routeIs('profile.*') ? 'active' : '' }}">
-            <i class="fas fa-user text-lg w-6"></i>
-            Profile
-        </a>
+                ['route' => 'leads.index', 'label' => 'Leads', 'icon' => 'fas fa-people-group'],
+                ['route' => 'packages.index', 'label' => 'Packages', 'icon' => 'fas fa-box-open'],
 
-        <!-- Users -->
+                ['route' => 'invoices.index', 'label' => 'Invoices', 'icon' => 'fas fa-file-invoice'], // 🔥 Missing one added
 
-        <a href="{{ route('leads.index') }}" class="sidebar-link {{ request()->routeIs('leads.*') ? 'active' : '' }}">
-            <i class="fas fa-people-group text-lg w-6"></i>
-            Leads
-        </a>
+                ['route' => 'users.index', 'label' => 'Users', 'icon' => 'fas fa-users'],
+                ['route' => 'pickup-points.index', 'label' => 'Pickup Points', 'icon' => 'fas fa-map-pin'],
+                ['route' => 'roles.index', 'label' => 'Roles', 'icon' => 'fas fa-user-shield'],
+                [
+                    'route' => 'package-categories.index',
+                    'label' => 'Package Categories',
+                    'icon' => 'fas fa-layer-group',
+                ],
+                ['route' => 'package-types.index', 'label' => 'Package Types', 'icon' => 'fas fa-tags'],
+                ['route' => 'cars.index', 'label' => 'Cars / Cabs', 'icon' => 'fas fa-car'],
+                ['route' => 'hotels.index', 'label' => 'Hotels', 'icon' => 'fas fa-hotel'],
+                ['route' => 'difficulty-types.index', 'label' => 'Difficulty Types', 'icon' => 'fas fa-mountain'],
+            ];
+        @endphp
 
-        <!-- Packages -->
-        <a href="{{ route('packages.index') }}"
-            class="sidebar-link {{ request()->routeIs('packages.*') ? 'active' : '' }}">
-            <i class="fas fa-box-open text-lg w-6"></i>
-            Packages
-        </a>
-        <a href="{{ route('users.index') }}" class="sidebar-link {{ request()->routeIs('users.*') ? 'active' : '' }}">
-            <i class="fas fa-user text-lg w-6"></i>
-            Users
-        </a>
-        <a href="{{ route('pickup-points.index') }}"
-            class="sidebar-link {{ request()->routeIs('pickup-points.*') ? 'active' : '' }}">
-            <i class="fas fa-map-pin text-lg w-6"></i>
-            Pickup Points
-        </a>
 
-        <!-- Roles -->
-        <a href="{{ route('roles.index') }}" class="sidebar-link {{ request()->routeIs('roles.*') ? 'active' : '' }}">
-            <i class="fas fa-user-shield text-lg w-6"></i>
-            Roles
-        </a>
-
-        <!-- Package Categories -->
-        <a href="{{ route('package-categories.index') }}"
-            class="sidebar-link {{ request()->routeIs('package-categories.*') ? 'active' : '' }}">
-            <i class="fas fa-layer-group text-lg w-6"></i>
-            Package Categories
-        </a>
-
-        <!-- Package Types -->
-        <a href="{{ route('package-types.index') }}"
-            class="sidebar-link {{ request()->routeIs('package-types.*') ? 'active' : '' }}">
-            <i class="fas fa-tags text-lg w-6"></i>
-            Package Types
-        </a>
-
-        <!-- Cars -->
-        <a href="{{ route('cars.index') }}" class="sidebar-link {{ request()->routeIs('cars.*') ? 'active' : '' }}">
-            <i class="fas fa-car text-lg w-6"></i>
-            Cars / Cabs
-        </a>
-
-        <!-- Hotels -->
-        <a href="{{ route('hotels.index') }}"
-            class="sidebar-link {{ request()->routeIs('hotels.*') ? 'active' : '' }}">
-            <i class="fas fa-hotel text-lg w-6"></i>
-            Hotels
-        </a>
-
-        <!-- Difficulty Types -->
-        <a href="{{ route('difficulty-types.index') }}"
-            class="sidebar-link {{ request()->routeIs('difficulty-types.*') ? 'active' : '' }}">
-            <i class="fas fa-mountain text-lg w-6"></i>
-            Difficulty Types
-        </a>
+        @foreach ($links as $link)
+            <a href="{{ route($link['route']) }}"
+                class="sidebar-link {{ request()->routeIs(Str::replaceLast('.index', '*', $link['route'])) ? 'active' : '' }}">
+                <i class="{{ $link['icon'] }} w-5"></i>
+                <span>{{ $link['label'] }}</span>
+            </a>
+        @endforeach
 
 
     </nav>
