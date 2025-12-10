@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\DifficultyType;
 use App\Models\PackageCategory;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -22,7 +23,7 @@ class PackageSeeder extends Seeder
                     'company_id'           => 1,
                     'package_type_id'      => 1,
                     'package_category_id'  => PackageCategory::inRandomOrder()->first()->id,
-                    'difficulty_type_id'   => fake()->numberBetween(1, 5),
+                    'difficulty_type_id'   => DifficultyType::inRandomOrder()->first()->id,
                     'pickup_points'        => fake()->address(),
                     'package_name'         => fake()->words(3, true),
                     'package_docs'         => 'doc_' . fake()->uuid() . '.pdf',
