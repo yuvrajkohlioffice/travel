@@ -1,7 +1,8 @@
 <x-app-layout>
     <div x-data="leadModals()" x-cloak class="min-h-screen ">
-        <div class="ml-64 flex justify-center items-start min-h-screen p-6">
-            <div class="w-full max-w-7xl space-y-6">
+    
+    <div class="ml-64 min-h-screen p-6 bg-gray-100 dark:bg-gray-900">
+        <div class="w-full">
 
                 <!-- Header -->
                 <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">

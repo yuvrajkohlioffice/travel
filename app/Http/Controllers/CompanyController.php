@@ -5,18 +5,34 @@ namespace App\Http\Controllers;
 use App\Models\Company;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Yajra\DataTables\DataTables;
 
 class CompanyController extends Controller
 {
     /**
      * Display a listing of companies with eager loading.
      */
-    public function index()
-{
-    $companies = Company::with(['owner'])->get();
 
-    return view('companies.index', compact('companies'));
+
+public function index(Request $request)
+{
+    if ($request->ajax()) {
+
+        $query = Company::with('owner');
+
+        return DataTables::of($query)
+            ->addColumn('owner', fn($row) => $row->owner->name ?? '—')
+            ->addColumn('team', fn($row) => $row->team_name ?? '—')
+            ->addColumn('actions', function ($row) {
+                return view('companies.actions', compact('row'))->render();
+            })
+            ->rawColumns(['actions'])
+            ->make(true);
+    }
+
+    return view('companies.index');
 }
+
 
 
     /**

@@ -4,17 +4,26 @@ namespace App\Http\Controllers;
 
 use App\Models\Car;
 use Illuminate\Http\Request;
+use Yajra\DataTables\DataTables;
 
 class CarController extends Controller
 {
     /**
      * Display a listing of the cars.
      */
-    public function index()
-    {
-        $cars = Car::all();
-        return view('cars.index', compact('cars'));
+    public function index(Request $request)
+{
+    if ($request->ajax()) {
+        return DataTables::of(Car::query())
+            ->addColumn('actions', function ($car) {
+                return view('cars.actions', compact('car'))->render();
+            })
+            ->rawColumns(['actions'])
+            ->make(true);
     }
+
+    return view('cars.index');
+}
 
     /**
      * Show the form for creating a new car.

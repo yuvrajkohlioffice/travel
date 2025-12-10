@@ -1,92 +1,68 @@
 <x-app-layout>
-    <div class="flex flex-col md:flex-row min-h-screen ">
+    <div class="ml-64 min-h-screen p-6 bg-gray-100 dark:bg-gray-900">
 
-        <!-- Sidebar -->
-        <aside class="hidden md:flex md:flex-col w-64 bg-white dark:bg-gray-800 shadow-lg">
-            <div class="p-6">
-                <h1 class="text-2xl font-bold text-gray-800 dark:text-white">Dashboard</h1>
+        <div class="w-full">
+
+            <!-- Header -->
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                    <i class="fas fa-car text-blue-600"></i> Cars
+                </h2>
+
+                <a href="{{ route('cars.create') }}"
+                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2">
+                    <i class="fas fa-plus"></i> Add Car
+                </a>
             </div>
-            <nav class="mt-6 flex-1">
-                <ul class="space-y-2">
-                    <li>
-                        <a href="{{ route('cars.index') }}"
-                           class="flex items-center px-6 py-3 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                            <i class="fas fa-car mr-3 w-5 text-center"></i>
-                            Cars
-                        </a>
-                    </li>
-                </ul>
-            </nav>
-        </aside>
 
-        <!-- Main Content -->
-        <main class="flex-1 p-6 overflow-auto">
-            <div class="max-w-7xl mx-auto">
+            <!-- Success -->
+            @if (session('success'))
+                <div class="mb-4 p-4 bg-green-500 text-white rounded-lg flex items-center gap-2">
+                    <i class="fas fa-check-circle"></i> {{ session('success') }}
+                </div>
+            @endif
 
-                <!-- Header / Actions -->
-                <div class="flex flex-col md:flex-row justify-between items-center mb-6 space-y-3 md:space-y-0">
-                    <h2 class="text-2xl font-semibold text-gray-800 dark:text-white">Cars</h2>
-                    <a href="{{ route('cars.create') }}"
-   class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition-colors">
-    <i class="fas fa-plus mr-2"></i> Add Car
-</a>
+            <!-- DataTable Container -->
+            <div class="bg-white dark:bg-gray-800 shadow-lg rounded-lg overflow-hidden">
+                <div class="p-4 overflow-x-auto">
+
+                    <table id="cars-table" class="min-w-full">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Type</th>
+                                <th>Capacity</th>
+                                <th>Price/KM</th>
+                                <th>Price/Day</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                    </table>
 
                 </div>
-
-                <!-- Notifications -->
-                @if(session('success'))
-                    <div class="mb-4 p-4 bg-green-500 text-white rounded shadow">
-                        {{ session('success') }}
-                    </div>
-                @endif
-
-                <!-- Cars DataTable -->
-                <div class=" dark:bg-gray-800  rounded-lg overflow-hidden">
-                    <div class="p-4 overflow-x-auto">
-                        <x-data-table
-                            id="cars-table"
-                            :headers="['ID','Type', 'Capacity', 'Price/KM', 'Price/Day', 'Actions']"
-                            :excel="true"
-                            :print="true"
-                            title="Cars List"
-                            resourceName="Cars"
-                        >
-                            @foreach($cars as $car)
-                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                                    <td class="text-center">{{ $car->id }}</td>
-                                    
-                                    <td>{{ $car->car_type }}</td>
-                                    <td>{{ $car->capacity }}</td>
-                                    <td>{{ $car->price_per_km }}</td>
-                                    <td>{{ $car->price_per_day }}</td>
-                                    <td class="text-center space-x-2">
-
-                                        <!-- Edit Button -->
-                                        <a href="{{ route('cars.edit', $car->id) }}"
-                                           class="inline-flex items-center px-3 py-1 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors">
-                                            <i class="fas fa-edit mr-1"></i> Edit
-                                        </a>
-
-                                        <!-- Delete Button -->
-                                        <form class="inline" action="{{ route('cars.destroy', $car->id) }}" method="POST" onsubmit="return confirm('Delete this car?')">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button class="inline-flex items-center px-3 py-1 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
-                                                <i class="fas fa-trash mr-1"></i> Delete
-                                            </button>
-                                        </form>
-
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </x-data-table>
-                    </div>
-                </div>
-
             </div>
-        </main>
+
+        </div>
+
     </div>
 
-    <!-- Add Car Modal -->
-  
+    <!-- DataTables Script -->
+    <script>
+        $(function () {
+            $('#cars-table').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: "{{ route('cars.index') }}",
+                columns: [
+                    { data: 'id', name: 'id' },
+                    { data: 'car_type', name: 'car_type' },
+                    { data: 'capacity', name: 'capacity' },
+                    { data: 'price_per_km', name: 'price_per_km' },
+                    { data: 'price_per_day', name: 'price_per_day' },
+                    { data: 'actions', name: 'actions', orderable: false, searchable: false },
+                ]
+            });
+        });
+    </script>
+
 </x-app-layout>

@@ -1,6 +1,6 @@
 <x-app-layout>
-    <div class="ml-64 flex justify-center items-start min-h-screen p-6 bg-gray-100 dark:bg-gray-900">
-        <div class="w-full max-w-7xl">
+    <div class="ml-64 min-h-screen p-6 bg-gray-100 dark:bg-gray-900">
+        <div class="w-full">
             <div class="bg-white dark:bg-gray-800 shadow-lg rounded-lg overflow-hidden">
 
                 <!-- Header -->
