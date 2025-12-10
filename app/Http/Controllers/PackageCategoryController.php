@@ -4,14 +4,43 @@ namespace App\Http\Controllers;
 
 use App\Models\PackageCategory;
 use Illuminate\Http\Request;
-
+use Yajra\DataTables\DataTables;
 class PackageCategoryController extends Controller
 {
-    public function index()
-    {
-        $categories = PackageCategory::all();
-        return view('package_categories.index', compact('categories'));
+    
+
+public function index(Request $request)
+{
+    if ($request->ajax()) {
+        $data = PackageCategory::select('id', 'name');
+
+        return DataTables::of($data)
+            ->addColumn('action', function ($row) {
+                $editUrl = route('package-categories.edit', $row->id);
+                $deleteUrl = route('package-categories.destroy', $row->id);
+
+                return '
+                    <a href="'.$editUrl.'" 
+                        class="inline-flex items-center gap-1 px-3 py-1 bg-yellow-500 text-white rounded-lg shadow-sm hover:bg-yellow-600">
+                        <i class="fa-solid fa-pen-to-square"></i>Edit
+                    </a>
+
+                    <form action="'.$deleteUrl.'" method="POST" class="inline" 
+                        onsubmit="return confirm(\'Delete this category?\')">
+                        '.csrf_field().method_field('DELETE').'
+                        <button class="inline-flex items-center gap-1 px-3 py-1 bg-red-600 text-white rounded-lg hover:bg-red-700">
+                            <i class="fa-solid fa-trash"></i>Delete
+                        </button>
+                    </form>
+                ';
+            })
+            ->rawColumns(['action'])
+            ->make(true);
     }
+
+    return view('package_categories.index');
+}
+
 
     public function create()
     {

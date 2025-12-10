@@ -1,67 +1,104 @@
 <x-app-layout>
-    <div class="ml-64 flex justify-center items-start min-h-screen p-6 bg-gray-100 dark:bg-gray-900">
-        <div class="w-full max-w-7xl">
-            <div class="bg-white dark:bg-gray-800 shadow-lg rounded-lg overflow-hidden">
+    <div class="ml-64 min-h-screen p-6 bg-gray-100 dark:bg-gray-900">
+        <div class="w-full">
 
-                <!-- Header -->
-                <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                    <h2 class="text-xl font-semibold text-gray-800 dark:text-white">Pickup Points</h2>
+            {{-- Header --}}
+            <header
+                class="mb-3 bg-white/80 backdrop-blur-md rounded-2xl shadow-sm border border-gray-100 p-5 md:p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div class="flex items-center gap-4">
+                    <div class="rounded-lg p-3 bg-gray-100/60">
+                        <i class="fa-solid fa-location-dot text-gray-700 text-lg"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl md:text-3xl font-semibold text-gray-800 leading-tight">Pickup Points</h1>
+                        <p class="text-sm text-gray-500 mt-0.5">Manage all travel Pickup Points — create, edit, view and delete.</p>
+                    </div>
+                </div>
 
+                <div class="flex items-center gap-3">
                     <a href="{{ route('pickup-points.create') }}"
-                       class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                        + Add Pickup Point
+                        class="inline-flex items-center gap-2 px-4 py-2 bg-white text-gray-800 font-medium rounded-lg shadow-sm border border-gray-200 hover:shadow-md hover:bg-gray-50 transition">
+                        <i class="fa-solid fa-plus"></i>
+                        <span class="hidden sm:inline">Add Pickup Point</span>
                     </a>
                 </div>
+            </header>
 
-                <!-- Success message -->
-                @if(session('success'))
-                    <div class="m-6 p-4 bg-green-500 text-white rounded">
-                        {{ session('success') }}
+            {{-- Success --}}
+            @if (session('success'))
+                <div
+                    class="flex items-start gap-3 bg-green-50 border border-green-100 rounded-lg p-4 text-sm md:text-base shadow-sm mb-4">
+                    <div class="text-green-600 mt-0.5">
+                        <i class="fa-solid fa-circle-check"></i>
                     </div>
-                @endif
-
-                <!-- Data Table Component -->
-                <div class="p-6 overflow-x-auto">
-                    <x-data-table 
-                        id="pickup-points-table"
-                        :headers="['ID', 'Name', 'Action']"
-                        :excel="true"
-                        :print="true"
-                        title="Pickup Points List"
-                        resourceName="Pickup Points"
-                    >
-                        @foreach ($pickupPoints as $point)
-                            <tr class="hover:bg-gray-100 dark:hover:bg-gray-700">
-                                <td class="text-center">{{ $point->id }}</td>
-                                <td>{{ $point->name }}</td>
-
-                                <td class="text-center space-x-2">
-
-                                    <!-- Edit -->
-                                    <a href="{{ route('pickup-points.edit', $point->id) }}"
-                                       class="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600">
-                                        Edit
-                                    </a>
-
-                                    <!-- Delete -->
-                                    <form action="{{ route('pickup-points.destroy', $point->id) }}"
-                                          method="POST"
-                                          class="inline"
-                                          onsubmit="return confirm('Delete this pickup point?')">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button class="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700">
-                                            Delete
-                                        </button>
-                                    </form>
-
-                                </td>
-                            </tr>
-                        @endforeach
-                    </x-data-table>
+                    <div class="text-gray-800">{{ session('success') }}</div>
+                    <button onclick="this.parentElement.remove()"
+                        class="ml-auto text-gray-400 hover:text-gray-600 focus:outline-none" aria-label="Dismiss">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
                 </div>
+            @endif
 
-            </div>
+            {{-- Table Card --}}
+            <section class="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden">
+                <div class="p-4 md:p-6">
+                    <div class="overflow-x-auto">
+                        <x-data-table 
+                            id="pickup-points-table" 
+                            :headers="['ID', 'Name', 'Action']" 
+                            :excel="true" 
+                            :print="true" 
+                            title="Pickup Points List" 
+                            resourceName="Pickup Points"
+                        >
+                            @foreach ($pickupPoints as $point)
+                                <tr class="border-b last:border-b-0 hover:bg-gray-50 transition-colors">
+
+                                    {{-- ID --}}
+                                    <td class="p-3 text-center text-sm text-gray-800 font-medium">
+                                        {{ $point->id }}
+                                    </td>
+
+                                    {{-- Name --}}
+                                    <td class="p-3 text-sm text-gray-700">
+                                        {{ $point->name }}
+                                    </td>
+
+                                    {{-- Action --}}
+                                    <td class="p-3 text-center text-sm text-gray-700">
+                                        <div class="flex flex-wrap items-center justify-center gap-2">
+
+                                            {{-- Edit --}}
+                                            <a href="{{ route('pickup-points.edit', $point->id) }}"
+                                                class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 hover:shadow-sm transition text-sm">
+                                                <i class="fa-solid fa-pen-to-square"></i>
+                                                <span class="hidden sm:inline">Edit</span>
+                                            </a>
+
+                                            {{-- Delete --}}
+                                            <form action="{{ route('pickup-points.destroy', $point->id) }}" method="POST"
+                                                class="inline"
+                                                onsubmit="return confirm('Delete this pickup point?')">
+                                                @csrf
+                                                @method('DELETE')
+
+                                                <button type="submit"
+                                                    class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-600 text-white hover:bg-red-700 transition text-sm shadow-sm">
+                                                    <i class="fa-solid fa-trash"></i>
+                                                    <span class="hidden sm:inline">Delete</span>
+                                                </button>
+                                            </form>
+
+                                        </div>
+                                    </td>
+
+                                </tr>
+                            @endforeach
+                        </x-data-table>
+                    </div>
+                </div>
+            </section>
+
         </div>
     </div>
 </x-app-layout>

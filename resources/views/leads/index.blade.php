@@ -6,7 +6,7 @@
 
                 <!-- Header -->
                 <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                    <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-3 mb-3">
                         <div class="bg-white dark:bg-gray-800 p-3 rounded-2xl shadow-sm">
                             <i class="fa-solid fa-people-group text-xl text-gray-700 dark:text-gray-200"></i>
                         </div>

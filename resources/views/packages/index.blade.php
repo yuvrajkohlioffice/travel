@@ -1,157 +1,169 @@
 <x-app-layout>
-    <div class="min-h-screen bg-gray-50 flex">
-        {{-- If you have a left sidebar occupying 64px width elsewhere (original had ml-64),
-             keep the layout consistent by keeping the content offset. If not, remove the ml-64 on the container. --}}
-        <div class="flex-1 p-6 md:p-8 lg:p-10 ml-64">
-            <div class="max-w-7xl mx-auto space-y-6">
+    <div class="ml-64 min-h-screen p-6 bg-gray-100 dark:bg-gray-900">
+        <div class="w-full">
 
-                {{-- Header / Title + Actions --}}
-                <header class="bg-white/80 backdrop-blur-md rounded-2xl shadow-sm border border-gray-100 p-5 md:p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                    <div class="flex items-center gap-4">
-                        <div class="rounded-lg p-3 bg-gray-100/60">
-                            <i class="fa-solid fa-box-open text-gray-700 text-lg"></i>
-                        </div>
-                        <div>
-                            <h1 class="text-2xl md:text-3xl font-semibold text-gray-800 leading-tight">Packages</h1>
-                            <p class="text-sm text-gray-500 mt-0.5">Manage all travel packages — create, edit, link relations, view and delete.</p>
-                        </div>
+            {{-- Header / Title + Actions --}}
+            <header
+                class="mb-3 bg-white/80 backdrop-blur-md rounded-2xl shadow-sm border border-gray-100 p-5 md:p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div class="flex items-center gap-4">
+                    <div class="rounded-lg p-3 bg-gray-100/60">
+                        <i class="fa-solid fa-box-open text-gray-700 text-lg"></i>
                     </div>
-
-                    <div class="flex items-center gap-3">
-                        <a href="{{ route('packages.create') }}"
-                           class="inline-flex items-center gap-2 px-4 py-2 bg-white text-gray-800 font-medium rounded-lg shadow-sm border border-gray-200 hover:shadow-md hover:bg-gray-50 transition">
-                            <i class="fa-solid fa-plus"></i>
-                            <span class="hidden sm:inline">Add Package</span>
-                        </a>
+                    <div>
+                        <h1 class="text-2xl md:text-3xl font-semibold text-gray-800 leading-tight">Packages</h1>
+                        <p class="text-sm text-gray-500 mt-0.5">Manage all travel packages — create, edit, link
+                            relations, view and delete.</p>
                     </div>
-                </header>
+                </div>
 
-                {{-- Flash Success --}}
-                @if (session('success'))
-                    <div
-                        class="flex items-start gap-3 bg-green-50 border border-green-100 rounded-lg p-4 text-sm md:text-base shadow-sm">
-                        <div class="text-green-600 mt-0.5">
-                            <i class="fa-solid fa-circle-check"></i>
-                        </div>
-                        <div class="text-gray-800">{{ session('success') }}</div>
-                        <button onclick="this.parentElement.remove()"
-                                class="ml-auto text-gray-400 hover:text-gray-600 focus:outline-none" aria-label="Dismiss">
-                            <i class="fa-solid fa-xmark"></i>
-                        </button>
+                <div class="flex items-center gap-3">
+                    <a href="{{ route('packages.create') }}"
+                        class="inline-flex items-center gap-2 px-4 py-2 bg-white text-gray-800 font-medium rounded-lg shadow-sm border border-gray-200 hover:shadow-md hover:bg-gray-50 transition">
+                        <i class="fa-solid fa-plus"></i>
+                        <span class="hidden sm:inline">Add Package</span>
+                    </a>
+                </div>
+            </header>
+
+            {{-- Flash Success --}}
+            @if (session('success'))
+                <div
+                    class="flex items-start gap-3 bg-green-50 border border-green-100 rounded-lg p-4 text-sm md:text-base shadow-sm">
+                    <div class="text-green-600 mt-0.5">
+                        <i class="fa-solid fa-circle-check"></i>
                     </div>
-                @endif
+                    <div class="text-gray-800">{{ session('success') }}</div>
+                    <button onclick="this.parentElement.remove()"
+                        class="ml-auto text-gray-400 hover:text-gray-600 focus:outline-none" aria-label="Dismiss">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            @endif
 
-                {{-- Controls + Table Card --}}
-                <section class="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden">
+            {{-- Controls + Table Card --}}
+            <section class="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden">
 
 
-                    {{-- Table wrapper --}}
-                    <div class="p-4 md:p-6">
-                        <div class="overflow-x-auto">
-                            {{-- Keep x-data-table as requested. Styled the slot rows/cells below. --}}
-                            <x-data-table id="packages-table"
-                                          :headers="['ID', 'Name', 'Type', 'Category', 'Company','Difficulty', 'Days', 'Nights', 'Price', 'Action']"
-                                          :excel="true" :print="true" title="Packages List" resourceName="Packages">
+                {{-- Table wrapper --}}
+                <div class="p-4 md:p-6">
+                    <div class="overflow-x-auto">
+                        {{-- Keep x-data-table as requested. Styled the slot rows/cells below. --}}
+                        <x-data-table id="packages-table" :headers="[
+                            'ID',
+                            'Name',
+                            'Type',
+                            'Category',
+                            'Company',
+                            'Difficulty',
+                            'Days',
+                            'Nights',
+                            'Price',
+                            'Action',
+                        ]" :excel="true" :print="true"
+                            title="Packages List" resourceName="Packages">
 
-                                @foreach ($packages as $package)
-                                    <tr class="border-b last:border-b-0 hover:bg-gray-50 transition-colors">
-                                        {{-- ID --}}
-                                        <td class="p-3 whitespace-nowrap text-center text-sm text-gray-700 font-medium">
-                                            {{ $package->id }}
-                                        </td>
+                            @foreach ($packages as $package)
+                                <tr class="border-b last:border-b-0 hover:bg-gray-50 transition-colors">
+                                    {{-- ID --}}
+                                    <td class="p-3 whitespace-nowrap text-center text-sm text-gray-700 font-medium">
+                                        {{ $package->id }}
+                                    </td>
 
-                                        {{-- Name --}}
-                                        <td class="p-3 text-sm text-gray-800 font-medium">
-                                            <div class="flex flex-col md:flex-row md:items-center md:gap-3">
-                                                <div class="leading-tight">
-                                                    <div class="text-sm font-semibold truncate max-w-[260px]">{{ $package->package_name }}</div>
-                                                </div>
+                                    {{-- Name --}}
+                                    <td class="p-3 text-sm text-gray-800 font-medium">
+                                        <div class="flex flex-col md:flex-row md:items-center md:gap-3">
+                                            <div class="leading-tight">
+                                                <div class="text-sm font-semibold truncate max-w-[260px]">
+                                                    {{ $package->package_name }}</div>
                                             </div>
-                                        </td>
+                                        </div>
+                                    </td>
 
-                                        {{-- Type --}}
-                                        <td class="p-3 text-center text-sm text-gray-600">
-                                            {{ $package->packageType->name ?? '-' }}
-                                        </td>
+                                    {{-- Type --}}
+                                    <td class="p-3 text-center text-sm text-gray-600">
+                                        {{ $package->packageType->name ?? '-' }}
+                                    </td>
 
-                                        {{-- Category --}}
-                                        <td class="p-3 text-center text-sm text-gray-600">
-                                            {{ $package->packageCategory->name ?? '-' }}
-                                        </td>
-                                        <td class="p-3 text-center text-sm text-gray-600">
-                                            {{ $package->company->company_name ?? '-' }}
-                                        </td>
+                                    {{-- Category --}}
+                                    <td class="p-3 text-center text-sm text-gray-600">
+                                        {{ $package->packageCategory->name ?? '-' }}
+                                    </td>
+                                    <td class="p-3 text-center text-sm text-gray-600">
+                                        {{ $package->company->company_name ?? '-' }}
+                                    </td>
 
-                                        {{-- Difficulty --}}
-                                        <td class="p-3 text-center text-sm text-gray-600">
-                                            {{ $package->difficultyType->name ?? '-' }}
-                                        </td>
+                                    {{-- Difficulty --}}
+                                    <td class="p-3 text-center text-sm text-gray-600">
+                                        {{ $package->difficultyType->name ?? '-' }}
+                                    </td>
 
-                                        {{-- Days --}}
-                                        <td class="p-3 text-center text-sm text-gray-600">
-                                            {{ $package->package_days ?? '-' }}
-                                        </td>
+                                    {{-- Days --}}
+                                    <td class="p-3 text-center text-sm text-gray-600">
+                                        {{ $package->package_days ?? '-' }}
+                                    </td>
 
-                                        {{-- Nights --}}
-                                        <td class="p-3 text-center text-sm text-gray-600">
-                                            {{ $package->package_nights ?? '-' }}
-                                        </td>
+                                    {{-- Nights --}}
+                                    <td class="p-3 text-center text-sm text-gray-600">
+                                        {{ $package->package_nights ?? '-' }}
+                                    </td>
 
-                                        {{-- Price --}}
-                                        <td class="p-3 text-center text-sm">
-                                            <span class="inline-flex items-center px-2 py-1 rounded-md text-green-700 bg-green-50 border border-green-100 font-semibold">
-                                                ₹{{ number_format($package->package_price) }}
-                                            </span>
-                                        </td>
+                                    {{-- Price --}}
+                                    <td class="p-3 text-center text-sm">
+                                        <span
+                                            class="inline-flex items-center px-2 py-1 rounded-md text-green-700 bg-green-50 border border-green-100 font-semibold">
+                                            ₹{{ number_format($package->package_price) }}
+                                        </span>
+                                    </td>
 
-                                        {{-- Actions --}}
-                                        <td class="p-3 text-sm text-gray-700">
-                                            <div class="flex flex-wrap items-center justify-center gap-2">
-                                                {{-- Edit (link styled subtle) --}}
-                                                <a href="{{ route('packages.edit', $package->id) }}"
-                                                   class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 bg-white hover:shadow-sm hover:bg-gray-50 transition text-sm">
-                                                    <i class="fa-solid fa-pen-to-square"></i>
-                                                    <span class="hidden sm:inline">Edit</span>
-                                                </a>
+                                    {{-- Actions --}}
+                                    <td class="p-3 text-sm text-gray-700">
+                                        <div class="flex flex-wrap items-center justify-center gap-2">
+                                            {{-- Edit (link styled subtle) --}}
+                                            <a href="{{ route('packages.edit', $package->id) }}"
+                                                class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 bg-white hover:shadow-sm hover:bg-gray-50 transition text-sm">
+                                                <i class="fa-solid fa-pen-to-square"></i>
+                                                <span class="hidden sm:inline">Edit</span>
+                                            </a>
 
-                                                {{-- Show --}}
-                                                <a href="{{ route('packages.show', $package->id) }}"
-                                                   class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition text-sm shadow-sm">
-                                                    <i class="fa-solid fa-eye"></i>
-                                                    <span class="hidden sm:inline">Show</span>
-                                                </a>
+                                            {{-- Show --}}
+                                            <a href="{{ route('packages.show', $package->id) }}"
+                                                class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition text-sm shadow-sm">
+                                                <i class="fa-solid fa-eye"></i>
+                                                <span class="hidden sm:inline">Show</span>
+                                            </a>
 
-                                                {{-- Relations --}}
-                                                <a href="{{ route('packages.edit-relations', $package->id) }}"
-                                                   class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition text-sm shadow-sm">
-                                                    <i class="fa-solid fa-link"></i>
-                                                    <span class="hidden sm:inline">Package Details</span>
-                                                </a>
+                                            {{-- Relations --}}
+                                            <a href="{{ route('packages.edit-relations', $package->id) }}"
+                                                class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition text-sm shadow-sm">
+                                                <i class="fa-solid fa-link"></i>
+                                                <span class="hidden sm:inline">Package Details</span>
+                                            </a>
 
-                                                {{-- Delete --}}
-                                                <form action="{{ route('packages.destroy', $package->id) }}" method="POST"
-                                                      class="inline" onsubmit="return confirmDelete(event, '{{ addslashes($package->package_name) }}')">
-                                                    @csrf
-                                                    @method('DELETE')
+                                            {{-- Delete --}}
+                                            <form action="{{ route('packages.destroy', $package->id) }}" method="POST"
+                                                class="inline"
+                                                onsubmit="return confirmDelete(event, '{{ addslashes($package->package_name) }}')">
+                                                @csrf
+                                                @method('DELETE')
 
-                                                    <button type="submit"
-                                                            class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-600 text-white hover:bg-red-700 transition text-sm shadow-sm">
-                                                        <i class="fa-solid fa-trash"></i>
-                                                        <span class="hidden sm:inline">Delete</span>
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @endforeach
+                                                <button type="submit"
+                                                    class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-600 text-white hover:bg-red-700 transition text-sm shadow-sm">
+                                                    <i class="fa-solid fa-trash"></i>
+                                                    <span class="hidden sm:inline">Delete</span>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforeach
 
-                            </x-data-table>
-                        </div>
+                        </x-data-table>
                     </div>
-                </section>
+                </div>
+            </section>
 
-            </div>
         </div>
+    </div>
     </div>
 
     {{-- Minimal JS interactions (vanilla JS) --}}
@@ -167,7 +179,8 @@
         function triggerExport(type) {
             // If x-data-table provides export buttons, trigger them here.
             // Fallback: notify user visually (you can wire this to x-data-table actions).
-            alert('Export: ' + type + '. If your data table supports programmatic export, wire triggerExport() accordingly.');
+            alert('Export: ' + type +
+                '. If your data table supports programmatic export, wire triggerExport() accordingly.');
         }
 
         // Local search that filters visible table rows (best-effort UI complement to x-data-table)
@@ -192,8 +205,8 @@
         }
 
         // Accessibility: focus-visible friendly outlines
-        (function () {
-            document.addEventListener('keydown', function (e) {
+        (function() {
+            document.addEventListener('keydown', function(e) {
                 if (e.key === 'Tab') {
                     document.documentElement.classList.add('user-is-tabbing');
                 }
