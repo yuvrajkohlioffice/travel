@@ -17,6 +17,10 @@ class Followup extends Model
     ];
     protected $dates = ['next_followup_date', 'created_at', 'updated_at'];
 
+protected $casts = [
+    'next_followup_date' => 'datetime',
+    'reminder_sent' => 'boolean',
+];
 
     public function lead()
     {

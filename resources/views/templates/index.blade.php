@@ -4,7 +4,7 @@
 
             {{-- Header --}}
             <header
-                class="mb-3 bg-white/80 backdrop-blur-md rounded-2xl shadow-sm border border-gray-100 
+                class="mb-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700
                 p-5 md:p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
 
                 <div class="flex items-center gap-4">
@@ -12,7 +12,7 @@
                         <i class="fas fa-envelope-open-text text-blue-600 text-lg"></i>
                     </div>
                     <div>
-                        <h1 class="text-2xl md:text-3xl font-semibold text-gray-800 leading-tight">
+                        <h1 class="text-2xl md:text-3xl font-semibold text-gray-800 dark:text-gray-200 leading-tight">
                             Message Templates
                         </h1>
                         <p class="text-sm text-gray-500 mt-0.5">

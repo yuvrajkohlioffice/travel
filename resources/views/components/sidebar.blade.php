@@ -1,7 +1,7 @@
-<div class="h-screen w-64 bg-white text-gray-800 flex flex-col fixed left-0 top-0 z-50 shadow-lg">
+<div class="h-screen w-64 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 flex flex-col fixed left-0 top-0 z-50 shadow-lg">
 
     <!-- Logo -->
-    <div class="p-4 text-2xl font-bold border-b border-gray-200 tracking-wide flex items-center space-x-2">
+    <div class="p-4 text-2xl font-bold border-b border-gray-200 dark:border-gray-700 tracking-wide flex items-center space-x-2">
         <i class="fas fa-route text-blue-500"></i>
         <span>TRAVEL</span>
     </div>
@@ -28,31 +28,45 @@
             ];
         @endphp
 
-        <!-- Normal Sidebar Links -->
         @foreach ($links as $link)
             <a href="{{ route($link['route']) }}"
-                class="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-all
-                {{ request()->routeIs(Str::replaceLast('.index', '*', $link['route'])) ? 'bg-blue-50 text-blue-600 font-semibold' : 'text-gray-700 dark:text-gray-200' }}">
+                class="flex items-center space-x-3 px-3 py-2 rounded-lg
+                transition-all
+                {{ request()->routeIs(Str::replaceLast('.index', '*', $link['route'])) 
+                    ? 'bg-blue-50 text-blue-600 font-semibold dark:bg-blue-900 dark:text-blue-400' 
+                    : 'text-gray-700 dark:text-gray-200 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-800 dark:hover:text-blue-400' }}">
                 <i class="{{ $link['icon'] }} w-5"></i>
                 <span>{{ $link['label'] }}</span>
             </a>
         @endforeach
 
         <!-- Divider -->
-        <div class="border-t border-gray-200 my-3"></div>
+        <div class="border-t border-gray-200 dark:border-gray-700 my-3"></div>
 
         <!-- Action Buttons -->
         <div class="space-y-1">
-            <a href="{{ url('/deploy') }}" class="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-green-50 hover:text-green-600 text-gray-700 transition-all">
+            <a href="{{ url('/deploy') }}"
+               class="flex items-center space-x-3 px-3 py-2 rounded-lg
+                      transition-all text-gray-700 dark:text-gray-200
+                      hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900 dark:hover:text-green-400">
                 <span>🚀 Run Deploy</span>
             </a>
-            <a href="{{ url('/run-npm-build') }}" class="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-green-50 hover:text-green-600 text-gray-700 transition-all">
+            <a href="{{ url('/run-npm-build') }}"
+               class="flex items-center space-x-3 px-3 py-2 rounded-lg
+                      transition-all text-gray-700 dark:text-gray-200
+                      hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900 dark:hover:text-green-400">
                 <span>📦 NPM Build</span>
             </a>
-            <a href="{{ url('/optimize-app') }}" class="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-green-50 hover:text-green-600 text-gray-700 transition-all">
+            <a href="{{ url('/optimize-app') }}"
+               class="flex items-center space-x-3 px-3 py-2 rounded-lg
+                      transition-all text-gray-700 dark:text-gray-200
+                      hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900 dark:hover:text-green-400">
                 <span>⚡ Optimize</span>
             </a>
-            <a href="{{ url('/link-storage') }}" class="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-green-50 hover:text-green-600 text-gray-700 transition-all">
+            <a href="{{ url('/link-storage') }}"
+               class="flex items-center space-x-3 px-3 py-2 rounded-lg
+                      transition-all text-gray-700 dark:text-gray-200
+                      hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900 dark:hover:text-green-400">
                 <span>🔗 Storage Link</span>
             </a>
         </div>

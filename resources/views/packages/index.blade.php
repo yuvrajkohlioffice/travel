@@ -10,7 +10,7 @@
                         <i class="fa-solid fa-box-open text-gray-700 text-lg"></i>
                     </div>
                     <div>
-                        <h1 class="text-2xl md:text-3xl font-semibold text-gray-800 leading-tight">Packages</h1>
+                        <h1 class="text-2xl md:text-3xl font-semibold text-gray-800 dark:text-gray-200 leading-tight">Packages</h1>
                         <p class="text-sm text-gray-500 mt-0.5">Manage all travel packages — create, edit, link
                             relations, view and delete.</p>
                     </div>
@@ -63,7 +63,7 @@
                             title="Packages List" resourceName="Packages">
 
                             @foreach ($packages as $package)
-                                <tr class="border-b last:border-b-0 hover:bg-gray-50 transition-colors">
+                                <tr class="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors transition-colors">
                                     {{-- ID --}}
                                     <td class="p-3 whitespace-nowrap text-center text-sm text-gray-700 font-medium">
                                         {{ $package->id }}

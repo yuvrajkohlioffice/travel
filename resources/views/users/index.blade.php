@@ -6,7 +6,7 @@
                 <!-- Header -->
                 <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
                     <h2 class="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
-                        <i class="fa-solid fa-user text-blue-600"></i>
+                        <i class="fas fa-people-group text-blue-600"></i>
                         Users
                     </h2>
                     <a href="{{ route('users.create') }}"

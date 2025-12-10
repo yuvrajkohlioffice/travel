@@ -15,15 +15,15 @@
 <div class="row">
     <div class="col-12">
         <div class="table-responsive">
-            <table id="{{ $id }}" class="table table-striped table-bordered" style="width:100%">
-                <thead class="table-success">
+            <table id="{{ $id }}" class="table table-striped table-bordered dark:bg-gray-800 dark:text-gray-200" style="width:100%">
+                <thead class="bg-green-500 dark:bg-gray-800">
                     <tr>
                         @foreach ($headers as $header)
-                            <th class="text-center align-middle text-white">{{ $header }}</th>
+                            <th class="text-center align-middle text-white dark:text-gray-200">{{ $header }}</th>
                         @endforeach
                     </tr>
                 </thead>
-                <tbody>
+                <tbody class="dark:bg-gray-800 dark:text-white">
                     {{ $slot }}
                 </tbody>
             </table>
@@ -34,73 +34,7 @@
 <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
 <link href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
-<style>
-    .table-success {
-        background-color: #28a745 !important;
-        color: white;
-    }
 
-    .table-success th {
-        border-color: #218838 !important;
-    }
-
-    #{{ $id }} tbody td {
-        vertical-align: middle;
-    }
-
-    .dataTables_wrapper .dataTables_filter input {
-        border: 1px solid #dee2e6 !important;
-        border-radius: 4px !important;
-        padding: 5px 10px !important;
-        margin-left: 0.5em !important;
-    }
-
-    .dataTables_wrapper .dataTables_paginate .paginate_button {
-        padding: 0.3em 0.8em !important;
-        border-radius: 4px !important;
-        margin: 0 2px !important;
-        cursor: pointer;
-        cursor: po border: 1px solid transparent !important;
-    }
-
-    .dataTables_wrapper .dataTables_paginate .paginate_button.current {
-        background: #28a745 !important;
-        color: white !important;
-        border: 1px solid #218838 !important;
-    }
-
-    .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
-        border: 1px solid #dee2e6 !important;
-    }
-
-    .dt-buttons .btn {
-        margin-right: 5px !important;
-        margin-bottom: 5px !important;
-
-    }
-
-    .badge-success {
-        background-color: #e8f5e9;
-        color: #2e7d32;
-        padding: 5px 10px;
-        border-radius: 4px;
-    }
-
-    .dataTables_wrapper .dataTables_length select {
-        border: 1px solid #dee2e6 !important;
-        border-radius: 4px !important;
-        padding: 7px 30px !important;
-    }
-
-    .dataTables_wrapper .dt-buttons {
-        margin-bottom: 10px;
-    }
-
-    .dataTables_wrapper .dataTables_length,
-    .dataTables_wrapper .dataTables_filter {
-        margin-bottom: 10px;
-    }
-</style>
 
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 <!-- DataTables JS -->

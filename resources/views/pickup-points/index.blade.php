@@ -10,7 +10,7 @@
                         <i class="fa-solid fa-location-dot text-gray-700 text-lg"></i>
                     </div>
                     <div>
-                        <h1 class="text-2xl md:text-3xl font-semibold text-gray-800 leading-tight">Pickup Points</h1>
+                        <h1 class="text-2xl md:text-3xl font-semibold text-gray-800 dark:text-gray-200 leading-tight">Pickup Points</h1>
                         <p class="text-sm text-gray-500 mt-0.5">Manage all travel Pickup Points — create, edit, view and delete.</p>
                     </div>
                 </div>
@@ -52,7 +52,7 @@
                             resourceName="Pickup Points"
                         >
                             @foreach ($pickupPoints as $point)
-                                <tr class="border-b last:border-b-0 hover:bg-gray-50 transition-colors">
+                                <tr class="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors transition-colors">
 
                                     {{-- ID --}}
                                     <td class="p-3 text-center text-sm text-gray-800 font-medium">
