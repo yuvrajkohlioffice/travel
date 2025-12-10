@@ -80,7 +80,7 @@ class Package extends Model
 
     public function getPackageBannerUrlAttribute(): ?string
     {
-        return $this->package_banner ? asset('storage/' . $this->package_banner) : null;
+        return $this->package_banner ? asset('storage/app/public/' . $this->package_banner) : null;
     }
 
     public function getPackageDocsUrlAttribute(): array|string|null
@@ -88,7 +88,7 @@ class Package extends Model
         if (!$this->package_docs) return [];
 
         return is_array($this->package_docs)
-            ? array_map(fn($doc) => asset('storage/' . $doc), $this->package_docs)
+            ? array_map(fn($doc) => asset('storage/app/public/' . $doc), $this->package_docs)
             : asset('storage/' . $this->package_docs);
     }
 

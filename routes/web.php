@@ -7,6 +7,15 @@ use Laravel\Fortify\Features;
 use App\Http\Controllers\{CompanyController, CarController, DashboardController, UserController, InvoiceController, PackageTypeController, PackageCategoryController, DifficultyTypeController, HotelController, RoleController, PackageController, LeadController, FollowupController, PaymentController, WhatsAppController};
 use Livewire\Volt\Volt;
 
+use Illuminate\Support\Facades\Artisan;
+
+
+Route::get('/link-storage', function () {
+    Artisan::call('storage:link');
+
+    return back()->with('success', 'Storage linked successfully!');
+});
+
 
 /*
 |--------------------------------------------------------------------------

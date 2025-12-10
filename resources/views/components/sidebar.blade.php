@@ -4,6 +4,7 @@
     <div class="p-4 text-2xl font-bold border-b border-gray-200 tracking-wide flex items-center space-x-2">
         <i class="fas fa-route text-blue-500"></i>
         <span>TRAVEL</span>
+        
     </div>
 
     <nav class="flex-1 p-4 space-y-2 shadow-lg ">
@@ -42,6 +43,9 @@
                 <span>{{ $link['label'] }}</span>
             </a>
         @endforeach
+
+        <a href="/link-storage" class="px-1 py-1 bg-blue-600 text-white rounded-lg btn">Run Storage Link</a>
+
 
 
     </nav>
