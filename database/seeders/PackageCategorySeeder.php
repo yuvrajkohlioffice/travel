@@ -11,7 +11,7 @@ class PackageCategorySeeder extends Seeder
     {
         $chunkSize = 500; // insert 500 rows at a time
 
-        for ($i = 1; $i <= 10000; $i += $chunkSize) {
+        for ($i = 1; $i <= 1; $i += $chunkSize) {
 
             $batch = [];
 

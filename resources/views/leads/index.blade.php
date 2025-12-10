@@ -132,7 +132,7 @@
                                         <input type="checkbox" id="selectAll"
                                             class="rounded border-gray-300 focus:ring-2 focus:ring-blue-500">
                                     </th>
-                                    <th class="w-20 p-2 text-left">ID</th>
+
                                     <th class="w-48 p-2 text-left">Client Info</th>
                                     <th class="w-40 p-2 text-left">Location</th>
                                     <th class="w-32 p-2 text-left">Reminder</th>
@@ -262,10 +262,7 @@
                             return `<input type="checkbox" class="row-checkbox rounded border-gray-300 focus:ring-2 focus:ring-blue-500" data-id="${data}">`;
                         }
                     },
-                    {
-                        data: 'id',
-                        className: 'p-2'
-                    },
+                    
                     {
                         data: 'client_info',
                         orderable: false,

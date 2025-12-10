@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\PackageCategory;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -20,7 +21,7 @@ class PackageSeeder extends Seeder
                 $batch[] = [
                     'company_id'           => 1,
                     'package_type_id'      => 1,
-                    'package_category_id'  => fake()->numberBetween(1, 10000),
+                    'package_category_id'  => PackageCategory::inRandomOrder()->first()->id,
                     'difficulty_type_id'   => fake()->numberBetween(1, 5),
                     'pickup_points'        => fake()->address(),
                     'package_name'         => fake()->words(3, true),

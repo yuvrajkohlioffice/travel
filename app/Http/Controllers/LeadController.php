@@ -207,9 +207,24 @@ class LeadController extends Controller
                 ' .
                     $lead->name .
                     '
-                <span class="px-2 py-0.5 rounded text-white font-extrabold ' .
+                <span class="py-0.5 rounded text-white font-bold ' .
                     $statusClass .
-                    '">
+                    '" style="    --bs-badge-padding-x: 0.65em;
+    --bs-badge-padding-y: 0.35em;
+    --bs-badge-font-size: 0.75em;
+    --bs-badge-font-weight: 700;
+    --bs-badge-color: #fff;
+    --bs-badge-border-radius: 0.375rem;
+    display: inline-block;
+    padding: var(--bs-badge-padding-y) var(--bs-badge-padding-x);
+    font-size: var(--bs-badge-font-size);
+    font-weight: var(--bs-badge-font-weight);
+    line-height: 1;
+    color: var(--bs-badge-color);
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: var(--bs-badge-border-radius);">
                     ' .
                     ($lead->lead_status ?? 'N/A') .
                     '
@@ -220,13 +235,7 @@ class LeadController extends Controller
                     <i class="fa-solid fa-pen-to-square"></i>
                 </button>
             </div>
-            <a href="mailto:' .
-                    $lead->email .
-                    '" class="text-gray-700 hover:underline text-sm">
-                ' .
-                    $lead->email .
-                    '
-            </a>
+            
             <div class="text-gray-600 text-sm font-mono">
                 +' .
                     $lead->phone_code .
@@ -401,31 +410,32 @@ class LeadController extends Controller
 
     // LeadController.php
     public function getLeadsCounts(Request $request)
-{
-    $user = auth()->user();
+    {
+        $user = auth()->user();
 
-    $query = Lead::query()
-        ->when($user->role_id != 1, fn($q) => $q->where(fn($q2) => $q2->where('user_id', $user->id)
-            ->orWhereHas('assignedUsers', fn($uq) => $uq->where('user_id', $user->id))))
-        ->when($request->id, fn($q) => $q->where('id', $request->id))
-        ->when($request->client_name, fn($q) => $q->where('name', 'like', "%{$request->client_name}%"))
-        ->when($request->location, fn($q) => $q->where(function ($q2) use ($request) {
-            $q2->where('country', 'like', "%{$request->location}%")
-               ->orWhere('district', 'like', "%{$request->location}%")
-               ->orWhere('city', 'like', "%{$request->location}%");
-        }))
-        ->when($request->status, fn($q) => $q->where('status', $request->status))
-        ->when($request->assigned, fn($q) => $q->whereHas('latestAssignedUser.user', fn($uq) => $uq->where('name', $request->assigned)));
+        $query = Lead::query()
+            ->when($user->role_id != 1, fn($q) => $q->where(fn($q2) => $q2->where('user_id', $user->id)->orWhereHas('assignedUsers', fn($uq) => $uq->where('user_id', $user->id))))
+            ->when($request->id, fn($q) => $q->where('id', $request->id))
+            ->when($request->client_name, fn($q) => $q->where('name', 'like', "%{$request->client_name}%"))
+            ->when(
+                $request->location,
+                fn($q) => $q->where(function ($q2) use ($request) {
+                    $q2->where('country', 'like', "%{$request->location}%")
+                        ->orWhere('district', 'like', "%{$request->location}%")
+                        ->orWhere('city', 'like', "%{$request->location}%");
+                }),
+            )
+            ->when($request->status, fn($q) => $q->where('status', $request->status))
+            ->when($request->assigned, fn($q) => $q->whereHas('latestAssignedUser.user', fn($uq) => $uq->where('name', $request->assigned)));
 
-    return response()->json([
-        'today' => (clone $query)->whereDate('created_at', today())->count(),
-        'yesterday' => (clone $query)->whereDate('created_at', today()->subDay())->count(),
-        'week' => (clone $query)->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->count(),
-        'month' => (clone $query)->whereMonth('created_at', now()->month)->count(),
-        'all' => (clone $query)->count(),
-    ]);
-}
-
+        return response()->json([
+            'today' => (clone $query)->whereDate('created_at', today())->count(),
+            'yesterday' => (clone $query)->whereDate('created_at', today()->subDay())->count(),
+            'week' => (clone $query)->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->count(),
+            'month' => (clone $query)->whereMonth('created_at', now()->month)->count(),
+            'all' => (clone $query)->count(),
+        ]);
+    }
 
     public function create()
     {
@@ -561,50 +571,46 @@ class LeadController extends Controller
         return back()->with('success', 'Leads imported successfully!');
     }
     public function bulkAssign(Request $request)
-{
-    $request->validate([
-        'lead_ids' => 'required|array|min:1',
-        'lead_ids.*' => 'integer|exists:leads,id',
-        'user_id' => 'required|exists:users,id',
-    ]);
+    {
+        $request->validate([
+            'lead_ids' => 'required|array|min:1',
+            'lead_ids.*' => 'integer|exists:leads,id',
+            'user_id' => 'required|exists:users,id',
+        ]);
 
-    $leadIds = $request->lead_ids;
-    $userId = $request->user_id;
-    $assignedBy = auth()->id();
+        $leadIds = $request->lead_ids;
+        $userId = $request->user_id;
+        $assignedBy = auth()->id();
 
-    // Step 1: Get already assigned leads to this user
-    $alreadyAssigned = LeadUser::whereIn('lead_id', $leadIds)
-        ->where('user_id', $userId)
-        ->pluck('lead_id')
-        ->toArray();
+        // Step 1: Get already assigned leads to this user
+        $alreadyAssigned = LeadUser::whereIn('lead_id', $leadIds)->where('user_id', $userId)->pluck('lead_id')->toArray();
 
-    // Step 2: Filter unassigned leads
-    $toAssign = array_diff($leadIds, $alreadyAssigned);
+        // Step 2: Filter unassigned leads
+        $toAssign = array_diff($leadIds, $alreadyAssigned);
 
-    if (count($toAssign) > 0) {
-        $insertData = [];
-        $now = now();
+        if (count($toAssign) > 0) {
+            $insertData = [];
+            $now = now();
 
-        foreach ($toAssign as $leadId) {
-            $insertData[] = [
-                'lead_id' => $leadId,
-                'user_id' => $userId,
-                'assigned_by' => $assignedBy,
-                'created_at' => $now,
-                'updated_at' => $now,
-            ];
+            foreach ($toAssign as $leadId) {
+                $insertData[] = [
+                    'lead_id' => $leadId,
+                    'user_id' => $userId,
+                    'assigned_by' => $assignedBy,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+            }
+
+            // Bulk insert (fast)
+            LeadUser::insert($insertData);
         }
 
-        // Bulk insert (fast)
-        LeadUser::insert($insertData);
+        return response()->json([
+            'success' => true,
+            'assigned_count' => count($toAssign),
+            'skipped' => count($alreadyAssigned),
+            'message' => 'Selected leads assigned successfully!',
+        ]);
     }
-
-    return response()->json([
-        'success' => true,
-        'assigned_count' => count($toAssign),
-        'skipped' => count($alreadyAssigned),
-        'message' => 'Selected leads assigned successfully!',
-    ]);
-}
-
 }
