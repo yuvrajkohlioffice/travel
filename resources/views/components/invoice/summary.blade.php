@@ -38,7 +38,7 @@
         <div class="page-break-inside-avoid"
              style="width: 50%; padding-left: 20px; box-sizing: border-box;">
 
-            <div class="bg-gradient-to-br from-blue-900 to-blue-800 rounded-2xl p-8 text-white shadow-2xl 
+            <div class="bg-gradient-to-br from-blue-900 to-blue-800 rounded-2xl mt-[65px] p-8 text-white shadow-2xl 
                         print:shadow-none print:p-4">
 
                 <h3 class="text-2xl font-bold mb-8 text-center border-b border-blue-700 pb-4">

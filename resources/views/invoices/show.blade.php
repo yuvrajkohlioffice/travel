@@ -13,7 +13,7 @@
 
         <!-- Invoice Container -->
         <div id="invoice-container"
-            class="invoice-wrapper bg-white rounded-3xl shadow-2xl overflow-hidden border border-blue-100">
+            class=" invoice-wrapper bg-white rounded-3xl shadow-2xl overflow-hidden border border-blue-100">
 
             {{-- Header --}}
             <x-invoice.header :invoice="$invoice" />
@@ -25,7 +25,7 @@
             <x-invoice.package-details :invoice="$invoice" />
 
             <!-- Special Instructions -->
-            <div class="border-t border-blue-100 bg-gradient-to-r from-blue-50 to-cyan-50 p-6">
+            <div class="page-break-inside-avoid border-t border-blue-100 bg-gradient-to-r from-blue-50 to-cyan-50 p-6 mt-[150px]">
                 <h4 class="font-bold text-gray-900 text-lg mb-4 flex items-center">
                     <i class="fas fa-star text-yellow-500 mr-3"></i>
                     Special Instructions for Your Trip

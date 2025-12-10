@@ -3,7 +3,7 @@
         <i class="fas fa-suitcase-rolling mr-3 text-blue-500 bg-blue-100 p-2 rounded-full"></i> Travel Package Details
     </h3>
 
-    <div class="overflow-x-auto rounded-2xl border border-blue-100 shadow-sm">
+    <div class="overflow-x-hidden rounded-2xl border border-blue-100 shadow-sm">
         <table class="min-w-full divide-y divide-blue-100">
             <thead class="bg-gradient-to-r from-blue-50 to-cyan-50">
                 <tr>
