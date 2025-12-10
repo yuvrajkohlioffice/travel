@@ -125,7 +125,7 @@
                                                 <a href="{{ route('packages.edit-relations', $package->id) }}"
                                                    class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition text-sm shadow-sm">
                                                     <i class="fa-solid fa-link"></i>
-                                                    <span class="hidden sm:inline">Relations</span>
+                                                    <span class="hidden sm:inline">Package Details</span>
                                                 </a>
 
                                                 {{-- Delete --}}

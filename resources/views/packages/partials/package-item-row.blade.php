@@ -17,7 +17,7 @@
     {{-- Select Car --}}
     <div>
     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-        Select Car
+        Select Vechile Type
     </label>
     <select 
         name="{{ $isEdit ? 'car_id' : "items[$index][car_id]" }}" 
@@ -34,8 +34,8 @@
                 @endif>
                 {{ $car->car_type }} 
                 | Capacity: {{ $car->capacity }} 
-                | Per Day: ₹{{ number_format($car->price_per_day, 2) }} 
-                | Per KM: ₹{{ number_format($car->price_per_km, 2) }}
+                | Per Day: ₹{{ $car->price_per_day }} 
+                | Per KM: ₹{{ $car->price_per_km }}
             </option>
         @endforeach
     </select>

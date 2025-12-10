@@ -64,15 +64,53 @@ class PackageController extends Controller
     }
 
     public function update(Request $request, Package $package)
-    {
+{
+    try {
+        // Validation
         $validated = $this->validatePackage($request);
 
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        \Log::error('Package update validation failed', [
+            'package_id' => $package->id,
+            'errors' => $e->errors(),
+            'input' => $request->all(),
+        ]);
+
+        return back()->withErrors($e->validator)->withInput();
+    }
+
+    try {
+        // File handling
         $files = $this->handlePackageFiles($request, $package);
 
+    } catch (\Exception $e) {
+        \Log::error('Package file upload failed', [
+            'package_id' => $package->id,
+            'message' => $e->getMessage(),
+            'input' => $request->all(),
+        ]);
+
+        return back()->with('error', 'File upload failed. Please try again.')->withInput();
+    }
+
+    try {
+        // Database update
         $package->update(array_merge($validated, $files));
 
-        return redirect()->route('packages.index')->with('success', 'Package updated successfully!');
+    } catch (\Exception $e) {
+        \Log::error('Package update failed', [
+            'package_id' => $package->id,
+            'message' => $e->getMessage(),
+        ]);
+
+        return back()->with('error', 'Something went wrong while updating the package.');
     }
+
+    return redirect()
+        ->route('packages.index')
+        ->with('success', 'Package updated successfully!');
+}
+
 
     public function destroy(Package $package)
     {
@@ -353,7 +391,7 @@ class PackageController extends Controller
             'max_age' => 'nullable|integer|min:0',
             'best_time_to_visit' => 'nullable|string',
             'content' => 'nullable|string',
-            'company_id' => 'required|exists:companies,id', // ✅ Added
+            'company_id' => 'nullable|exists:companies,id', // ✅ Added
         ]);
     }
 }
