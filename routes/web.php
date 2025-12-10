@@ -4,18 +4,55 @@ use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 
 // Controllers
-use App\Http\Controllers\{CompanyController, CarController, DashboardController, UserController, InvoiceController, PackageTypeController, PackageCategoryController, DifficultyTypeController, HotelController, RoleController, PackageController, LeadController, FollowupController, PaymentController, WhatsAppController};
+use App\Http\Controllers\{CompanyController, MessageTemplateController, CarController, DashboardController, UserController, InvoiceController, PackageTypeController, PackageCategoryController, DifficultyTypeController, HotelController, RoleController, PackageController, LeadController, FollowupController, PaymentController, WhatsAppController};
 use Livewire\Volt\Volt;
-
+use Symfony\Component\Process\Process;
+use Symfony\Component\Process\Exception\ProcessFailedException;
 use Illuminate\Support\Facades\Artisan;
-
 
 Route::get('/link-storage', function () {
     Artisan::call('storage:link');
 
     return back()->with('success', 'Storage linked successfully!');
 });
+Route::get('/deploy', function () {
+    try {
+        // 1. Run npm build
+        $npm = new Process(['npm', 'run', 'build']);
+        $npm->run();
 
+        if (!$npm->isSuccessful()) {
+            throw new ProcessFailedException($npm);
+        }
+
+        // 2. Run optimize
+        Artisan::call('optimize');
+
+        // 3. Run migrate
+        Artisan::call('migrate', ['--force' => true]);
+
+        // 4. Run storage link
+        Artisan::call('storage:link');
+
+        return back()->with('success', 'Deployment commands executed successfully!');
+    } catch (\Exception $e) {
+        return back()->with('error', 'Error: ' . $e->getMessage());
+    }
+})->middleware('auth');
+Route::get('/optimize-app', function () {
+    Artisan::call('optimize');
+    return back()->with('success', 'Application optimized successfully!');
+});
+Route::get('/run-npm-build', function () {
+    $process = new Process(['npm', 'run', 'build']);
+    $process->run();
+
+    if (!$process->isSuccessful()) {
+        return back()->with('error', $process->getErrorOutput());
+    }
+
+    return back()->with('success', 'NPM Build completed!');
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -40,6 +77,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 */
 Route::middleware(['auth'])->group(function () {
     Route::redirect('settings', 'settings/profile');
+    Route::resource('templates', MessageTemplateController::class);
 
     Volt::route('settings/profile', 'settings.profile')->name('profile.edit');
     Volt::route('settings/password', 'settings.password')->name('user-password.edit');
@@ -92,7 +130,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
 
     Route::resource('leads', LeadController::class);
 
-Route::resource('companies', CompanyController::class);
+    Route::resource('companies', CompanyController::class);
 
     /*
         |--------------------------------------------------------------------------
@@ -145,7 +183,6 @@ Route::resource('companies', CompanyController::class);
         Route::get('{package}/edit-relations', [PackageController::class, 'editRelations'])->name('packages.edit-relations');
         Route::post('{package}/update-relations', [PackageController::class, 'updateRelations'])->name('packages.update-relations');
 
-        
         Route::get('/{package}/json', [PackageController::class, 'apiShow']);
     });
 
