@@ -21,8 +21,8 @@ return new class extends Migration
             $table->decimal('amount', 12, 2); // Total invoice amount
             $table->decimal('paid_amount', 12, 2)->default(0); // How much paid
             $table->decimal('remaining_amount', 12, 2)->default(0); // Remaining amount
-            $table->enum('status', ['pending', 'partial', 'completed', 'failed', 'refunded'])->default('pending');
-            $table->enum('payment_method', ['bank_transfer', 'card', 'cash', 'paypal', 'other'])->nullable();
+            $table->text('status')->default('pending');
+            $table->text('payment_method')->nullable();
             $table->string('transaction_id')->nullable();
             $table->text('notes')->nullable(); // log / remarks
             

@@ -7,12 +7,23 @@ use Illuminate\Support\Facades\DB;
 
 class PackageCategorySeeder extends Seeder
 {
-    public function run(): void
+    public function run()
     {
-        DB::table('package_category')->insert([
-            ['name' => 'Adventure'],
-            ['name' => 'Family'],
-            ['name' => 'Corporate'],
-        ]);
+        $chunkSize = 500; // insert 500 rows at a time
+
+        for ($i = 1; $i <= 10000; $i += $chunkSize) {
+
+            $batch = [];
+
+            for ($j = 0; $j < $chunkSize; $j++) {
+                $batch[] = [
+                    'name'       => fake()->words(2, true),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            }
+
+            DB::table('package_category')->insert($batch);
+        }
     }
 }
