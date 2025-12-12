@@ -13,7 +13,7 @@
                     </h2>
 
                     <a href="{{ route('companies.create') }}"
-                       class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2">
+                        class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2">
                         <i class="fas fa-plus"></i> Add Company
                     </a>
                 </div>
@@ -34,9 +34,12 @@
                                 <th>Company Name</th>
                                 <th>Owner</th>
                                 <th>Team</th>
+                                <th>Email</th>
+                                <th>Phone</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
+
                     </table>
                 </div>
 
@@ -47,18 +50,45 @@
 
     <!-- DataTables Script -->
     <script>
-        $(function () {
+        $(function() {
             $('#companies-table').DataTable({
                 processing: true,
                 serverSide: true,
                 ajax: "{{ route('companies.index') }}",
-                columns: [
-                    { data: 'id', name: 'id' },
-                    { data: 'company_name', name: 'company_name' },
-                    { data: 'owner', name: 'owner', orderable: false },
-                    { data: 'team', name: 'team', orderable: false },
-                    { data: 'actions', name: 'actions', orderable: false, searchable: false },
+                columns: [{
+                        data: 'id',
+                        name: 'id'
+                    },
+                    {
+                        data: 'company_name',
+                        name: 'company_name'
+                    },
+                    {
+                        data: 'owner',
+                        name: 'owner',
+                        orderable: false
+                    },
+                    {
+                        data: 'team',
+                        name: 'team',
+                        orderable: false
+                    },
+                    {
+                        data: 'email',
+                        name: 'email'
+                    },
+                    {
+                        data: 'phone',
+                        name: 'phone'
+                    },
+                    {
+                        data: 'actions',
+                        name: 'actions',
+                        orderable: false,
+                        searchable: false
+                    },
                 ]
+
             });
         });
     </script>

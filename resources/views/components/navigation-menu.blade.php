@@ -73,7 +73,7 @@
                             <x-slot name="trigger">
                                 @if (Laravel\Jetstream\Jetstream::managesProfilePhotos())
                                     <button
-                                        class="flex text-sm border-2 border-transparent rounded-full focus:outline-none focus:border-gray-300 transition">
+                                        class="flex text-sm border-2 border-gray-800 rounded-full focus:outline-none focus:border-gray-300 transition border">
                                         <img class="size-8 rounded-full object-cover"
                                             src="{{ Auth::user()->profile_photo_url }}"
                                             alt="{{ Auth::user()->name }}" />
@@ -94,7 +94,8 @@
                                 @endif
                             </x-slot>
 
-                            <x-slot name="content" class="text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-700 transition duration-150 ease-in-out">
+                            <x-slot name="content"
+                                class="text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-700 transition duration-150 ease-in-out">
                                 <div class="w-48 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200">
                                     <!-- Account Management -->
                                     <div class="block px-4 py-2 text-xs text-gray-400 dark:text-gray-500">
@@ -156,8 +157,10 @@
                     @endif
 
                     <div>
-                        <div class="font-medium text-base text-gray-800 dark:text-gray-200">{{ Auth::user()->name }}</div>
-                        <div class="font-medium text-sm text-gray-500 dark:text-gray-400">{{ Auth::user()->email }}</div>
+                        <div class="font-medium text-base text-gray-800 dark:text-gray-200">{{ Auth::user()->name }}
+                        </div>
+                        <div class="font-medium text-sm text-gray-500 dark:text-gray-400">{{ Auth::user()->email }}
+                        </div>
                     </div>
                 </div>
 
@@ -180,5 +183,5 @@
     </nav>
 
     <!-- Sidebar -->
-    <x-sidebar/>
+    <x-sidebar />
 </div>

@@ -65,7 +65,14 @@
         placeholder="Enter your WhatsApp API key" 
     />
     <x-input-error for="whatsapp_api_key" class="mt-2" />
+
+    @if(is_null($state['whatsapp_api_key'] ?? null) || $state['whatsapp_api_key'] === '')
+        <p class="mt-2 text-sm text-blue-600">
+            You can purchase it from  <a href="https://wabot.adxventure.com/" target="_blank" class="underline">WA BOT</a> here.
+        </p>
+    @endif
 </div>
+
 <!-- Company Selection -->
 <div class="col-span-6 sm:col-span-4">
     <x-label for="company_id" value="{{ __('Company') }}" />
