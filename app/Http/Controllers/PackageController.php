@@ -42,7 +42,7 @@ class PackageController extends Controller
         $categories = PackageCategory::all();
         $difficulties = DifficultyType::all();
 
-        return view('packages.create', compact('types', 'categories', 'difficulties','companies'));
+        return view('packages.create', compact('types', 'categories', 'difficulties', 'companies'));
     }
 
     public function store(Request $request)
@@ -66,53 +66,47 @@ class PackageController extends Controller
     }
 
     public function update(Request $request, Package $package)
-{
-    try {
-        // Validation
-        $validated = $this->validatePackage($request);
+    {
+        try {
+            // Validation
+            $validated = $this->validatePackage($request);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('Package update validation failed', [
+                'package_id' => $package->id,
+                'errors' => $e->errors(),
+                'input' => $request->all(),
+            ]);
 
-    } catch (\Illuminate\Validation\ValidationException $e) {
-        \Log::error('Package update validation failed', [
-            'package_id' => $package->id,
-            'errors' => $e->errors(),
-            'input' => $request->all(),
-        ]);
+            return back()->withErrors($e->validator)->withInput();
+        }
 
-        return back()->withErrors($e->validator)->withInput();
+        try {
+            // File handling
+            $files = $this->handlePackageFiles($request, $package);
+        } catch (\Exception $e) {
+            \Log::error('Package file upload failed', [
+                'package_id' => $package->id,
+                'message' => $e->getMessage(),
+                'input' => $request->all(),
+            ]);
+
+            return back()->with('error', 'File upload failed. Please try again.')->withInput();
+        }
+
+        try {
+            // Database update
+            $package->update(array_merge($validated, $files));
+        } catch (\Exception $e) {
+            \Log::error('Package update failed', [
+                'package_id' => $package->id,
+                'message' => $e->getMessage(),
+            ]);
+
+            return back()->with('error', 'Something went wrong while updating the package.');
+        }
+
+        return redirect()->route('packages.index')->with('success', 'Package updated successfully!');
     }
-
-    try {
-        // File handling
-        $files = $this->handlePackageFiles($request, $package);
-
-    } catch (\Exception $e) {
-        \Log::error('Package file upload failed', [
-            'package_id' => $package->id,
-            'message' => $e->getMessage(),
-            'input' => $request->all(),
-        ]);
-
-        return back()->with('error', 'File upload failed. Please try again.')->withInput();
-    }
-
-    try {
-        // Database update
-        $package->update(array_merge($validated, $files));
-
-    } catch (\Exception $e) {
-        \Log::error('Package update failed', [
-            'package_id' => $package->id,
-            'message' => $e->getMessage(),
-        ]);
-
-        return back()->with('error', 'Something went wrong while updating the package.');
-    }
-
-    return redirect()
-        ->route('packages.index')
-        ->with('success', 'Package updated successfully!');
-}
-
 
     public function destroy(Package $package)
     {
@@ -238,120 +232,153 @@ class PackageController extends Controller
     }
 
     public function apiShow(Package $package)
-{
-    // Load relationships
-    $package->load([
-        'packageType',
-        'packageCategory',
-        'difficultyType',
-        'packageItems.car',
-        'messageTemplate' // Load the message template
-    ]);
-
-    $packageItems = $package->packageItems->map(
-        fn($item) => [
-            'id' => $item->id,
-            'car' => $item->car,
-            'person_count' => $item->person_count,
-            'vehicle_name' => $item->vehicle_name,
-            'room_count' => $item->room_count,
-            'standard_price' => $item->standard_price,
-            'deluxe_price' => $item->deluxe_price,
-            'luxury_price' => $item->luxury_price,
-            'premium_price' => $item->premium_price,
-        ]
-    );
-
-    // Prepare message template if exists
-    $messageTemplate = $package->messageTemplate
-        ? [
-            'whatsapp' => [
-                'text' => $package->messageTemplate->whatsapp_text,
-                'media' => $package->messageTemplate->whatsapp_media,
-            ],
-            'email' => [
-                'subject' => $package->messageTemplate->email_subject,
-                'body' => $package->messageTemplate->email_body,
-                'media' => $package->messageTemplate->email_media,
-            ]
-        ]
-        : null;
-
-    return response()->json([
-        'success' => true,
-        'package' => [
-            'id' => $package->id,
-            'package_name' => $package->package_name,
-            'package_days' => $package->package_days,
-            'package_nights' => $package->package_nights,
-            'package_price' => $package->package_price,
-            'pickup_points' => $package->pickup_points,
-            'package_banner_url' => $package->package_banner_url,
-            'package_docs_url' => $package->package_docs_url,
-            'other_images_url' => $package->other_images_url,
-            'packageType' => $package->packageType,
-            'packageCategory' => $package->packageCategory,
-            'difficultyType' => $package->difficultyType,
-            'packageItems' => $packageItems,
-            'messageTemplate' => $messageTemplate, // include the template
-        ],
-    ]);
-}
-
-
-    public function sendPackageEmail(Request $request)
     {
-        $request->validate([
-            'lead_name' => 'required|string',
-            'package_id' => 'required|exists:packages,id',
-            'email' => 'required|email',
-            'media_type' => 'nullable|string|in:template,banner,docs', // select which media to send
+        // Load relationships
+        $package->load([
+            'packageType',
+            'packageCategory',
+            'difficultyType',
+            'packageItems.car',
+            'messageTemplate', // Load the message template
         ]);
 
-        $package = Package::findOrFail($request->package_id);
-        $template = MessageTemplate::where('package_id', $package->id)->first();
+        $packageItems = $package->packageItems->map(
+            fn($item) => [
+                'id' => $item->id,
+                'car' => $item->car,
+                'person_count' => $item->person_count,
+                'vehicle_name' => $item->vehicle_name,
+                'room_count' => $item->room_count,
+                'standard_price' => $item->standard_price,
+                'deluxe_price' => $item->deluxe_price,
+                'luxury_price' => $item->luxury_price,
+                'premium_price' => $item->premium_price,
+            ],
+        );
 
-        $documents = [];
-
-        switch ($request->media_type) {
-            case 'template':
-                if ($template?->email_media && Storage::disk('public')->exists($template->email_media)) {
-                    $documents[] = Storage::disk('public')->path($template->email_media); // full path for Mail attachment
-                }
-                break;
-
-            case 'banner':
-                if ($package->package_banner && Storage::disk('public')->exists($package->package_banner)) {
-                    $documents[] = Storage::disk('public')->path($package->package_banner);
-                }
-                break;
-
-            case 'docs':
-                if ($package->package_docs) {
-                    $docs = is_array($package->package_docs) ? $package->package_docs : [$package->package_docs];
-                    foreach ($docs as $doc) {
-                        if (Storage::disk('public')->exists($doc)) {
-                            $documents[] = Storage::disk('public')->path($doc);
-                        }
-                    }
-                }
-                break;
-        }
-
-        // Use template email subject/body if exists
-        $subject = $template->email_subject ?? "Package Details: {$package->package_name}";
-        $body = $template->email_body ?? "Hello, please find the details of the package: {$package->package_name}.";
-
-        // Send email
-        Mail::to($request->email)->send(new SharePackageMail($request->lead_name, $subject, $body, $documents));
+        // Prepare message template if exists
+        $messageTemplate = $package->messageTemplate
+            ? [
+                'whatsapp' => [
+                    'text' => $package->messageTemplate->whatsapp_text,
+                    'media' => $package->messageTemplate->whatsapp_media,
+                ],
+                'email' => [
+                    'subject' => $package->messageTemplate->email_subject,
+                    'body' => $package->messageTemplate->email_body,
+                    'media' => $package->messageTemplate->email_media,
+                ],
+            ]
+            : null;
 
         return response()->json([
             'success' => true,
-            'message' => 'Package email sent successfully!',
-            'media_type_used' => $request->media_type,
-            'documents_sent' => $documents,
+            'package' => [
+                'id' => $package->id,
+                'package_name' => $package->package_name,
+                'package_days' => $package->package_days,
+                'package_nights' => $package->package_nights,
+                'package_price' => $package->package_price,
+                'pickup_points' => $package->pickup_points,
+                'package_banner_url' => $package->package_banner_url,
+                'package_docs_url' => $package->package_docs_url,
+                'other_images_url' => $package->other_images_url,
+                'packageType' => $package->packageType,
+                'packageCategory' => $package->packageCategory,
+                'difficultyType' => $package->difficultyType,
+                'packageItems' => $packageItems,
+                'messageTemplate' => $messageTemplate, // include the template
+            ],
         ]);
     }
+
+   public function sendPackageEmail(Request $request)
+{
+    $request->validate([
+        'lead_name'  => 'required|string',
+        'package_id' => 'required|exists:packages,id',
+        'email'      => 'required|email',
+        'media_type' => 'nullable|string|in:template,banner,docs',
+    ]);
+
+    $package  = Package::with('messageTemplate')->findOrFail($request->package_id);
+    $template = $package->messageTemplate;
+    $disk     = Storage::disk('public');
+
+    // -------------------------------
+    // Normalize DB fields
+    // -------------------------------
+    $normalizeToArray = fn($value) => match(true) {
+        empty($value) => [],
+        is_array($value) => array_values(array_filter($value)),
+        str_contains($value, ',') => array_values(array_filter(array_map('trim', explode(',', $value)))),
+        default => [$value],
+    };
+
+    $packageDocs  = $normalizeToArray($package->package_docs);
+    $bannerArr    = $package->package_banner ? [$package->package_banner] : [];
+    $templateDocs = $template?->email_media ? [$template->email_media] : [];
+
+    // -------------------------------
+    // Select media file
+    // -------------------------------
+    $mediaFile = null;
+    switch ($request->media_type) {
+        case 'template': $mediaFile = $templateDocs[0] ?? null; break;
+        case 'banner':   $mediaFile = $bannerArr[0] ?? null; break;
+        case 'docs':     $mediaFile = $packageDocs[0] ?? null; break;
+    }
+
+    $documents    = [];
+    $documentUrls = [];
+
+    // -------------------------------
+    // Attach files & generate URLs
+    // -------------------------------
+    $allFiles = [];
+
+    if ($request->media_type === 'docs') {
+        $allFiles = $packageDocs;
+    } elseif ($request->media_type === 'banner') {
+        $allFiles = $bannerArr;
+    } elseif ($request->media_type === 'template') {
+        $allFiles = $templateDocs;
+    }
+
+    foreach ($allFiles as $file) {
+        if ($disk->exists($file)) {
+            $documents[]    = $disk->path($file);
+            $documentUrls[] = asset('storage/' . ltrim($file, '/'));
+        }
+    }
+
+    // -------------------------------
+    // Subject & Body
+    // -------------------------------
+    $subject = $template->email_subject ?? "Package Details: {$package->package_name}";
+    $body    = $template->email_body ?? "Hello, please find the package details for {$package->package_name}.";
+
+    // -------------------------------
+    // Send Email
+    // -------------------------------
+    Mail::to($request->email)->send(
+        new SharePackageMail(
+            $request->lead_name,
+            $subject,
+            $body,
+            $documents,       // local attachment paths
+            $documentUrls      // URLs for blade display
+        )
+    );
+
+    return response()->json([
+        'success'        => true,
+        'message'        => 'Package email sent successfully!',
+        'media_type'     => $request->media_type,
+        'media_used'     => $documentUrls[0] ?? null,
+        'documents_sent' => $documentUrls,
+    ]);
+}
 
 
     public function filterPackageItems(Request $request)

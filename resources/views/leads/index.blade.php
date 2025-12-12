@@ -1041,7 +1041,7 @@ async sendWhatsApp() {
     this.sending = true;
 
     try {
-        const res = await fetch("{{ url('whatsapp/send-media') }}", {
+        const res = await fetch("{{ url('whatsapp/send-media-json') }}", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",

@@ -41,7 +41,7 @@ Route::get('/deploy', function () {
 })->middleware('auth');
 Route::get('/optimize-app', function () {
     Artisan::call('optimize');
-    return back()->with('success', 'Application optimized successfully!');
+     return back()->with('success', 'Optimize  successfully!');
 });
 Route::get('/run-npm-build', function () {
     $process = new Process(['npm', 'run', 'build']);

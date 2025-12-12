@@ -11,37 +11,38 @@ class SharePackageMail extends Mailable
     use Queueable, SerializesModels;
 
     public $leadName;
-    public $packageName;
-    public $documents;
+    public $subjectText;
+    public $bodyText;
+    public $documentUrls;
+    private array $localAttachments;
 
-    /**
-     * Create a new message instance.
-     */
-    public function __construct($leadName, $packageName, $documents = [])
-    {
-        $this->leadName = $leadName;
-        $this->packageName = $packageName;
-        $this->documents = $documents; // array of URLs
+    public function __construct(
+        $leadName,
+        $subjectText,
+        $bodyText,
+        array $attachments = [],
+        array $documentUrls = []
+    ) {
+        $this->leadName        = $leadName;
+        $this->subjectText     = $subjectText;
+        $this->bodyText        = $bodyText;
+        $this->documentUrls    = $documentUrls;
+        $this->localAttachments = $attachments;
     }
 
-    /**
-     * Build the message.
-     */
     public function build()
     {
-        $mail = $this->subject("Package Details: {$this->packageName}")
+        $mail = $this->subject($this->subjectText)
                      ->view('emails.share-package')
                      ->with([
                          'leadName' => $this->leadName,
-                         'packageName' => $this->packageName,
-                         'documents' => $this->documents,
+                         'bodyText' => $this->bodyText,
+                         'documentUrls' => $this->documentUrls,
                      ]);
 
-        // Attach all documents
-        foreach ($this->documents as $doc) {
-            $path = public_path(parse_url($doc, PHP_URL_PATH));
-            if (file_exists($path)) {
-                $mail->attach($path);
+        foreach ($this->localAttachments as $file) {
+            if (is_string($file) && file_exists($file)) {
+                $mail->attach($file);
             }
         }
 
