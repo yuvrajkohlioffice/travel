@@ -99,16 +99,51 @@ class WhatsAppController extends Controller
         $request->validate([
             'recipient' => 'required|string',
             'package_id' => 'required|exists:packages,id',
+            'media_type' => 'required|string|in:template,banner,docs', // frontend must send this
         ]);
 
         $package = Package::findOrFail($request->package_id);
         $template = MessageTemplate::where('package_id', $package->id)->first();
 
+        // Message text
         $text = $template->whatsapp_text ?? "Please check the package: {$package->package_name}";
-        $media = $template->whatsapp_media ? Storage::disk('public')->url($template->whatsapp_media) : null;
 
+        // Determine media based on user selection
+        $media = null;
+
+        switch ($request->media_type) {
+            case 'template':
+                if ($template?->whatsapp_media) {
+                    $media = Storage::disk('public')->url($template->whatsapp_media);
+                }
+                break;
+
+            case 'banner':
+                if ($package->package_banner) {
+                    $media = Storage::disk('public')->url($package->package_banner);
+                }
+                break;
+
+            case 'docs':
+                if ($package->package_docs) {
+                    $docs = is_array($package->package_docs) ? $package->package_docs : [$package->package_docs];
+                    $media = Storage::disk('public')->url($docs[0] ?? null);
+                }
+                break;
+        }
+
+        if (!$media) {
+            return response()->json(
+                [
+                    'status' => 'error',
+                    'message' => "No media found for the selected type: {$request->media_type}",
+                ],
+                422,
+            );
+        }
+
+        // WhatsApp API key
         $apiKey = auth()->user()->whatsapp_api_key ?? null;
-
         if (!$apiKey) {
             return response()->json(
                 [
@@ -119,24 +154,15 @@ class WhatsAppController extends Controller
             );
         }
 
-        if (!$media) {
-            return response()->json(
-                [
-                    'status' => 'error',
-                    'message' => 'No media file found for this package',
-                ],
-                422,
-            );
-        }
+        // Prepare URL
+        $recipient = $request->recipient;
+        $textEncoded = rawurlencode($text);
+        $fileUrl = $media;
 
-        // IMPORTANT FIXES
-        $recipient = $request->recipient; // no urlencode
-        $text = rawurlencode($text);
-        // encode only text
-        $fileUrl = $media; // do NOT encode media URL
+        // Custom filename
+        $filename = preg_replace('/[^A-Za-z0-9_\-]/', '', str_replace(' ', '_', $package->package_name));
 
-        // FINAL URL (same format as your working URL 2)
-        $url = 'https://wabot.adxventure.com/api/user/send-media-message' . "?recipient={$recipient}" . "&apikey={$apiKey}" . "&text={$text}" . "&file={$fileUrl}";
+        $url = "https://wabot.adxventure.com/api/user/send-media-message?recipient={$recipient}&apikey={$apiKey}&text={$textEncoded}&file={$fileUrl}&filename={$filename}";
 
         try {
             $response = Http::timeout(20)->get($url);
@@ -145,8 +171,11 @@ class WhatsAppController extends Controller
             return response()->json([
                 'status' => $body['success'] ?? ($body['status'] ?? 'error'),
                 'message' => $body['message'] ?? 'Unknown response',
-                'raw' => $body,
+                'media_used' => $fileUrl,
+                'text_used' => $text,
+                'filename_used' => $filename,
                 'URL' => $url,
+                'media_type_used' => $request->media_type,
             ]);
         } catch (\Throwable $e) {
             return response()->json(

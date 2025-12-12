@@ -7,10 +7,12 @@ use App\Models\PackageType;
 use App\Models\PackageCategory;
 use App\Models\DifficultyType;
 use App\Models\Car;
+use App\Models\MessageTemplate;
 use App\Models\PackageItem;
 use App\Models\Hotel;
 use App\Mail\SharePackageMail;
 use App\Models\Company;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -236,42 +238,66 @@ class PackageController extends Controller
     }
 
     public function apiShow(Package $package)
-    {
-        $package->load(['packageType', 'packageCategory', 'difficultyType', 'packageItems.car']);
+{
+    // Load relationships
+    $package->load([
+        'packageType',
+        'packageCategory',
+        'difficultyType',
+        'packageItems.car',
+        'messageTemplate' // Load the message template
+    ]);
 
-        $packageItems = $package->packageItems->map(
-            fn($item) => [
-                'id' => $item->id,
-                'car' => $item->car,
-                'person_count' => $item->person_count,
-                'vehicle_name' => $item->vehicle_name,
-                'room_count' => $item->room_count,
-                'standard_price' => $item->standard_price,
-                'deluxe_price' => $item->deluxe_price,
-                'luxury_price' => $item->luxury_price,
-                'premium_price' => $item->premium_price,
-            ],
-        );
+    $packageItems = $package->packageItems->map(
+        fn($item) => [
+            'id' => $item->id,
+            'car' => $item->car,
+            'person_count' => $item->person_count,
+            'vehicle_name' => $item->vehicle_name,
+            'room_count' => $item->room_count,
+            'standard_price' => $item->standard_price,
+            'deluxe_price' => $item->deluxe_price,
+            'luxury_price' => $item->luxury_price,
+            'premium_price' => $item->premium_price,
+        ]
+    );
 
-        return response()->json([
-            'success' => true,
-            'package' => [
-                'id' => $package->id,
-                'package_name' => $package->package_name,
-                'package_days' => $package->package_days,
-                'package_nights' => $package->package_nights,
-                'package_price' => $package->package_price,
-                'pickup_points' => $package->pickup_points,
-                'package_banner_url' => $package->package_banner_url,
-                'package_docs_url' => $package->package_docs_url,
-                'other_images_url' => $package->other_images_url,
-                'packageType' => $package->packageType,
-                'packageCategory' => $package->packageCategory,
-                'difficultyType' => $package->difficultyType,
-                'packageItems' => $packageItems,
+    // Prepare message template if exists
+    $messageTemplate = $package->messageTemplate
+        ? [
+            'whatsapp' => [
+                'text' => $package->messageTemplate->whatsapp_text,
+                'media' => $package->messageTemplate->whatsapp_media,
             ],
-        ]);
-    }
+            'email' => [
+                'subject' => $package->messageTemplate->email_subject,
+                'body' => $package->messageTemplate->email_body,
+                'media' => $package->messageTemplate->email_media,
+            ]
+        ]
+        : null;
+
+    return response()->json([
+        'success' => true,
+        'package' => [
+            'id' => $package->id,
+            'package_name' => $package->package_name,
+            'package_days' => $package->package_days,
+            'package_nights' => $package->package_nights,
+            'package_price' => $package->package_price,
+            'pickup_points' => $package->pickup_points,
+            'package_banner_url' => $package->package_banner_url,
+            'package_docs_url' => $package->package_docs_url,
+            'other_images_url' => $package->other_images_url,
+            'packageType' => $package->packageType,
+            'packageCategory' => $package->packageCategory,
+            'difficultyType' => $package->difficultyType,
+            'packageItems' => $packageItems,
+            'messageTemplate' => $messageTemplate, // include the template
+        ],
+    ]);
+}
+
 
     public function sendPackageEmail(Request $request)
     {
@@ -279,22 +305,54 @@ class PackageController extends Controller
             'lead_name' => 'required|string',
             'package_id' => 'required|exists:packages,id',
             'email' => 'required|email',
-            'documents' => 'nullable|array',
+            'media_type' => 'nullable|string|in:template,banner,docs', // select which media to send
         ]);
 
         $package = Package::findOrFail($request->package_id);
+        $template = MessageTemplate::where('package_id', $package->id)->first();
 
-        $docs = $request->documents ?? $package->package_docs;
+        $documents = [];
 
-        $validDocs = array_filter($docs ?? [], fn($doc) => Storage::disk('public')->exists($doc));
+        switch ($request->media_type) {
+            case 'template':
+                if ($template?->email_media && Storage::disk('public')->exists($template->email_media)) {
+                    $documents[] = Storage::disk('public')->path($template->email_media); // full path for Mail attachment
+                }
+                break;
 
-        Mail::to($request->email)->send(new SharePackageMail($request->lead_name, $package->package_name, $validDocs));
+            case 'banner':
+                if ($package->package_banner && Storage::disk('public')->exists($package->package_banner)) {
+                    $documents[] = Storage::disk('public')->path($package->package_banner);
+                }
+                break;
+
+            case 'docs':
+                if ($package->package_docs) {
+                    $docs = is_array($package->package_docs) ? $package->package_docs : [$package->package_docs];
+                    foreach ($docs as $doc) {
+                        if (Storage::disk('public')->exists($doc)) {
+                            $documents[] = Storage::disk('public')->path($doc);
+                        }
+                    }
+                }
+                break;
+        }
+
+        // Use template email subject/body if exists
+        $subject = $template->email_subject ?? "Package Details: {$package->package_name}";
+        $body = $template->email_body ?? "Hello, please find the details of the package: {$package->package_name}.";
+
+        // Send email
+        Mail::to($request->email)->send(new SharePackageMail($request->lead_name, $subject, $body, $documents));
 
         return response()->json([
             'success' => true,
             'message' => 'Package email sent successfully!',
+            'media_type_used' => $request->media_type,
+            'documents_sent' => $documents,
         ]);
     }
+
 
     public function filterPackageItems(Request $request)
     {

@@ -216,8 +216,12 @@ class LeadController extends Controller
             ->addColumn('client_info', function ($lead) {
 
     // Mask phone
-    $maskedPhone = str_repeat('*', strlen($lead->phone_number) - 4) . substr($lead->phone_number, -4);
+        $phone = $lead->phone_number;
+$visibleDigits = 3; // last 3 digits visible
+$maxMaskLength = 5;
 
+$maskLength = min(strlen($phone) - $visibleDigits, $maxMaskLength);
+$maskedPhone = str_repeat('*', $maskLength) . substr($phone, -$visibleDigits);
     // --- Follow-up Expired Check ---
     $followup = $lead->latestFollowup;
     $followupText = '';
@@ -248,7 +252,7 @@ if ($followup) {
     $today = now()->startOfDay();
 
     $days = $createdDate->diffInDays($today);
-$shortName = Str::limit($lead->name, 11, '...');
+
     if ($days == 0) {
         $daysText = "Today";
     } elseif ($days == 1) {
@@ -258,19 +262,19 @@ $shortName = Str::limit($lead->name, 11, '...');
     }
 
     return '
-       <div class="font-xc flex items-center gap-2" title="' . htmlspecialchars($lead->name) . '">
-    ' . $shortName . '
-    | <span class="py-0.5 badge-custom rounded text-white font-bold ' . $statusClass . '">
+       <div class="font-xc flex items-center gap-2">
+    ' . ($lead->name) . '
+    
+</div>
+
+
+        <div class="text-gray-600 text-sm font-mono mb-1">
+            +' . $lead->phone_code . ' ' . $maskedPhone . '| <span class="py-0.5 badge-custom rounded text-white font-bold ' . $statusClass . '">
         ' . ($lead->lead_status ?? 'N/A') . '
     </span>
     | <button @click="openEditModal(' . $lead->id . ')" class="text-gray-600 hover:text-black">
         <i class="fa-solid fa-pen-to-square"></i>
     </button>
-</div>
-
-
-        <div class="text-gray-600 text-sm font-mono">
-            +' . $lead->phone_code . ' ' . $maskedPhone . '
         </div>
 
         <div class="text-gray-500"><span class=" text-xs text-black">Created At ' . $lead->created_at->format('d-M-y') . ' </span>

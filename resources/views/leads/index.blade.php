@@ -1,25 +1,25 @@
 @php
-    $statusColors = [
-        'Pending' => 'bg-lime-500',
-        'Approved' => 'bg-green-500',
-        'Quotation Sent' => 'bg-indigo-500',
-        'Follow-up Taken' => 'bg-purple-500',
-        'Converted' => 'bg-teal-500',
-        'Lost' => 'bg-gray-500',
-        'On Hold' => 'bg-amber-500',
-        'Rejected' => 'bg-red-500',
-    ];
+$statusColors = [
+'Pending' => 'bg-lime-500',
+'Approved' => 'bg-green-500',
+'Quotation Sent' => 'bg-indigo-500',
+'Follow-up Taken' => 'bg-purple-500',
+'Converted' => 'bg-teal-500',
+'Lost' => 'bg-gray-500',
+'On Hold' => 'bg-amber-500',
+'Rejected' => 'bg-red-500',
+];
 
-    $statusIcons = [
-        'Pending' => 'fa-hourglass-half',
-        'Approved' => 'fa-circle-check',
-        'Quotation Sent' => 'fa-file-invoice',
-        'Follow-up Taken' => 'fa-headset',
-        'Converted' => 'fa-share-from-square',
-        'Lost' => 'fa-user-xmark',
-        'On Hold' => 'fa-pause-circle',
-        'Rejected' => 'fa-circle-xmark',
-    ];
+$statusIcons = [
+'Pending' => 'fa-hourglass-half',
+'Approved' => 'fa-circle-check',
+'Quotation Sent' => 'fa-file-invoice',
+'Follow-up Taken' => 'fa-headset',
+'Converted' => 'fa-share-from-square',
+'Lost' => 'fa-user-xmark',
+'On Hold' => 'fa-pause-circle',
+'Rejected' => 'fa-circle-xmark',
+];
 @endphp
 
 <x-app-layout>
@@ -79,9 +79,9 @@
 
                 <!-- Success -->
                 @if (session('success'))
-                    <div class="p-3 bg-green-600 text-white rounded shadow-sm">
-                        {{ session('success') }}
-                    </div>
+                <div class="p-3 bg-green-600 text-white rounded shadow-sm">
+                    {{ session('success') }}
+                </div>
                 @endif
 
                 <!-- Bulk Assign bar (visible when selections exist) -->
@@ -91,24 +91,22 @@
                     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mt-4">
 
                         @foreach ($statusOthersCounts as $status => $count)
+                        <div
+                            class="flex items-center gap-3 bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border dark:border-gray-700">
+
+                            <!-- Colored Icon -->
                             <div
-                                class="flex items-center gap-3 bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border dark:border-gray-700">
-
-                                <!-- Colored Icon -->
-                                <div
-                                    class="w-10 h-10 flex items-center justify-center rounded-lg text-white {{ $statusColors[$status] ?? 'bg-gray-400' }}">
-                                    <i class="fa-solid {{ $statusIcons[$status] ?? 'fa-circle-info' }}"></i>
-                                </div>
-
-                                <!-- Text -->
-                                <div class="flex flex-col">
-                                    <span
-                                        class="text-sm text-gray-500 dark:text-gray-400 font-medium">{{ $status }}</span>
-                                    <span
-                                        class="text-xl font-semibold text-gray-800 dark:text-gray-100">{{ $count }}</span>
-                                </div>
-
+                                class="w-10 h-10 flex items-center justify-center rounded-lg text-white {{ $statusColors[$status] ?? 'bg-gray-400' }}">
+                                <i class="fa-solid {{ $statusIcons[$status] ?? 'fa-circle-info' }}"></i>
                             </div>
+
+                            <!-- Text -->
+                            <div class="flex flex-col">
+                                <span class="text-sm text-gray-500 dark:text-gray-400 font-medium">{{ $status }}</span>
+                                <span class="text-xl font-semibold text-gray-800 dark:text-gray-100">{{ $count }}</span>
+                            </div>
+
+                        </div>
                         @endforeach
 
                     </div>
@@ -129,7 +127,7 @@
                             class="w-44 rounded-lg border border-gray-300 dark:border-gray-700 px-4 py-2 text-sm dark:bg-gray-900 dark:text-white">
                             <option value="">All Assigned</option>
                             @foreach ($users as $u)
-                                <option value="{{ $u->name }}">{{ $u->name }}</option>
+                            <option value="{{ $u->name }}">{{ $u->name }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -139,8 +137,9 @@
                         <button data-value=""
                             class="status-btn px-4 py-2 rounded-lg border border-gray-300 text-sm hover:bg-blue-50 transition">All</button>
                         @foreach (['Follow-up Taken', 'Converted', 'Approved', 'Rejected'] as $s)
-                            <button data-value="{{ $s }}"
-                                class="status-btn px-4 py-2 rounded-lg border border-gray-300 text-sm hover:bg-blue-50 transition">{{ $s }}</button>
+                        <button data-value="{{ $s }}"
+                            class="status-btn px-4 py-2 rounded-lg border border-gray-300 text-sm hover:bg-blue-50 transition">{{
+                            $s }}</button>
                         @endforeach
                     </div>
 
@@ -170,7 +169,7 @@
                             class="w-48 rounded-lg border border-gray-300 px-4 py-2 text-sm bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-white">
                             <option value="">Select User</option>
                             @foreach ($users as $user)
-                                <option value="{{ $user->id }}">{{ $user->name }}</option>
+                            <option value="{{ $user->id }}">{{ $user->name }}</option>
                             @endforeach
                         </select>
 
@@ -186,13 +185,13 @@
                         <table id="Leads-table" class="min-w-full  border-gray-200 dark:border-gray-700 text-sm">
                             <thead class="bg-gray-50 dark:bg-gray-700">
                                 <tr>
-                                    <th class="w-10 p-2 text-left">
+                                    <th class="w-5 p-2 text-left">
                                         <input type="checkbox" id="selectAll"
                                             class="rounded border-gray-300 focus:ring-2 focus:ring-blue-500">
                                     </th>
 
-                                    <th class="w-30 p-2 text-left">Client Info</th>
-                                    <th class="w-40 p-2 text-left">Location</th>
+                                    <th class="w-64 p-2 text-left">Client Info</th>
+                                    <th class="w-32 p-2 text-left">Location</th>
                                     <th class="w-32 p-2 text-left">Reminder</th>
                                     <th class="w-40 p-2 text-left">Inquiry</th>
                                     <th class="w-40 p-2 text-left">Proposal</th>
@@ -326,7 +325,7 @@
                         orderable: true,
                         className: 'p-2'
                     },
-                    
+
                     {
                         data: 'location',
                         orderable: false,
@@ -932,129 +931,147 @@
                 },
 
 
+fetchPackageDocs(packageId) {
+    fetch(`/packages/${packageId}/json`)
+        .then(res => res.json())
+        .then(data => {
+            let docs = data.package.package_docs_url;
+            if (typeof docs === 'string') docs = [docs];
+            if (!Array.isArray(docs)) docs = [];
 
-                fetchPackageDocs(packageId) {
-                    fetch(`/packages/${packageId}/json`)
-                        .then(res => res.json())
-                        .then(data => {
-                            let docs = data.package.package_docs_url;
+            this.selectedPackageDocs = docs;
+            this.selectedPackagePdf = docs[0] || null;
+            this.selectedDocs = [...docs];
+            this.selectedPackageName = data.package.package_name;
 
-                            if (typeof docs === 'string') docs = [docs];
-                            if (!Array.isArray(docs)) docs = [];
+            // Load template messages if exists
+            this.whatsappMessage = data.package.messageTemplate?.whatsapp?.text || "";
+            this.whatsappMedia = data.package.messageTemplate?.whatsapp?.media || "";
+            this.emailSubject = data.package.messageTemplate?.email?.subject || "";
+            this.emailBody = data.package.messageTemplate?.email?.body || "";
+            this.emailMedia = data.package.messageTemplate?.email?.media || "";
 
-                            this.selectedPackageDocs = docs;
-                            this.selectedPackagePdf = docs[0] || null;
-                            this.selectedDocs = [...docs];
+            // Reset checkboxes
+            this.sendWhatsAppChecked = false;
+            this.sendEmailChecked = false;
+            this.selectedMediaType = 'template'; // default media type
+        });
+},
 
-                            this.selectedPackageName = data.package.package_name;
-                        });
-                },
+closeShare() {
+    this.shareOpen = false;
+    this.selectedPackageDocs = [];
+    this.selectedDocs = [];
+    this.selectedPackagePdf = null;
+    this.whatsappMessage = "";
+    this.whatsappMedia = "";
+    this.emailSubject = "";
+    this.emailBody = "";
+    this.emailMedia = "";
+    this.sendWhatsAppChecked = false;
+    this.sendEmailChecked = false;
+    this.selectedMediaType = 'template';
+},
 
-                closeShare() {
-                    this.shareOpen = false;
-                    this.selectedPackageDocs = [];
-                    this.selectedDocs = [];
-                    this.selectedPackagePdf = null;
-                },
-                sendEmail() {
-                    if (!this.leadEmail || !this.selectedPackage) {
-                        alert("Email & Package are required.");
-                        return;
-                    }
+sendSelected() {
+    if (this.sendEmailChecked) this.sendEmail();
+    if (this.sendWhatsAppChecked) this.sendWhatsApp();
+},
 
-                    const payload = {
-                        lead_name: this.shareLeadName,
-                        package_id: this.selectedPackage,
-                        email: this.leadEmail,
-                        documents: this.selectedDocs,
-                    };
+sendEmail() {
+    if (!this.leadEmail || !this.selectedPackage) {
+        alert("Email & Package are required.");
+        return;
+    }
 
-                    // Loader optional
-                    this.sending = true;
+    const payload = {
+        lead_name: this.shareLeadName,
+        package_id: this.selectedPackage,
+        email: this.leadEmail,
+        subject: this.emailSubject,
+        body: this.emailBody,
+        media_type: this.selectedMediaType, // send media type
+    };
 
-                    fetch("{{ route('leads.sendPackageEmail') }}", {
-                            method: "POST",
-                            headers: {
-                                "Content-Type": "application/json",
-                                "X-CSRF-TOKEN": '{{ csrf_token() }}'
-                            },
-                            body: JSON.stringify(payload)
-                        })
-                        .then(res => res.json())
-                        .then(response => {
-                            this.sending = false;
+    this.sending = true;
 
-                            if (response.success) {
-                                alert("📧 Package Email Sent Successfully!");
-                                this.closeShare();
-                            } else {
-                                alert("Failed to send email.");
-                            }
-                        })
-                        .catch(err => {
-                            this.sending = false;
-                            console.error(err);
-                            alert("Error sending email.");
-                        });
-                },
-                async sendWhatsApp() {
-                    // Basic validations
-                    if (!this.leadPhone || !this.selectedPackage) {
-                        alert("Phone number & Package are required.");
-                        return;
-                    }
+    fetch("{{ route('leads.sendPackageEmail') }}", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-TOKEN": '{{ csrf_token() }}'
+        },
+        body: JSON.stringify(payload)
+    })
+    .then(res => res.json())
+    .then(response => {
+        this.sending = false;
+        if (response.success) {
+            alert("📧 Package Email Sent Successfully!");
+            this.closeShare();
+        } else {
+            alert("Failed to send email.");
+        }
+    })
+    .catch(err => {
+        this.sending = false;
+        console.error(err);
+        alert("Error sending email.");
+    });
+},
 
-                    if (!this.selectedPackagePdf) {
-                        alert("PDF URL is required to send WhatsApp message.");
-                        return;
-                    }
+async sendWhatsApp() {
+    if (!this.leadPhone || !this.selectedPackage) {
+        alert("Phone number & Package are required.");
+        return;
+    }
 
-                    // Construct payload
-                    const payload = {
-                        recipient: this.leadPhone,
-                        text: this.whatsappMessage?.trim() || "Please check the attached package details.",
-                        mediaUrl: this.selectedPackagePdf,
-                    };
+    if (!this.whatsappMessage && !this.whatsappMedia && !this.selectedPackagePdf) {
+        alert("WhatsApp message or media is required.");
+        return;
+    }
 
-                    this.sending = true;
+    const payload = {
+        recipient: this.leadPhone,
+        text: this.whatsappMessage,
+        package_id: this.selectedPackage,
+        media_type: this.selectedMediaType // send selected media type
+    };
 
-                    try {
-                        const res = await fetch("{{ url('whatsapp/send-media') }}", {
-                            method: "POST",
-                            headers: {
-                                "Content-Type": "application/json",
-                                "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content
-                            },
-                            credentials: "same-origin",
-                            body: JSON.stringify(payload),
-                        });
+    this.sending = true;
 
-                        let data;
-                        try {
-                            data = await res.json();
-                        } catch {
-                            throw new Error("Invalid JSON response from server");
-                        }
+    try {
+        const res = await fetch("{{ url('whatsapp/send-media') }}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content
+            },
+            credentials: "same-origin",
+            body: JSON.stringify(payload),
+        });
 
-                        // Success condition: check multiple possible responses
-                        const successMessage = data.message?.toLowerCase() ?? "";
-                        if (data.success || data.status === "success" || successMessage.includes("sent successfully")) {
-                            alert("📨 WhatsApp sent successfully!");
-                            this.closeShare();
-                            return;
-                        }
+        let data = await res.json();
 
-                        // If failed
-                        console.error("WhatsApp API Error:", data);
-                        alert(data.error ?? data.message ?? "Failed to send WhatsApp message.");
+        const successMessage = data.message?.toLowerCase() ?? "";
+        if (data.success || data.status === "success" || successMessage.includes("sent successfully")) {
+            alert("📨 WhatsApp sent successfully!");
+            this.closeShare();
+            return;
+        }
 
-                    } catch (err) {
-                        console.error("WhatsApp Error:", err);
-                        alert("Error sending WhatsApp. Please check logs.");
-                    } finally {
-                        this.sending = false;
-                    }
-                },
+        console.error("WhatsApp API Error:", data);
+        alert(data.error ?? data.message ?? "Failed to send WhatsApp message.");
+
+    } catch (err) {
+        console.error("WhatsApp Error:", err);
+        alert("Error sending WhatsApp. Please check logs.");
+    } finally {
+        this.sending = false;
+    }
+},
+
+
 
 
 
