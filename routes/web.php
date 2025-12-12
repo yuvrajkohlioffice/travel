@@ -10,49 +10,66 @@ use Symfony\Component\Process\Process;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Illuminate\Support\Facades\Artisan;
 
-Route::get('/link-storage', function () {
-    Artisan::call('storage:link');
 
-    return back()->with('success', 'Storage linked successfully!');
+
+Route::get('/link-storage', function () {
+    
+        Artisan::call('storage:link');
+        $output = Artisan::output();
+        return back()->with('success', "Storage linked successfully! \n$output");
+    
 });
+
 Route::get('/deploy', function () {
-    try {
-        // 1. Run npm build
+    $messages = [];
+
+    
         $npm = new Process(['npm', 'run', 'build']);
         $npm->run();
 
         if (!$npm->isSuccessful()) {
             throw new ProcessFailedException($npm);
         }
+        $messages[] = "NPM build completed successfully.";
 
         // 2. Run optimize
         Artisan::call('optimize');
+        $messages[] = "Artisan optimize executed successfully.";
 
         // 3. Run migrate
         Artisan::call('migrate', ['--force' => true]);
+        $messages[] = "Database migrations executed successfully.";
 
         // 4. Run storage link
         Artisan::call('storage:link');
+        $messages[] = "Storage linked successfully.";
 
-        return back()->with('success', 'Deployment commands executed successfully!');
-    } catch (\Exception $e) {
-        return back()->with('error', 'Error: ' . $e->getMessage());
-    }
+        // Join all messages into one flash message
+        return back()->with('success', implode(' | ', $messages));
+    
 })->middleware('auth');
+
 Route::get('/optimize-app', function () {
-    Artisan::call('optimize');
-     return back()->with('success', 'Optimize  successfully!');
+   
+        Artisan::call('optimize');
+        $output = Artisan::output();
+        return back()->with('success', "App optimized successfully! \n$output");
+   
 });
+
 Route::get('/run-npm-build', function () {
-    $process = new Process(['npm', 'run', 'build']);
-    $process->run();
+ 
+        $process = new Process(['npm', 'run', 'build']);
+        $process->run();
 
-    if (!$process->isSuccessful()) {
-        return back()->with('error', $process->getErrorOutput());
-    }
+        if (!$process->isSuccessful()) {
+            throw new ProcessFailedException($process);
+        }
 
-    return back()->with('success', 'NPM Build completed!');
+        return back()->with('success', 'NPM Build completed successfully! Output: ' . $process->getOutput());
+   
 });
+
 
 /*
 |--------------------------------------------------------------------------
