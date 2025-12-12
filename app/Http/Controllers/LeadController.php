@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 use App\Imports\LeadsImport;
 use Maatwebsite\Excel\Facades\Excel;
 use Yajra\DataTables\DataTables;
-
+use Illuminate\Support\Str;
 class LeadController extends Controller
 {
     public function showJson(Lead $lead)
@@ -93,6 +93,27 @@ class LeadController extends Controller
             'Approved' => (clone $baseQuery)->where('status', 'Approved')->count(),
             'Rejected' => (clone $baseQuery)->where('status', 'Rejected')->count(),
         ];
+        $statusList = [
+            'Pending',
+            'Approved',
+            'Quotation Sent',
+            'Follow-up Taken',
+            'Converted',
+            'Lost',
+            'On Hold',
+            'Rejected',
+        ];
+
+        $statusOthersCounts = [];
+
+        // Add ALL first
+        $statusOthersCounts['All'] = (clone $baseQuery)->count();
+
+        // Add other statuses
+        foreach ($statusList as $status) {
+            $statusOthersCounts[$status] = (clone $baseQuery)->where('status', $status)->count();
+        }
+
 
         // Main query with relationships and filters
         $leadsQuery = (clone $baseQuery)
@@ -123,7 +144,7 @@ class LeadController extends Controller
         // Pagination
         $leads = $leadsQuery->paginate(50)->withQueryString();
 
-        return view('leads.index', compact('leads', 'packages', 'users', 'filters', 'statusCounts', 'timeCounts'));
+        return view('leads.index', compact('leads', 'packages', 'users', 'filters', 'statusCounts', 'statusOthersCounts', 'timeCounts'));
     }
 
     public function getLeadsData(Request $request)
@@ -193,62 +214,80 @@ class LeadController extends Controller
             ->addIndexColumn()
             ->addColumn('checkbox', fn($lead) => '<input type="checkbox" value="' . $lead->id . '" @change="toggleLead($event)" class="h-4 w-4 text-gray-700 border-gray-400">')
             ->addColumn('client_info', function ($lead) {
-                $maskedPhone = str_repeat('*', strlen($lead->phone_number) - 4) . substr($lead->phone_number, -4);
-                $statusClass =
-                    [
-                        'Hot' => 'bg-red-500',
-                        'Warm' => 'bg-yellow-400',
-                        'Cold' => 'bg-gray-400',
-                        'Interested' => 'bg-green-500',
-                    ][$lead->lead_status] ?? 'bg-gray-300 text-black font-extrabold';
 
-                return '
-            <div class="font-medium flex items-center gap-2">
-                ' .
-                    $lead->name .
-                    '
-                <span class="py-0.5 rounded text-white font-bold ' .
-                    $statusClass .
-                    '" style="    --bs-badge-padding-x: 0.65em;
-    --bs-badge-padding-y: 0.35em;
-    --bs-badge-font-size: 0.75em;
-    --bs-badge-font-weight: 700;
-    --bs-badge-color: #fff;
-    --bs-badge-border-radius: 0.375rem;
-    display: inline-block;
-    padding: var(--bs-badge-padding-y) var(--bs-badge-padding-x);
-    font-size: var(--bs-badge-font-size);
-    font-weight: var(--bs-badge-font-weight);
-    line-height: 1;
-    color: var(--bs-badge-color);
-    text-align: center;
-    white-space: nowrap;
-    vertical-align: baseline;
-    border-radius: var(--bs-badge-border-radius);">
-                    ' .
-                    ($lead->lead_status ?? 'N/A') .
-                    '
-                </span>
-                <button @click="openEditModal(' .
-                    $lead->id .
-                    ')" class="text-gray-600 hover:text-black">
-                    <i class="fa-solid fa-pen-to-square"></i>
-                </button>
-            </div>
-            
-            <div class="text-gray-600 text-sm font-mono">
-                +' .
-                    $lead->phone_code .
-                    ' ' .
-                    $maskedPhone .
-                    '
-            </div>
-            <div class="text-gray-500 text-xs">
-                ' .
-                    $lead->created_at->format('d-M-y') .
-                    '
-            </div>';
-            })
+    // Mask phone
+    $maskedPhone = str_repeat('*', strlen($lead->phone_number) - 4) . substr($lead->phone_number, -4);
+
+    // --- Follow-up Expired Check ---
+    $followup = $lead->latestFollowup;
+    $followupText = '';
+
+
+if ($followup) {
+    $today = now()->startOfDay();
+    $nextDate = \Carbon\Carbon::parse($followup->next_followup_date)->startOfDay();
+
+    // Only show if expired
+    if ($nextDate->isPast() && !$nextDate->isToday()) {
+        $daysLate = $nextDate->diffInDays($today);
+        $followupText = '<span class="text-white font-bold">Last followup expired: '.$daysLate.' days ago</span>';
+    }
+}
+
+
+    // Lead status badge color
+    $statusClass = [
+        'Hot' => 'bg-red-500',
+        'Warm' => 'bg-yellow-400',
+        'Cold' => 'bg-gray-400',
+        'Interested' => 'bg-green-500',
+    ][$lead->lead_status] ?? 'bg-gray-300 text-black font-extrabold';
+
+    // Days difference for created_at
+    $createdDate = \Carbon\Carbon::parse($lead->created_at)->startOfDay();
+    $today = now()->startOfDay();
+
+    $days = $createdDate->diffInDays($today);
+$shortName = Str::limit($lead->name, 11, '...');
+    if ($days == 0) {
+        $daysText = "Today";
+    } elseif ($days == 1) {
+        $daysText = "1 day ago";
+    } else {
+        $daysText = $days . " days ago";
+    }
+
+    return '
+       <div class="font-xc flex items-center gap-2" title="' . htmlspecialchars($lead->name) . '">
+    ' . $shortName . '
+    | <span class="py-0.5 badge-custom rounded text-white font-bold ' . $statusClass . '">
+        ' . ($lead->lead_status ?? 'N/A') . '
+    </span>
+    | <button @click="openEditModal(' . $lead->id . ')" class="text-gray-600 hover:text-black">
+        <i class="fa-solid fa-pen-to-square"></i>
+    </button>
+</div>
+
+
+        <div class="text-gray-600 text-sm font-mono">
+            +' . $lead->phone_code . ' ' . $maskedPhone . '
+        </div>
+
+        <div class="text-gray-500"><span class=" text-xs text-black">Created At ' . $lead->created_at->format('d-M-y') . ' </span>
+             |  
+            <span class="bg-gray-500 text-black font-extrabold badge-custom"
+                >
+                ' . $daysText . '
+            </span>
+        </div>
+
+        ' . ($followupText ? '
+        <div class="text-xs font-semibold mt-1 badge-custom bg-red-600">
+            <i class="fa-solid fa-clock-rotate-left mr-1"></i> ' . $followupText . '
+        </div>' : '') . '
+    ';
+})
+
             ->addColumn('location', fn($lead) => $lead->country . '<br>' . $lead->district . '<br>' . $lead->city)
             ->addColumn('reminder', function ($lead) {
                 $last = $lead->lastFollowup ? '<div class="text-xs text-gray-600 mt-2"><strong>Last:</strong> ' . $lead->lastFollowup->reason . '<br><strong>By:</strong> ' . $lead->lastFollowup->user->name . '</div>' : '';

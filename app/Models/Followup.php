@@ -6,21 +6,13 @@ use Illuminate\Database\Eloquent\Model;
 
 class Followup extends Model
 {
-    protected $fillable = [
-        'lead_id',
-        'user_id',
-        'reason',
-        'remark',
-        'next_followup_date',
-        'next_followup_time',
-        'last_followup_date',
-    ];
+    protected $fillable = ['lead_id', 'user_id', 'reason', 'remark', 'next_followup_date', 'next_followup_time', 'last_followup_date'];
     protected $dates = ['next_followup_date', 'created_at', 'updated_at'];
 
-protected $casts = [
-    'next_followup_date' => 'datetime',
-    'reminder_sent' => 'boolean',
-];
+    protected $casts = [
+        'next_followup_date' => 'datetime',
+        'reminder_sent' => 'boolean',
+    ];
 
     public function lead()
     {

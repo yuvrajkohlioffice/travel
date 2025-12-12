@@ -1,8 +1,32 @@
+@php
+    $statusColors = [
+        'Pending' => 'bg-lime-500',
+        'Approved' => 'bg-green-500',
+        'Quotation Sent' => 'bg-indigo-500',
+        'Follow-up Taken' => 'bg-purple-500',
+        'Converted' => 'bg-teal-500',
+        'Lost' => 'bg-gray-500',
+        'On Hold' => 'bg-amber-500',
+        'Rejected' => 'bg-red-500',
+    ];
+
+    $statusIcons = [
+        'Pending' => 'fa-hourglass-half',
+        'Approved' => 'fa-circle-check',
+        'Quotation Sent' => 'fa-file-invoice',
+        'Follow-up Taken' => 'fa-headset',
+        'Converted' => 'fa-share-from-square',
+        'Lost' => 'fa-user-xmark',
+        'On Hold' => 'fa-pause-circle',
+        'Rejected' => 'fa-circle-xmark',
+    ];
+@endphp
+
 <x-app-layout>
     <div x-data="leadModals()" x-cloak class="min-h-screen ">
-    
-    <div class="ml-64 min-h-screen p-6 bg-gray-100 dark:bg-gray-900">
-        <div class="w-full">
+
+        <div class="ml-64 min-h-screen p-6 bg-gray-100 dark:bg-gray-900">
+            <div class="w-full">
 
                 <!-- Header -->
                 <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -12,35 +36,41 @@
                         </div>
                         <div>
                             <h1 class="text-2xl font-semibold text-gray-800 dark:text-gray-100">Leads</h1>
-                            <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Manage leads, follow-ups, and assignments</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Manage leads, follow-ups, and
+                                assignments</p>
                         </div>
                     </div>
 
                     <div class="flex flex-wrap items-center gap-3">
                         {{-- Import template link --}}
                         <a href="/Example-Import-Leads.xlsx"
-                           class="inline-flex items-center gap-2 px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-200 hover:shadow transition">
+                            class="inline-flex items-center gap-2 px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-200 hover:shadow transition">
                             <i class="fa-regular fa-file-excel"></i>
                             Import Template
                         </a>
 
                         {{-- Import form --}}
-                        <form action="{{ route('leads.import') }}" method="POST" enctype="multipart/form-data" class="flex items-center gap-2">
+                        <form action="{{ route('leads.import') }}" method="POST" enctype="multipart/form-data"
+                            class="flex items-center gap-2">
                             @csrf
-                            <label class="relative overflow-hidden rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm px-3 py-2 cursor-pointer hover:shadow transition">
+                            <label
+                                class="relative overflow-hidden rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm px-3 py-2 cursor-pointer hover:shadow transition">
                                 <span class="flex items-center gap-2 text-gray-600 dark:text-gray-300">
                                     <i class="fa-solid fa-upload"></i>
                                     <span>Upload</span>
                                 </span>
-                                <input type="file" name="file" accept=".xlsx,.csv" required class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                                <input type="file" name="file" accept=".xlsx,.csv" required
+                                    class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
                             </label>
-                            <button type="submit" class="px-4 py-2 bg-gray-800 text-white rounded-lg text-sm hover:opacity-95 transition">
+                            <button type="submit"
+                                class="px-4 py-2 bg-gray-800 text-white rounded-lg text-sm hover:opacity-95 transition">
                                 Import
                             </button>
                         </form>
 
                         {{-- Add lead --}}
-                        <a href="{{ route('leads.create') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 transition">
+                        <a href="{{ route('leads.create') }}"
+                            class="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 transition">
                             <i class="fa-solid fa-plus"></i>
                             Add Lead
                         </a>
@@ -55,26 +85,35 @@
                 @endif
 
                 <!-- Bulk Assign bar (visible when selections exist) -->
-                <div id="bulkBar"
-                    class="hidden mb-3 flex flex-wrap items-center gap-3 bg-white dark:bg-gray-800 p-4 rounded shadow-sm border">
-                    <span class="font-medium text-gray-700 dark:text-gray-300">Assign Selected Leads:</span>
 
-                    <select id="bulkAssignUser"
-                        class="w-48 rounded-lg border border-gray-300 px-4 py-2 text-sm bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-white">
-                        <option value="">Select User</option>
-                        @foreach ($users as $user)
-                            <option value="{{ $user->id }}">{{ $user->name }}</option>
+
+                <div class="bg-white dark:bg-gray-800 rounded-lg  p-4 shadow-sm overflow-x-auto">
+                    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mt-4">
+
+                        @foreach ($statusOthersCounts as $status => $count)
+                            <div
+                                class="flex items-center gap-3 bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border dark:border-gray-700">
+
+                                <!-- Colored Icon -->
+                                <div
+                                    class="w-10 h-10 flex items-center justify-center rounded-lg text-white {{ $statusColors[$status] ?? 'bg-gray-400' }}">
+                                    <i class="fa-solid {{ $statusIcons[$status] ?? 'fa-circle-info' }}"></i>
+                                </div>
+
+                                <!-- Text -->
+                                <div class="flex flex-col">
+                                    <span
+                                        class="text-sm text-gray-500 dark:text-gray-400 font-medium">{{ $status }}</span>
+                                    <span
+                                        class="text-xl font-semibold text-gray-800 dark:text-gray-100">{{ $count }}</span>
+                                </div>
+
+                            </div>
                         @endforeach
-                    </select>
 
-                    <button id="bulkAssignBtn" disabled
-                        class="px-3 py-1 bg-gray-800 text-white rounded hover:bg-black transition text-sm disabled:opacity-50">
-                        <i class="fa-solid fa-user-check mr-2"></i> Assign
-                    </button>
+                    </div>
 
-                    <span id="selectedCount" class="text-sm text-gray-500 dark:text-gray-400">0 selected</span>
                 </div>
-
                 <!-- Filters & Table -->
                 <div class="bg-white dark:bg-gray-800 rounded-lg  p-4 shadow-sm overflow-x-auto">
                     <!-- Filters -->
@@ -123,7 +162,25 @@
                             class="date-range-btn px-4 py-2 rounded-lg border border-gray-300 text-sm hover:bg-blue-50 transition">Yesterday
                             <span id="count-yesterday" class="ml-2">0</span></button>
                     </div>
+                    <div id="bulkBar"
+                        class="hidden mb-3 flex flex-wrap items-center gap-3 bg-white dark:bg-gray-800 p-4 rounded shadow-sm border">
+                        <span class="font-medium text-gray-700 dark:text-gray-300">Assign Selected Leads:</span>
 
+                        <select id="bulkAssignUser"
+                            class="w-48 rounded-lg border border-gray-300 px-4 py-2 text-sm bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-white">
+                            <option value="">Select User</option>
+                            @foreach ($users as $user)
+                                <option value="{{ $user->id }}">{{ $user->name }}</option>
+                            @endforeach
+                        </select>
+
+                        <button id="bulkAssignBtn" disabled
+                            class="px-3 py-1 bg-gray-800 text-white rounded hover:bg-black transition text-sm disabled:opacity-50">
+                            <i class="fa-solid fa-user-check mr-2"></i> Assign
+                        </button>
+
+                        <span id="selectedCount" class="text-sm text-gray-500 dark:text-gray-400">0 selected</span>
+                    </div>
                     <!-- Table -->
                     <div class="overflow-x-auto">
                         <table id="Leads-table" class="min-w-full  border-gray-200 dark:border-gray-700 text-sm">
@@ -256,19 +313,20 @@
                 columns: [{
                         // render checkbox using ID
                         data: 'id',
-                        orderable: false,
-                        searchable: false,
+                        orderable: true,
+                        searchable: true,
                         className: 'p-2',
                         render: function(data, type, row, meta) {
                             return `<input type="checkbox" class="row-checkbox rounded border-gray-300 focus:ring-2 focus:ring-blue-500" data-id="${data}">`;
                         }
                     },
-                    
+
                     {
                         data: 'client_info',
-                        orderable: false,
+                        orderable: true,
                         className: 'p-2'
                     },
+                    
                     {
                         data: 'location',
                         orderable: false,
@@ -324,7 +382,7 @@
                 ],
                 pageLength: 50,
                 order: [
-                    [1, 'desc']
+                    [3, 'asc']
                 ],
                 autoWidth: false,
                 drawCallback: function() {
