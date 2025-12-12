@@ -10,7 +10,7 @@
                 </h1>
 
                 <a href="{{ route('companies.index') }}"
-                   class="flex items-center text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white transition">
+                    class="flex items-center text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white transition">
                     <i class="fas fa-arrow-left mr-2"></i>
                     Back
                 </a>
@@ -18,10 +18,8 @@
 
             {{-- Form Card --}}
             <div class="bg-white dark:bg-gray-800 shadow-md rounded-2xl p-6 transition hover:shadow-lg">
-                <form action="{{ route('companies.store') }}"
-                      method="POST"
-                      enctype="multipart/form-data"
-                      class="space-y-8">
+                <form action="{{ route('companies.store') }}" method="POST" enctype="multipart/form-data"
+                    class="space-y-8">
                     @csrf
 
                     {{-- GRID START --}}
@@ -30,46 +28,27 @@
                         {{-- Company Name --}}
                         <div>
                             <label class="form-label">Company Name</label>
-                            <input 
-                                type="text" 
-                                name="company_name"
-                                class="custom-inputs"
-                                placeholder="Enter company name"
-                                required
-                            >
+                            <input type="text" name="company_name" class="custom-inputs"
+                                placeholder="Enter company name" required>
                         </div>
 
                         {{-- Team Name --}}
                         <div>
                             <label class="form-label">Team Name</label>
-                            <input 
-                                type="text" 
-                                name="team_name"
-                                class="custom-inputs"
-                                placeholder="Enter team name"
-                            >
+                            <input type="text" name="team_name" class="custom-inputs" placeholder="Enter team name">
                         </div>
 
                         {{-- Email --}}
                         <div>
                             <label class="form-label">Email</label>
-                            <input 
-                                type="email" 
-                                name="email"
-                                class="custom-inputs"
-                                placeholder="Enter company email"
-                            >
+                            <input type="email" name="email" class="custom-inputs"
+                                placeholder="Enter company email">
                         </div>
 
                         {{-- Phone --}}
                         <div>
                             <label class="form-label">Phone Number</label>
-                            <input 
-                                type="text" 
-                                name="phone"
-                                class="custom-inputs"
-                                placeholder="Enter phone number"
-                            >
+                            <input type="text" name="phone" class="custom-inputs" placeholder="Enter phone number">
                         </div>
 
                         {{-- Owner --}}
@@ -77,7 +56,7 @@
                             <label class="form-label">Select Owner</label>
                             <select name="owner_id" class="custom-inputs" required>
                                 <option value="">Choose Owner</option>
-                                @foreach($users as $user)
+                                @foreach ($users as $user)
                                     <option value="{{ $user->id }}">{{ $user->name }}</option>
                                 @endforeach
                             </select>
@@ -86,53 +65,36 @@
                         {{-- WhatsApp API Key --}}
                         <div>
                             <label class="form-label">WhatsApp API Key</label>
-                            <input
-                                type="text"
-                                name="whatsapp_api_key"
-                                class="custom-inputs"
-                                placeholder="Enter API key"
-                            >
+                            <input type="text" name="whatsapp_api_key" class="custom-inputs"
+                                placeholder="Enter API key">
                         </div>
 
                         {{-- Logo Upload --}}
                         <div class="md:col-span-2">
                             <label class="form-label">Company Logo (400 x 160) Size</label>
-                            <input 
-                                type="file" 
-                                name="logo"
-                                accept="image/*"
-                                class="custom-inputs"
-                                onchange="previewLogo(event)"
-                            >
-                            <img id="logoPreview" class="mt-3 w-32 h-32 rounded-xl object-cover hidden border" />
+                            <input type="file" name="logo" onchange="previewLogo(event)" class="custom-inputs"
+                                accept="image/*">
+
+                            <img id="logoPreview" class="mt-3 rounded-xl object-cover hidden border" />
                         </div>
 
                         {{-- Scanner Image --}}
                         <div class="md:col-span-2">
                             <label class="form-label">QR Image (201 x 199) Size</label>
-                            <input 
-                                type="file" 
-                                name="scanner_image"
-                                accept="image/*"
-                                class="custom-inputs"
-                                onchange="previewScanner(event)"
-                            >
+                            <input type="file" name="scanner_image" accept="image/*" class="custom-inputs"
+                                onchange="previewScanner(event)">
 
-                            <img id="scannerPreview" class="mt-3 w-32 h-32 rounded-xl object-cover hidden border" />
+                            <img id="scannerPreview" class="mt-3 rounded-xl object-cover hidden border" />
 
                             <label class="form-label mt-4">UPI ID</label>
-                            <input
-                                type="text"
-                                name="scanner_upi_id"
-                                class="custom-inputs"
-                                placeholder="Enter UPI ID"
-                            >
+                            <input type="text" name="scanner_upi_id" class="custom-inputs"
+                                placeholder="Enter UPI ID">
                         </div>
 
                     </div>
                     {{-- GRID END --}}
 
-                    {{-- Bank Details --}}        
+                    {{-- Bank Details --}}
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
                         <div>
                             <label class="form-label">Bank Name</label>
@@ -157,10 +119,8 @@
 
                     {{-- Submit --}}
                     <div class="pt-4">
-                        <button 
-                            type="submit"
-                            class="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-xl shadow-sm hover:shadow-md transition"
-                        >
+                        <button type="submit"
+                            class="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-xl shadow-sm hover:shadow-md transition">
                             <i class="fas fa-save"></i>
                             Save Company
                         </button>
@@ -174,18 +134,41 @@
 
     {{-- Preview JS --}}
     <script>
+        function validateAndPreview(event, previewId, requiredWidth, requiredHeight) {
+            const file = event.target.files[0];
+            const img = document.getElementById(previewId);
+
+            if (!file) return;
+
+            const image = new Image();
+            image.onload = function() {
+
+                if (this.width !== requiredWidth || this.height !== requiredHeight) {
+                    alert(
+                        `Invalid Image Size!\nRequired: ${requiredWidth} x ${requiredHeight}\nUploaded: ${this.width} x ${this.height}`
+                        );
+                    event.target.value = ""; // reset file
+                    img.classList.add('hidden');
+                    img.src = "";
+                    return;
+                }
+
+                img.src = URL.createObjectURL(file);
+                img.classList.remove('hidden');
+            };
+
+            image.src = URL.createObjectURL(file);
+        }
+
         function previewLogo(event) {
-            let img = document.getElementById('logoPreview');
-            img.src = URL.createObjectURL(event.target.files[0]);
-            img.classList.remove('hidden');
+            validateAndPreview(event, 'logoPreview', 400, 160);
         }
 
         function previewScanner(event) {
-            let img = document.getElementById('scannerPreview');
-            img.src = URL.createObjectURL(event.target.files[0]);
-            img.classList.remove('hidden');
+            validateAndPreview(event, 'scannerPreview', 201, 199);
         }
     </script>
+
 
 
 </x-app-layout>

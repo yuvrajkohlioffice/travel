@@ -137,29 +137,38 @@
                     <!-- Status buttons -->
                     <div class="flex flex-wrap gap-2 mb-4">
                         <button data-value=""
-                            class="status-btn px-4 py-2 rounded-lg border border-gray-300 text-sm hover:bg-blue-50 transition">All</button>
+                            class="status-btn px-4 py-2 rounded-lg border border-gray-300 text-sm hover:bg-blue-300 transition">All</button>
                         @foreach (['Follow-up Taken', 'Converted', 'Approved', 'Rejected'] as $s)
                             <button data-value="{{ $s }}"
-                                class="status-btn px-4 py-2 rounded-lg border border-gray-300 text-sm hover:bg-blue-50 transition">{{ $s }}</button>
+                                class="status-btn px-4 py-2 rounded-lg border border-gray-300 text-sm hover:bg-blue-300 transition">{{ $s }}</button>
+                        @endforeach
+
+
+                    </div>
+                    <div class="flex flex-wrap gap-2 mb-4">
+                        <button data-value=""
+                            class="status-btn-lead px-4 py-2 rounded-lg border border-gray-300 text-sm hover:bg-blue-300 transition">All</button>
+                        @foreach (['Hot', 'Cold', 'Warm'] as $s)
+                            <button data-value="{{ $s }}"
+                                class="status-btn-lead px-4 py-2 rounded-lg border border-gray-300 text-sm hover:bg-blue-300 transition">{{ $s }}</button>
                         @endforeach
                     </div>
-
                     <!-- Date range -->
                     <div class="flex flex-wrap gap-2 mb-4">
                         <button data-value="all"
-                            class="date-range-btn px-4 py-2 rounded-lg border border-gray-300 text-sm hover:bg-blue-50 transition">All
+                            class="date-range-btn px-4 py-2 rounded-lg border border-gray-300 text-sm hover:bg-blue-300 transition">All
                             <span id="count-all" class="ml-2">0</span></button>
                         <button data-value="today"
-                            class="date-range-btn px-4 py-2 rounded-lg border border-gray-300 text-sm hover:bg-blue-50 transition">Today
+                            class="date-range-btn px-4 py-2 rounded-lg border border-gray-300 text-sm hover:bg-blue-300 transition">Today
                             <span id="count-today" class="ml-2">0</span></button>
                         <button data-value="week"
-                            class="date-range-btn px-4 py-2 rounded-lg border border-gray-300 text-sm hover:bg-blue-50 transition">This
+                            class="date-range-btn px-4 py-2 rounded-lg border border-gray-300 text-sm hover:bg-blue-300 transition">This
                             Week <span id="count-week" class="ml-2">0</span></button>
                         <button data-value="month"
-                            class="date-range-btn px-4 py-2 rounded-lg border border-gray-300 text-sm hover:bg-blue-50 transition">This
+                            class="date-range-btn px-4 py-2 rounded-lg border border-gray-300 text-sm hover:bg-blue-300 transition">This
                             Month <span id="count-month" class="ml-2">0</span></button>
                         <button data-value="yesterday"
-                            class="date-range-btn px-4 py-2 rounded-lg border border-gray-300 text-sm hover:bg-blue-50 transition">Yesterday
+                            class="date-range-btn px-4 py-2 rounded-lg border border-gray-300 text-sm hover:bg-blue-300 transition">Yesterday
                             <span id="count-yesterday" class="ml-2">0</span></button>
                     </div>
                     <div id="bulkBar"
@@ -224,6 +233,7 @@
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
             let selectedStatus = '';
+            let selectedLeadStatus = '';
             let selectedDateRange = 'all';
             let datatable = null;
             let debounceTimer = null;
@@ -305,6 +315,7 @@
                         d.client_name = $('#filter-client').val();
                         d.location = $('#filter-location').val();
                         d.status = selectedStatus;
+                        d.lead_status = selectedLeadStatus;
                         d.assigned = $('#filter-assigned').val();
                         d.date_range = selectedDateRange;
                         d.search_query = $('.dataTables_filter input').val();
@@ -407,6 +418,17 @@
                     datatable.page(0).draw(false);
                 });
             });
+
+            document.querySelectorAll('.status-btn-lead').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.status-btn-lead').forEach(b => b.classList.remove(
+                        'bg-blue-500', 'text-white'));
+                    this.classList.add('bg-blue-500', 'text-white');
+                    selectedLeadStatus = this.dataset.value || ''; // <-- correct variable
+                    datatable.page(0).draw(false);
+                });
+            });
+
             document.querySelectorAll('.date-range-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
                     document.querySelectorAll('.date-range-btn').forEach(b => b.classList.remove(
@@ -495,16 +517,21 @@
 
             // ---------- Keep counts updated ----------
             function loadCounts() {
-                fetch("{{ route('leads.counts') }}?id=" + encodeURIComponent($('#filter-id').val() || '') +
-                        "&client_name=" + encodeURIComponent($('#filter-client').val() || '') +
-                        "&location=" + encodeURIComponent($('#filter-location').val() || '') +
-                        "&assigned=" + encodeURIComponent($('#filter-assigned').val() || '') +
-                        "&status=" + encodeURIComponent(selectedStatus || '') +
-                        "&date_range=" + encodeURIComponent(selectedDateRange || ''), {
-                            headers: {
-                                'X-Requested-With': 'XMLHttpRequest'
-                            }
-                        })
+                const params = new URLSearchParams({
+                    id: $('#filter-id').val() || '',
+                    client_name: $('#filter-client').val() || '',
+                    location: $('#filter-location').val() || '',
+                    assigned: $('#filter-assigned').val() || '',
+                    status: selectedStatus || '',
+                    lead_status: selectedLeadStatus || '', // <-- FIXED
+                    date_range: selectedDateRange || ''
+                });
+
+                fetch("{{ route('leads.counts') }}?" + params.toString(), {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
                     .then(r => r.json())
                     .then(data => {
                         document.getElementById('count-today').textContent = data.today ?? 0;
@@ -515,6 +542,7 @@
                     })
                     .catch(e => console.error('Counts error', e));
             }
+
 
             // initial load
             refreshBulkUI();

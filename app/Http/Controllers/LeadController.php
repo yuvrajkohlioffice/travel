@@ -93,16 +93,7 @@ class LeadController extends Controller
             'Approved' => (clone $baseQuery)->where('status', 'Approved')->count(),
             'Rejected' => (clone $baseQuery)->where('status', 'Rejected')->count(),
         ];
-        $statusList = [
-            'Pending',
-            'Approved',
-            'Quotation Sent',
-            'Follow-up Taken',
-            'Converted',
-            'Lost',
-            'On Hold',
-            'Rejected',
-        ];
+        $statusList = ['Pending', 'Approved', 'Quotation Sent', 'Follow-up Taken', 'Converted', 'Lost', 'On Hold', 'Rejected'];
 
         $statusOthersCounts = [];
 
@@ -114,13 +105,9 @@ class LeadController extends Controller
             $statusOthersCounts[$status] = (clone $baseQuery)->where('status', $status)->count();
         }
 
-
         // Main query with relationships and filters
         $leadsQuery = (clone $baseQuery)
-            ->with([
-                'package:id,package_name',
-                'invoice:id,invoice_no,lead_id', // eager load invoice
-            ])
+            ->with(['package:id,package_name', 'latestAssignedUser.user:id,name', 'latestAssignedUser.assignedBy:id,name', 'createdBy:id,name', 'lastFollowup.user:id,name', 'invoice:id,invoice_no,lead_id'])
             ->when($filters['status'], fn($q, $v) => $q->where('status', $v))
             ->when($filters['time'] != 'all', function ($q) use ($filters) {
                 if ($filters['time'] == 'today') {
@@ -131,15 +118,8 @@ class LeadController extends Controller
                     $q->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()]);
                 }
             })
-            ->orderByRaw(
-                "CASE
-                WHEN lead_status = 'Hot' THEN 1
-                WHEN lead_status = 'Warm' THEN 2
-                WHEN lead_status = 'Cold' THEN 3
-                ELSE 4
-            END",
-            )
-            ->latest('id');
+
+            ->orderBy('created_at', 'desc'); // <-- secondary order: latest first within each status
 
         // Pagination
         $leads = $leadsQuery->paginate(50)->withQueryString();
@@ -152,7 +132,8 @@ class LeadController extends Controller
         $user = auth()->user();
 
         // Base query with relationships
-        $query = Lead::with(['package:id,package_name', 'latestAssignedUser.user:id,name', 'latestAssignedUser.assignedBy:id,name', 'createdBy:id,name', 'lastFollowup.user:id,name']);
+        $query = Lead::with(['package:id,package_name', 'latestAssignedUser.user:id,name', 'latestAssignedUser.assignedBy:id,name', 'createdBy:id,name', 'lastFollowup.user:id,name'])
+        ->orderBy('created_at', 'desc');
 
         // Include soft-deleted leads for role_id 1
         if ($user->role_id == 1) {
@@ -188,6 +169,9 @@ class LeadController extends Controller
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
+        if ($request->filled('lead_status')) {
+        $query->where('lead_status', $request->lead_status);
+    }
 
         // Filter by date range (created_at)
         if ($request->filled('date_range')) {
@@ -214,83 +198,103 @@ class LeadController extends Controller
             ->addIndexColumn()
             ->addColumn('checkbox', fn($lead) => '<input type="checkbox" value="' . $lead->id . '" @change="toggleLead($event)" class="h-4 w-4 text-gray-700 border-gray-400">')
             ->addColumn('client_info', function ($lead) {
+                // Mask phone
+                $phone = $lead->phone_number;
+                $visibleDigits = 3; // last 3 digits visible
+                $maxMaskLength = 5;
 
-    // Mask phone
-        $phone = $lead->phone_number;
-$visibleDigits = 3; // last 3 digits visible
-$maxMaskLength = 5;
+                $maskLength = min(strlen($phone) - $visibleDigits, $maxMaskLength);
+                $maskedPhone = str_repeat('*', $maskLength) . substr($phone, -$visibleDigits);
+                // --- Follow-up Expired Check ---
+                $followup = $lead->latestFollowup;
+                $followupText = '';
 
-$maskLength = min(strlen($phone) - $visibleDigits, $maxMaskLength);
-$maskedPhone = str_repeat('*', $maskLength) . substr($phone, -$visibleDigits);
-    // --- Follow-up Expired Check ---
-    $followup = $lead->latestFollowup;
-    $followupText = '';
+                if ($followup) {
+                    $today = now()->startOfDay();
+                    $nextDate = \Carbon\Carbon::parse($followup->next_followup_date)->startOfDay();
 
+                    // Only show if expired
+                    if ($nextDate->isPast() && !$nextDate->isToday()) {
+                        $daysLate = $nextDate->diffInDays($today);
+                        $followupText = '<span class="text-white font-bold">Last followup expired: ' . $daysLate . ' days ago</span>';
+                    }
+                }
 
-if ($followup) {
-    $today = now()->startOfDay();
-    $nextDate = \Carbon\Carbon::parse($followup->next_followup_date)->startOfDay();
+                // Lead status badge color
+                $statusClass =
+                    [
+                        'Hot' => 'bg-red-500',
+                        'Warm' => 'bg-yellow-400',
+                        'Cold' => 'bg-gray-400',
+                        'Interested' => 'bg-green-500',
+                    ][$lead->lead_status] ?? 'bg-gray-300 text-black font-extrabold';
 
-    // Only show if expired
-    if ($nextDate->isPast() && !$nextDate->isToday()) {
-        $daysLate = $nextDate->diffInDays($today);
-        $followupText = '<span class="text-white font-bold">Last followup expired: '.$daysLate.' days ago</span>';
-    }
-}
+                // Days difference for created_at
+                $createdDate = \Carbon\Carbon::parse($lead->created_at)->startOfDay();
+                $today = now()->startOfDay();
 
+                $days = $createdDate->diffInDays($today);
 
-    // Lead status badge color
-    $statusClass = [
-        'Hot' => 'bg-red-500',
-        'Warm' => 'bg-yellow-400',
-        'Cold' => 'bg-gray-400',
-        'Interested' => 'bg-green-500',
-    ][$lead->lead_status] ?? 'bg-gray-300 text-black font-extrabold';
+                if ($days == 0) {
+                    $daysText = 'Today';
+                } elseif ($days == 1) {
+                    $daysText = '1 day ago';
+                } else {
+                    $daysText = $days . ' days ago';
+                }
 
-    // Days difference for created_at
-    $createdDate = \Carbon\Carbon::parse($lead->created_at)->startOfDay();
-    $today = now()->startOfDay();
-
-    $days = $createdDate->diffInDays($today);
-
-    if ($days == 0) {
-        $daysText = "Today";
-    } elseif ($days == 1) {
-        $daysText = "1 day ago";
-    } else {
-        $daysText = $days . " days ago";
-    }
-
-    return '
+                return '
        <div class="font-xc flex items-center gap-2">
-    ' . ($lead->name) . '
+    ' .
+                    $lead->name .
+                    '
     
 </div>
 
 
         <div class="text-gray-600 text-sm font-mono mb-1">
-            +' . $lead->phone_code . ' ' . $maskedPhone . '| <span class="py-0.5 badge-custom rounded text-white font-bold ' . $statusClass . '">
-        ' . ($lead->lead_status ?? 'N/A') . '
+            +' .
+                    $lead->phone_code .
+                    ' ' .
+                    $maskedPhone .
+                    '| <span class="py-0.5 badge-custom rounded text-white font-bold ' .
+                    $statusClass .
+                    '">
+        ' .
+                    ($lead->lead_status ?? 'N/A') .
+                    '
     </span>
-    | <button @click="openEditModal(' . $lead->id . ')" class="text-gray-600 hover:text-black">
+    | <button @click="openEditModal(' .
+                    $lead->id .
+                    ')" class="text-gray-600 hover:text-black">
         <i class="fa-solid fa-pen-to-square"></i>
     </button>
         </div>
 
-        <div class="text-gray-500"><span class=" text-xs text-black">Created At ' . $lead->created_at->format('d-M-y') . ' </span>
-             |  
+        <div class="text-gray-500"><span class=" text-xs text-black">Created At ' .
+                    $lead->created_at->format('d-M-y') .
+                    ' </span>
+             |
             <span class="bg-gray-500 text-black font-extrabold badge-custom"
                 >
-                ' . $daysText . '
+                ' .
+                    $daysText .
+                    '
             </span>
         </div>
 
-        ' . ($followupText ? '
+        ' .
+                    ($followupText
+                        ? '
         <div class="text-xs font-semibold mt-1 badge-custom bg-red-600">
-            <i class="fa-solid fa-clock-rotate-left mr-1"></i> ' . $followupText . '
-        </div>' : '') . '
+            <i class="fa-solid fa-clock-rotate-left mr-1"></i> ' .
+                            $followupText .
+                            '
+        </div>'
+                        : '') .
+                    '
     ';
-})
+            })
 
             ->addColumn('location', fn($lead) => $lead->country . '<br>' . $lead->district . '<br>' . $lead->city)
             ->addColumn('reminder', function ($lead) {
@@ -402,7 +406,7 @@ if ($followup) {
                     ][$lead->status] ?? 'bg-gray-300 text-black font-extrabold'; // Default gray-300
                 // Default gray-300
 
-                 return '
+                  return '
             <div x-data="{ open: false, value: \''.$lead->status.'\' }" class="relative">
                 <div x-show="!open" @click="open = true" class="cursor-pointer text-xs px-2 py-1 rounded '.$stageClass.'">
                     <span x-text="value || \'Select Status\'"></span>
@@ -448,37 +452,39 @@ if ($followup) {
             </form>';
             })
             ->rawColumns(['checkbox', 'client_info', 'location', 'reminder', 'inquiry', 'proposal', 'status', 'assigned', 'action', 'date_range'])
-            ->make(true);
+        ->make(true);
     }
 
     // LeadController.php
-    public function getLeadsCounts(Request $request)
-    {
-        $user = auth()->user();
+   public function getLeadsCounts(Request $request)
+{
+    $user = auth()->user();
 
-        $query = Lead::query()
-            ->when($user->role_id != 1, fn($q) => $q->where(fn($q2) => $q2->where('user_id', $user->id)->orWhereHas('assignedUsers', fn($uq) => $uq->where('user_id', $user->id))))
-            ->when($request->id, fn($q) => $q->where('id', $request->id))
-            ->when($request->client_name, fn($q) => $q->where('name', 'like', "%{$request->client_name}%"))
-            ->when(
-                $request->location,
-                fn($q) => $q->where(function ($q2) use ($request) {
-                    $q2->where('country', 'like', "%{$request->location}%")
-                        ->orWhere('district', 'like', "%{$request->location}%")
-                        ->orWhere('city', 'like', "%{$request->location}%");
-                }),
-            )
-            ->when($request->status, fn($q) => $q->where('status', $request->status))
-            ->when($request->assigned, fn($q) => $q->whereHas('latestAssignedUser.user', fn($uq) => $uq->where('name', $request->assigned)));
+    $query = Lead::query()
+        ->when($user->role_id != 1, fn($q) => $q->where(fn($q2) => 
+            $q2->where('user_id', $user->id)
+               ->orWhereHas('assignedUsers', fn($uq) => $uq->where('user_id', $user->id))
+        ))
+        ->when($request->id, fn($q) => $q->where('id', $request->id))
+        ->when($request->client_name, fn($q) => $q->where('name', 'like', "%{$request->client_name}%"))
+        ->when($request->location, fn($q) => $q->where(fn($q2) => 
+            $q2->where('country', 'like', "%{$request->location}%")
+               ->orWhere('district', 'like', "%{$request->location}%")
+               ->orWhere('city', 'like', "%{$request->location}%")
+        ))
+        ->when($request->status, fn($q) => $q->where('status', $request->status))
+        ->when($request->lead_status, fn($q) => $q->where('lead_status', $request->lead_status))
+        ->when($request->assigned, fn($q) => $q->whereHas('latestAssignedUser.user', fn($uq) => $uq->where('name', $request->assigned)));
 
-        return response()->json([
-            'today' => (clone $query)->whereDate('created_at', today())->count(),
-            'yesterday' => (clone $query)->whereDate('created_at', today()->subDay())->count(),
-            'week' => (clone $query)->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->count(),
-            'month' => (clone $query)->whereMonth('created_at', now()->month)->count(),
-            'all' => (clone $query)->count(),
-        ]);
-    }
+    return response()->json([
+        'today' => (clone $query)->whereDate('created_at', today())->count(),
+        'yesterday' => (clone $query)->whereDate('created_at', today()->subDay())->count(),
+        'week' => (clone $query)->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->count(),
+        'month' => (clone $query)->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->count(),
+        'all' => (clone $query)->count(),
+    ]);
+}
+
 
     public function create()
     {

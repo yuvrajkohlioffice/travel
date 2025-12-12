@@ -10,7 +10,7 @@
                 </h1>
 
                 <a href="{{ route('companies.index') }}"
-                   class="flex items-center text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white transition">
+                    class="flex items-center text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white transition">
                     <i class="fas fa-arrow-left mr-2"></i>
                     Back
                 </a>
@@ -19,10 +19,8 @@
             {{-- Form Card --}}
             <div class="bg-white dark:bg-gray-800 shadow-md rounded-2xl p-6 transition hover:shadow-lg">
 
-                <form action="{{ route('companies.update', $company->id) }}"
-                      method="POST"
-                      enctype="multipart/form-data"
-                      class="space-y-10">
+                <form action="{{ route('companies.update', $company->id) }}" method="POST" enctype="multipart/form-data"
+                    class="space-y-10">
                     @csrf
                     @method('PUT')
 
@@ -32,46 +30,27 @@
                         {{-- Company Name --}}
                         <div>
                             <label class="form-label">Company Name</label>
-                            <input
-                                type="text"
-                                name="company_name"
-                                class="custom-inputs"
-                                value="{{ $company->company_name }}"
-                                required
-                            >
+                            <input type="text" name="company_name" class="custom-inputs"
+                                value="{{ $company->company_name }}" required>
                         </div>
 
                         {{-- Team Name --}}
                         <div>
                             <label class="form-label">Team Name</label>
-                            <input
-                                type="text"
-                                name="team_name"
-                                class="custom-inputs"
-                                value="{{ $company->team_name }}"
-                            >
+                            <input type="text" name="team_name" class="custom-inputs"
+                                value="{{ $company->team_name }}">
                         </div>
 
                         {{-- Email --}}
                         <div>
                             <label class="form-label">Email</label>
-                            <input
-                                type="email"
-                                name="email"
-                                class="custom-inputs"
-                                value="{{ $company->email }}"
-                            >
+                            <input type="email" name="email" class="custom-inputs" value="{{ $company->email }}">
                         </div>
 
                         {{-- Phone --}}
                         <div>
                             <label class="form-label">Phone Number</label>
-                            <input
-                                type="text"
-                                name="phone"
-                                class="custom-inputs"
-                                value="{{ $company->phone }}"
-                            >
+                            <input type="text" name="phone" class="custom-inputs" value="{{ $company->phone }}">
                         </div>
 
                         {{-- Owner --}}
@@ -79,7 +58,7 @@
                             <label class="form-label">Select Owner</label>
                             <select name="owner_id" class="custom-inputs" required>
                                 <option value="">Choose Owner</option>
-                                @foreach($users as $user)
+                                @foreach ($users as $user)
                                     <option value="{{ $user->id }}"
                                         {{ $company->owner_id == $user->id ? 'selected' : '' }}>
                                         {{ $user->name }}
@@ -91,12 +70,8 @@
                         {{-- WhatsApp API --}}
                         <div>
                             <label class="form-label">WhatsApp API Key</label>
-                            <input
-                                type="text"
-                                name="whatsapp_api_key"
-                                class="custom-inputs"
-                                value="{{ $company->whatsapp_api_key }}"
-                            >
+                            <input type="text" name="whatsapp_api_key" class="custom-inputs"
+                                value="{{ $company->whatsapp_api_key }}">
                         </div>
 
                     </div>
@@ -106,22 +81,15 @@
 
                         <div class="md:col-span-2">
                             <label class="form-label">Company Logo (400 x 160) Size</label>
-                            <input
-                                type="file"
-                                name="logo"
-                                accept="image/*"
-                                class="custom-inputs"
-                                onchange="previewLogo(event)"
-                            >
+                            <input type="file" name="logo" accept="image/*" class="custom-inputs"
+                                onchange="previewLogo(event)">
 
-                            @if($company->logo)
+                            @if ($company->logo)
                                 <p class="text-sm text-gray-500 mt-2">Current Logo:</p>
-                                <img src="{{ $company->logo }}"
-                                     class="mt-3 w-32 h-32 rounded-xl object-cover border" />
+                                <img src="{{ $company->logo }}" class="mt-3  rounded-xl object-cover border" />
                             @endif
 
-                            <img id="logoPreview"
-                                 class="mt-3 w-32 h-32 rounded-xl object-cover hidden border" />
+                            <img id="logoPreview" class="mt-3  rounded-xl object-cover hidden border" />
                         </div>
 
                     </div>
@@ -132,31 +100,20 @@
                         {{-- Scanner Image --}}
                         <div class="md:col-span-2">
                             <label class="form-label">QR Image (201 x 199) Size</label>
-                            <input
-                                type="file"
-                                name="scanner_image"
-                                accept="image/*"
-                                class="custom-inputs"
-                                onchange="previewScanner(event)"
-                            >
+                            <input type="file" name="scanner_image" accept="image/*" class="custom-inputs"
+                                onchange="previewScanner(event)">
 
-                            @if(!empty($company->scanner_details['image']))
+                            @if (!empty($company->scanner_details['image']))
                                 <p class="text-sm text-gray-500 mt-2">Current Scanner Image:</p>
                                 <img src="{{ $company->scanner_details['image'] }}"
-                                     class="mt-3 w-32 h-32 rounded-xl object-cover border" />
+                                    class="mt-3  rounded-xl object-cover border" />
                             @endif
 
-                            <img id="scannerPreview"
-                                 class="mt-3 w-32 h-32 rounded-xl object-cover hidden border" />
+                            <img id="scannerPreview" class="mt-3  rounded-xl object-cover hidden border" />
 
                             <label class="form-label mt-4">UPI ID</label>
-                            <input
-                                type="text"
-                                name="scanner_upi_id"
-                                class="custom-inputs"
-                                value="{{ $company->scanner_details['upi_id'] ?? '' }}"
-                                placeholder="Enter UPI ID"
-                            >
+                            <input type="text" name="scanner_upi_id" class="custom-inputs"
+                                value="{{ $company->scanner_details['upi_id'] ?? '' }}" placeholder="Enter UPI ID">
                         </div>
                     </div>
 
@@ -165,52 +122,34 @@
 
                         <div>
                             <label class="form-label">Bank Name</label>
-                            <input
-                                type="text"
-                                name="bank_details[bank_name]"
-                                class="custom-inputs"
-                                value="{{ $company->bank_details['bank_name'] ?? '' }}"
-                            >
+                            <input type="text" name="bank_details[bank_name]" class="custom-inputs"
+                                value="{{ $company->bank_details['bank_name'] ?? '' }}">
                         </div>
 
                         <div>
                             <label class="form-label">Account Name</label>
-                            <input
-                                type="text"
-                                name="bank_details[account_name]"
-                                class="custom-inputs"
-                                value="{{ $company->bank_details['account_name'] ?? '' }}"
-                            >
+                            <input type="text" name="bank_details[account_name]" class="custom-inputs"
+                                value="{{ $company->bank_details['account_name'] ?? '' }}">
                         </div>
 
                         <div>
                             <label class="form-label">Account Number</label>
-                            <input
-                                type="text"
-                                name="bank_details[account_number]"
-                                class="custom-inputs"
-                                value="{{ $company->bank_details['account_number'] ?? '' }}"
-                            >
+                            <input type="text" name="bank_details[account_number]" class="custom-inputs"
+                                value="{{ $company->bank_details['account_number'] ?? '' }}">
                         </div>
 
                         <div>
                             <label class="form-label">IFSC Code</label>
-                            <input
-                                type="text"
-                                name="bank_details[ifsc]"
-                                class="custom-inputs"
-                                value="{{ $company->bank_details['ifsc'] ?? '' }}"
-                            >
+                            <input type="text" name="bank_details[ifsc]" class="custom-inputs"
+                                value="{{ $company->bank_details['ifsc'] ?? '' }}">
                         </div>
 
                     </div>
 
                     {{-- Submit --}}
                     <div class="pt-4">
-                        <button
-                            type="submit"
-                            class="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-xl shadow-sm hover:shadow-md transition"
-                        >
+                        <button type="submit"
+                            class="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-xl shadow-sm hover:shadow-md transition">
                             <i class="fas fa-save"></i>
                             Update Company
                         </button>
@@ -224,16 +163,38 @@
 
     {{-- Preview JS --}}
     <script>
+        function validateAndPreview(event, previewId, requiredWidth, requiredHeight) {
+            const file = event.target.files[0];
+            const img = document.getElementById(previewId);
+
+            if (!file) return;
+
+            const image = new Image();
+            image.onload = function() {
+
+                if (this.width !== requiredWidth || this.height !== requiredHeight) {
+                    alert(
+                        `Invalid Image Size!\nRequired: ${requiredWidth} x ${requiredHeight}\nUploaded: ${this.width} x ${this.height}`
+                    );
+                    event.target.value = ""; // reset file
+                    img.classList.add('hidden');
+                    img.src = "";
+                    return;
+                }
+
+                img.src = URL.createObjectURL(file);
+                img.classList.remove('hidden');
+            };
+
+            image.src = URL.createObjectURL(file);
+        }
+
         function previewLogo(event) {
-            let img = document.getElementById('logoPreview');
-            img.src = URL.createObjectURL(event.target.files[0]);
-            img.classList.remove('hidden');
+            validateAndPreview(event, 'logoPreview', 400, 160);
         }
 
         function previewScanner(event) {
-            let img = document.getElementById('scannerPreview');
-            img.src = URL.createObjectURL(event.target.files[0]);
-            img.classList.remove('hidden');
+            validateAndPreview(event, 'scannerPreview', 201, 199);
         }
     </script>
 

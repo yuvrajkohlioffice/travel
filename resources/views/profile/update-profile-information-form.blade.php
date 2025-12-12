@@ -74,6 +74,7 @@
 </div>
 
 <!-- Company Selection -->
+@if(auth()->user()->role_id == 1)
 <div class="col-span-6 sm:col-span-4">
     <x-label for="company_id" value="{{ __('Company') }}" />
     <select id="company_id" wire:model.defer="state.company_id"
@@ -85,6 +86,8 @@
     </select>
     <x-input-error for="company_id" class="mt-2" />
 </div>
+@endif
+
 
         <div class="col-span-6 sm:col-span-4">
             <x-label for="name" value="{{ __('Name') }}" />
