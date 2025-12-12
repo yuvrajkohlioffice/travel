@@ -191,7 +191,7 @@
                                             class="rounded border-gray-300 focus:ring-2 focus:ring-blue-500">
                                     </th>
 
-                                    <th class="w-48 p-2 text-left">Client Info</th>
+                                    <th class="w-30 p-2 text-left">Client Info</th>
                                     <th class="w-40 p-2 text-left">Location</th>
                                     <th class="w-32 p-2 text-left">Reminder</th>
                                     <th class="w-40 p-2 text-left">Inquiry</th>
