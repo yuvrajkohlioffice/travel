@@ -63,13 +63,21 @@ class PaymentController extends Controller
         // Remaining amount
         $remaining = max($invoice->final_price - $newTotalPaid, 0);
 
-        // Determine payment status
+        // Determine payment & lead status
         if ($newTotalPaid == 0) {
-            $status = 'pending';
+            $paymentStatus = 'pending';
+            $leadStatus = 'Pending';
         } elseif ($newTotalPaid < $invoice->final_price) {
-            $status = 'partial';
+            $paymentStatus = 'partial';
+            $leadStatus = 'Pending';
         } else {
-            $status = 'paid';
+            $paymentStatus = 'paid';
+            $leadStatus = 'Converted';
+           
+            $lead->update([
+                'lead_status' => $paymentStatus,
+                'status' => $leadStatus === 'Converted' ? 'Converted' : $lead->status,
+            ]); // Lead is fully paid → Converted
         }
 
         // Create payment record
@@ -79,7 +87,7 @@ class PaymentController extends Controller
             'amount' => $request->amount,
             'paid_amount' => $request->paid_amount,
             'remaining_amount' => $remaining,
-            'status' => $status,
+            'status' => $paymentStatus,
             'payment_method' => $request->payment_method,
             'transaction_id' => $request->transaction_id,
             'notes' => $request->notes,
@@ -87,13 +95,16 @@ class PaymentController extends Controller
             'reminder_date' => $request->reminder_date,
         ]);
 
-        // Update lead status
+        // Update lead status and status
         if ($lead) {
-            $lead->update(['lead_status' => $status]);
+            $lead->update([
+                'lead_status' => $paymentStatus,
+                
+            ]);
         }
 
-        // Create follow-up if partial payment and next payment date provided
-        if ($status === 'partial' && $request->next_payment_date && $lead) {
+        // Create follow-up if partial payment
+        if ($paymentStatus === 'partial' && $request->next_payment_date && $lead) {
             Followup::create([
                 'lead_id' => $lead->id,
                 'user_id' => auth()->id(),
@@ -109,7 +120,7 @@ class PaymentController extends Controller
             'status' => 'success',
             'payment' => $payment,
             'remaining' => $remaining,
-            'status_label' => $status,
+            'status_label' => $paymentStatus,
         ]);
     }
 
@@ -119,6 +130,8 @@ class PaymentController extends Controller
     public function update(Request $request, $id)
     {
         $payment = Payment::findOrFail($id);
+        $invoice = $payment->invoice;
+        $lead = $invoice->lead;
 
         $validator = Validator::make($request->all(), [
             'paid_amount' => 'nullable|numeric|min:0',
@@ -137,16 +150,12 @@ class PaymentController extends Controller
             ], 422);
         }
 
-        $invoice = $payment->invoice;
-        $lead = $invoice->lead;
-
-        // Update paid amount if provided
+        // Update payment fields
         if ($request->has('paid_amount')) {
             $payment->paid_amount = $request->paid_amount;
             $payment->amount = $request->amount ?? $payment->amount;
         }
 
-        // Update other fields
         $payment->update($request->only([
             'payment_method',
             'transaction_id',
@@ -156,30 +165,37 @@ class PaymentController extends Controller
             'reminder_date',
         ]));
 
-        // Recalculate total paid for invoice
+        // Recalculate total paid
         $totalPaid = Payment::where('invoice_id', $invoice->id)->sum('paid_amount');
         $remaining = max($invoice->final_price - $totalPaid, 0);
 
+        // Determine new status
         if ($totalPaid == 0) {
-            $status = 'pending';
+            $paymentStatus = 'pending';
+            $leadStatus = 'Pending';
         } elseif ($totalPaid < $invoice->final_price) {
-            $status = 'partial';
+            $paymentStatus = 'partial';
+            $leadStatus = 'Pending';
         } else {
-            $status = 'paid';
+            $paymentStatus = 'paid';
+            $leadStatus = 'Converted';
         }
 
         $payment->update([
             'remaining_amount' => $remaining,
-            'status' => $status,
+            'status' => $paymentStatus,
         ]);
 
-        // Update lead status
+        // Update lead status and status
         if ($lead) {
-            $lead->update(['lead_status' => $status]);
+            $lead->update([
+                'lead_status' => $leadStatus,
+                'status' => $leadStatus === 'Converted' ? 'Converted' : $lead->status,
+            ]);
         }
 
         // Create follow-up if partial
-        if ($status === 'partial' && $request->next_payment_date && $lead) {
+        if ($paymentStatus === 'partial' && $request->next_payment_date && $lead) {
             Followup::create([
                 'lead_id' => $lead->id,
                 'user_id' => auth()->id(),
@@ -195,7 +211,7 @@ class PaymentController extends Controller
             'status' => 'success',
             'payment' => $payment,
             'remaining' => $remaining,
-            'status_label' => $status,
+            'status_label' => $paymentStatus,
         ]);
     }
 

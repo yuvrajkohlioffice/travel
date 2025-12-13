@@ -9,31 +9,7 @@ class Invoice extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'invoice_no',
-        'user_id',
-        'lead_id',
-        'package_id',
-        'package_items_id',
-        'issued_date',
-        'travel_start_date',
-        'primary_full_name',
-        'primary_email',
-        'primary_phone',
-        'primary_address',
-        'additional_travelers',
-        'total_travelers',
-        'adult_count',
-        'child_count',
-        'package_name',
-        'package_type',
-        'price_per_person',
-        'subtotal_price',
-        'discount_amount',
-        'tax_amount',
-        'final_price',
-        'additional_details',
-    ];
+    protected $fillable = ['invoice_no', 'user_id', 'lead_id', 'package_id', 'package_items_id', 'issued_date', 'travel_start_date', 'primary_full_name', 'primary_email', 'primary_phone', 'primary_address', 'additional_travelers', 'total_travelers', 'adult_count', 'child_count', 'package_name', 'package_type', 'price_per_person', 'subtotal_price', 'discount_amount', 'tax_amount', 'final_price', 'additional_details'];
 
     protected $casts = [
         'additional_travelers' => 'array',
@@ -64,14 +40,21 @@ class Invoice extends Model
     public function package()
     {
         return $this->belongsTo(Package::class);
-    }public function getFormattedIssueDateAttribute() {
-    return \Carbon\Carbon::parse($this->issued_date)->format('M d, Y');
-}
+    }
+    public function getFormattedIssueDateAttribute()
+    {
+        return \Carbon\Carbon::parse($this->issued_date)->format('M d, Y');
+    }
 
-public function getFormattedTravelStartDateAttribute() {
-    return \Carbon\Carbon::parse($this->travel_start_date)->format('M d, Y');
-}
+    public function getFormattedTravelStartDateAttribute()
+    {
+        return \Carbon\Carbon::parse($this->travel_start_date)->format('M d, Y');
+    }
 
+    public function payments()
+    {
+        return $this->hasMany(Payment::class, 'invoice_id');
+    }
 
     public function packageItem()
     {

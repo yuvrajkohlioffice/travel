@@ -10,73 +10,95 @@ use Illuminate\Http\Request;
 
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
-use Yajra\DataTables\DataTables;
+use Yajra\DataTables\Facades\DataTables;
+
 class InvoiceController extends Controller
 {
-   
-public function index(Request $request)
-{
-    // AJAX request from DataTables
-    if ($request->ajax()) {
-        $query = Invoice::with(['lead', 'package'])->latest();
+    public function index(Request $request)
+    {
+        if ($request->ajax()) {
+            $query = Invoice::with(['lead', 'package'])
+                ->withSum('payments as total_paid', 'paid_amount')
+                ->latest();
 
-        return DataTables::of($query)
-            ->addIndexColumn()
+            return DataTables::of($query)
 
-            ->editColumn('invoice_no', function ($row) {
-                return '#' . $row->invoice_no;
-            })
+                ->editColumn('invoice_no', fn($row) => '#' . $row->invoice_no)
 
-            ->editColumn('user', function ($row) {
-                return '
-                    <div class="flex items-center gap-2">
-                        <i class="fas fa-user text-gray-400"></i>
-                        <div>
-                            <div class="font-semibold">'.($row->lead->name ?? 'N/A').'</div>
-                            <div class="text-xs text-gray-500">'.($row->lead->email ?? '—').'</div>
-                        </div>
-                    </div>';
-            })
+                ->addColumn('user', function ($row) {
+                    return '
+            <div class="flex items-center gap-2">
+                <i class="fas fa-user text-gray-400"></i>
+                <div>
+                    <div class="font-semibold">' .
+                        ($row->lead->name ?? 'N/A') .
+                        '</div>
+                    <div class="text-xs text-gray-500">' .
+                        ($row->lead->email ?? '—') .
+                        '</div>
+                </div>
+            </div>
+        ';
+                })
 
-            ->editColumn('package_name', function ($row) {
-                return '<i class="fas fa-box text-gray-400"></i> ' .
-                       ($row->package->package_name ?? $row->package_name ?? 'N/A');
-            })
+                ->addColumn('package_name', function ($row) {
+                    return '<i class="fas fa-box text-gray-400"></i> ' . ($row->package->package_name ?? ($row->package_name ?? 'N/A'));
+                })
 
-            ->addColumn('travelers', function ($row) {
-                return "Adults: <strong>$row->adult_count</strong> • 
-                        Children: <strong>$row->child_count</strong> <br> 
-                        Total: <strong>$row->total_travelers</strong>";
-            })
+                ->addColumn('travelers', function ($row) {
+                    return "Adults: <strong>{$row->adult_count}</strong><br>
+                Children: <strong>{$row->child_count}</strong><br>
+                Total: <strong>{$row->total_travelers}</strong>";
+                })
 
-            ->addColumn('dates', function ($row) {
-                return '
-                    Issued: <strong>'.$row->formatted_issue_date.'</strong><br>
-                    Travel: <strong>'.$row->formatted_travel_start_date.'</strong>
-                ';
-            })
+                ->addColumn('dates', function ($row) {
+                    return "
+            Issued: <strong>{$row->issued_date}</strong><br>
+            Travel: <strong>{$row->travel_start_date}</strong>
+        ";
+                })
 
-            ->addColumn('amount', function ($row) {
-                return '
-                    Subtotal: ₹'.number_format($row->subtotal_price, 2).'<br>
-                    Discount: -₹'.number_format($row->discount_amount, 2).'<br>
-                    Tax: +₹'.number_format($row->tax_amount, 2).'<br>
-                    <span class="font-bold text-green-600">
-                        Final: ₹'.number_format($row->final_price, 2).'
-                    </span>';
-            })
+                ->addColumn('amount', function ($row) {
+                    $paid = $row->total_paid ?? 0;
+                    return "
+            Final: <strong>₹" .
+                        number_format($row->final_price, 2) .
+                        "</strong><br>
+            Paid: <span class='text-green-600'>₹" .
+                        number_format($paid, 2) .
+                        "</span><br>
+            Due: <span class='text-red-600'>₹" .
+                        number_format($row->final_price - $paid, 2) .
+                        "</span>
+        ";
+                })
 
-            ->addColumn('action', function ($row) {
-                return '<a href="'.route('invoices.show', $row->id).'"
-                    class="text-blue-600 hover:underline">View</a>';
-            })
+                ->addColumn('status', function ($row) {
+                    $paid = $row->total_paid ?? 0;
+                    $final = $row->final_price;
 
-            ->rawColumns(['user', 'package_name', 'travelers', 'dates', 'amount', 'action'])
-            ->make(true);
+                    if ($paid >= $final && $final > 0) {
+                        return '<span class="px-3 py-1 text-xs rounded-full bg-green-100 text-green-700 font-semibold">Paid</span>';
+                    }
+
+                    if ($paid > 0) {
+                        return '<span class="px-3 py-1 text-xs rounded-full bg-yellow-100 text-yellow-700 font-semibold">Partial</span>';
+                    }
+
+                    return '<span class="px-3 py-1 text-xs rounded-full bg-red-100 text-red-700 font-semibold">Pending</span>';
+                })
+
+                ->addColumn('action', function ($row) {
+                    return '<a href="' . route('invoices.show', $row->id) . '" class="text-blue-600 hover:underline">View</a>';
+                })
+
+                ->rawColumns(['user', 'package_name', 'travelers', 'dates', 'amount', 'status', 'action'])
+
+                ->make(true);
+        }
+
+        return view('invoices.index');
     }
-
-    return view('invoices.index');
-}
 
     /**
      * Generate invoice number e.g. TRAV-2023-0876
@@ -239,7 +261,6 @@ public function index(Request $request)
     /**
      * Display All Invoices
      */
-    
 
     /**
      * Delete Invoice

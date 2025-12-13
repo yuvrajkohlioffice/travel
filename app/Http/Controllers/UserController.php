@@ -8,16 +8,65 @@ use App\Models\Company;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
+use Yajra\DataTables\DataTables;
+
+
+
 class UserController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
-    {
-        $users = User::with(['role', 'company'])->get(); // eager load relationships
-        return view('users.index', compact('users'));
+    public function index(Request $request)
+{
+    if ($request->ajax()) {
+        $users = User::with(['role', 'company']);
+
+        return DataTables::of($users)
+            ->addIndexColumn()
+
+            ->addColumn('role', function ($user) {
+                return $user->role->name ?? 'N/A';
+            })
+
+            ->addColumn('company', function ($user) {
+                return $user->company->company_name ?? 'N/A';
+            })
+
+            ->addColumn('status', function ($user) {
+                return $user->status
+                    ? '<span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">Active</span>'
+                    : '<span class="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs">Inactive</span>';
+            })
+
+            ->addColumn('action', function ($user) {
+                $buttons = '
+                    <a href="'.route('users.edit', $user->id).'"
+                        class="px-2 py-1 bg-yellow-500 text-white rounded">
+                        Edit
+                    </a>
+
+                    <form action="'.route('users.destroy', $user->id).'" method="POST"
+                        style="display:inline"
+                        onsubmit="return confirm(\'Delete this user?\')">
+                        '.csrf_field().method_field('DELETE').'
+                        <button class="px-2 py-1 bg-red-600 text-white rounded">
+                            Delete
+                        </button>
+                    </form>
+                ';
+
+            
+                return $buttons;
+            })
+
+            ->rawColumns(['status', 'action'])
+            ->make(true);
     }
+
+    return view('users.index');
+}
+
 
     /**
      * Show the form for creating a new resource.

@@ -12,7 +12,7 @@
                     </h2>
 
                     <a href="{{ route('invoices.create') }}"
-                       class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2">
+                        class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2">
                         <i class="fas fa-plus"></i> Add Invoice
                     </a>
                 </div>
@@ -29,7 +29,9 @@
                                 <th>Travelers</th>
                                 <th>Dates</th>
                                 <th>Amount</th>
+                                <th>Status</th>
                                 <th>Action</th>
+
                             </tr>
                         </thead>
                     </table>
@@ -40,28 +42,61 @@
         </div>
     </div>
 
-<script>
-$(function () {
+    <script>
+        $(function() {
 
-    $('#invoice-table').DataTable({
-        processing: true,
-        serverSide: true,
-        responsive: true,
-        ajax: "{{ route('invoices.index') }}",
+            $('#invoice-table').DataTable({
+                processing: true,
+                serverSide: true,
+                responsive: true,
+                ajax: "{{ route('invoices.index') }}",
 
-        columns: [
-            { data: 'invoice_no', name: 'invoice_no' },
-            { data: 'user', name: 'lead.name' },
-            { data: 'package_name', name: 'package.package_name' },
-            { data: 'package_type', name: 'package_type' },
-            { data: 'travelers', orderable: false, searchable: false },
-            { data: 'dates', orderable: false, searchable: false },
-            { data: 'amount', orderable: false, searchable: false },
-            { data: 'action', orderable: false, searchable: false },
-        ]
-    });
+                columns: [{
+                        data: 'invoice_no',
+                        name: 'invoice_no'
+                    },
+                    {
+                        data: 'user',
+                        name: 'lead.name'
+                    },
+                    {
+                        data: 'package_name',
+                        name: 'package.package_name'
+                    },
+                    {
+                        data: 'package_type',
+                        name: 'package_type'
+                    },
+                    {
+                        data: 'travelers',
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        data: 'dates',
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        data: 'amount',
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        data: 'status',
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        data: 'action',
+                        orderable: false,
+                        searchable: false
+                    },
+                ]
 
-});
-</script>
+            });
+
+        });
+    </script>
 
 </x-app-layout>

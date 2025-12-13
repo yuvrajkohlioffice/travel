@@ -86,7 +86,7 @@ class DashboardController extends Controller
         // -------------------------------------------
         // TOTAL REVENUE
         // -------------------------------------------
-        $totalRevenue = $paymentsQuery->whereIn('status', ['partial', 'completed'])->sum('paid_amount');
+        $totalRevenue = $paymentsQuery->whereIn('status', ['partial', 'paid'])->sum('paid_amount');
 
         // -------------------------------------------
         // UPCOMING FOLLOWUPS (DATATABLE READY)
