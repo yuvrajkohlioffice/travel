@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 
 // Controllers
-use App\Http\Controllers\{CompanyController,LeadStatusController, MessageTemplateController, CarController, DashboardController, UserController, InvoiceController, PackageTypeController, PackageCategoryController, DifficultyTypeController, HotelController, RoleController, PackageController, LeadController, FollowupController, PaymentController, WhatsAppController};
+use App\Http\Controllers\{CompanyController,FollowupReasonController,LeadStatusController, MessageTemplateController, CarController, DashboardController, UserController, InvoiceController, PackageTypeController, PackageCategoryController, DifficultyTypeController, HotelController, RoleController, PackageController, LeadController, FollowupController, PaymentController, WhatsAppController};
 use Livewire\Volt\Volt;
 
 use Symfony\Component\Process\Process;
@@ -228,7 +228,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         |--------------------------------------------------------------------------
         */
        
-
+Route::resource('followup-reasons', FollowupReasonController::class)->except(['create', 'show']);
 Route::resource('lead-statuses', LeadStatusController::class)->except(['create', 'show']);
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');

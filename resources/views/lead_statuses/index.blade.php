@@ -53,7 +53,7 @@
                                     <th>Color</th>
                                     <th>Status</th>
                                     <th>Global</th>
-                                    <th>Created At</th>
+
                                     <th>Action</th>
                                 </tr>
                             </thead>
@@ -90,7 +90,14 @@
                         </div>
 
                         <div>
-                            <label class="block font-medium text-gray-700 mb-1">Color</label>
+                            <label class="block font-medium text-gray-700 mb-1">
+                                Color (
+                                <a href="https://tailwindcss.com/docs/colors" target="_blank" rel="noopener noreferrer"
+                                    class="text-blue-500 hover:underline">
+                                    Click here
+                                </a>
+                                )
+                            </label>
                             <input type="text" x-model="leadStatus.color"
                                 class="w-full p-3 rounded-xl border bg-gray-50 dark:bg-gray-700">
                         </div>
@@ -178,10 +185,7 @@
                                     name: 'is_global',
                                     searchable: false
                                 },
-                                {
-                                    data: 'created_at',
-                                    name: 'created_at'
-                                },
+
                                 {
                                     data: 'action',
                                     name: 'action',
