@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Imports\LeadsImport;
 use App\Models\Lead;
 use App\Models\Package;
 use App\Models\User;
@@ -9,8 +10,11 @@ use Illuminate\Http\Request;
 use Yajra\DataTables\DataTables;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
+
 use App\Models\LeadUser;
 use Illuminate\Support\Facades\DB;
+
+use Maatwebsite\Excel\Facades\Excel;
 
 class LeadController extends Controller
 {
@@ -68,7 +72,7 @@ class LeadController extends Controller
         ];
 
         // Status counts using single DB query
-        $statusList = ['Pending','Approved','Quotation Sent','Follow-up Taken','Converted','Lost','On Hold','Rejected'];
+        $statusList = ['Pending','Approved','Quotation Sent','In Progress','Follow-up Taken','Converted','Lost','On Hold','Rejected'];
         $statusCountsRaw = (clone $baseQuery)
             ->select('status', DB::raw('COUNT(*) as total'))
             ->groupBy('status')

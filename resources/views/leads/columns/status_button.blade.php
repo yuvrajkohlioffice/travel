@@ -9,6 +9,7 @@
         @click.outside="open=false"
         class="px-2 py-1 rounded text-xs border bg-white">
         <option value="Pending">Pending</option>
+        <option value="In Progress">In Progress</option>
         <option value="Approved">Approved</option>
         <option value="Quotation Sent">Quotation Sent</option>
         <option value="Follow-up Taken">Follow-up Taken</option>

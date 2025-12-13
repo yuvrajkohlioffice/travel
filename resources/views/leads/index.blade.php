@@ -8,6 +8,7 @@
         'Lost' => 'bg-gray-500',
         'On Hold' => 'bg-amber-500',
         'Rejected' => 'bg-red-500',
+        'In Progress' => 'bg-emerald-600',
     ];
 
     $statusIcons = [
@@ -18,6 +19,7 @@
         'Converted' => 'fa-share-from-square',
         'Lost' => 'fa-user-xmark',
         'On Hold' => 'fa-pause-circle',
+        'In Progress' => 'fa-hourglass-half',
         'Rejected' => 'fa-circle-xmark',
     ];
 @endphp
