@@ -378,21 +378,7 @@
                     }
                 ],
                 dom: 'Blfrtip',
-                buttons: [{
-                        extend: 'excelHtml5',
-                        text: 'Excel',
-                        exportOptions: {
-                            columns: ':not(:last-child)'
-                        }
-                    },
-                    {
-                        extend: 'print',
-                        text: 'Print',
-                        exportOptions: {
-                            columns: ':not(:last-child)'
-                        }
-                    }
-                ],
+                buttons: [],
                 pageLength: 50,
                 order: [
                     [3, 'asc']

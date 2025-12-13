@@ -51,8 +51,8 @@
 
                 ['route' => 'leads.index', 'label' => 'Leads', 'icon' => 'fas fa-user-check'],
 
-                ['route' => 'lead-statuses.index', 'label' => 'Lead Statuses', 'icon' => 'fas fa-tags'],
-                 ['route' => 'followup-reasons.index', 'label' => 'Follup Reasons', 'icon' => 'fas fa-tags'],
+                ['route' => 'lead-statuses.index', 'label' => 'Lead Status', 'icon' => 'fas fa-tags'],
+                 ['route' => 'followup-reasons.index', 'label' => 'Followup Reasons', 'icon' => 'fas fa-tags'],
 
                 ['route' => 'packages.index', 'label' => 'Packages', 'icon' => 'fas fa-suitcase-rolling'],
 
