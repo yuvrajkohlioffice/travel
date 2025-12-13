@@ -50,8 +50,12 @@
             <!-- Modal -->
             <div x-show="modalOpen" x-transition.opacity
                 class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+
                 <div @click.outside="closeModal()" x-transition
-                    class="bg-white dark:bg-gray-800 w-full max-w-lg rounded-2xl shadow-xl p-6 relative">
+                    class="bg-white dark:bg-gray-800 w-full max-w-lg rounded-2xl shadow-xl relative
+                max-h-[80vh] overflow-y-auto p-6">
+
+
 
                     <!-- Close Button -->
                     <button @click="closeModal()"
@@ -83,24 +87,22 @@
                         </div>
 
                         <!-- Name -->
-                        <div>
-                            <label class="block font-medium text-gray-700 mb-1">Name</label>
-                            <input type="text" x-model="followupReason.name"
-                                class="w-full p-3 rounded-xl border bg-gray-50 dark:bg-gray-700" required>
-                        </div>
-
-                        <!-- Remark -->
-                        <div>
-                            <label class="block font-medium text-gray-700 mb-1">Remark (Yes/No)</label>
-                            <select x-model="followupReason.remark"
-                                class="w-full p-3 rounded-xl border bg-gray-50 dark:bg-gray-700">
-                                <option value="1">Yes</option>
-                                <option value="0">No</option>
-                            </select>
-                        </div>
-
-                        <!-- Date & Time -->
                         <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block font-medium text-gray-700 mb-1">Name</label>
+                                <input type="text" x-model="followupReason.name"
+                                    class="w-full p-3 rounded-xl border bg-gray-50 dark:bg-gray-700" required>
+                            </div>
+
+                            <!-- Remark -->
+                            <div>
+                                <label class="block font-medium text-gray-700 mb-1">Remark (Yes/No)</label>
+                                <select x-model="followupReason.remark"
+                                    class="w-full p-3 rounded-xl border bg-gray-50 dark:bg-gray-700">
+                                    <option value="1">Yes</option>
+                                    <option value="0">No</option>
+                                </select>
+                            </div>
                             <div>
                                 <label class="block font-medium text-gray-700 mb-1">Date Required</label>
                                 <select x-model="followupReason.date"
@@ -117,6 +119,10 @@
                                     <option value="0">No</option>
                                 </select>
                             </div>
+                        </div>
+                        <!-- Date & Time -->
+                        <div class="grid grid-cols-2 gap-4">
+                            
                         </div>
 
                         <!-- Templates -->
@@ -162,158 +168,208 @@
             </div>
         </div>
 
-      <script>
-function followupReasonModal() {
-    return {
-        modalOpen: false,
-        modalTitle: 'Add Followup Reason',
-        followupReason: {
-            id: '',
-            company_id: '',
-            name: '',
-            remark: 0,
-            date: 0,
-            time: 0,
-            email_template: '',
-            whatsapp_template: '',
-            is_active: 1,
-            is_global: 0
-        },
-        table: null,
+        <script>
+            function followupReasonModal() {
+                return {
+                    modalOpen: false,
+                    modalTitle: 'Add Followup Reason',
+                    followupReason: {
+                        id: '',
+                        company_id: '',
+                        name: '',
+                        remark: 0,
+                        date: 0,
+                        time: 0,
+                        email_template: '',
+                        whatsapp_template: '',
+                        is_active: 1,
+                        is_global: 0
+                    },
+                    table: null,
 
-        init() {
-            const self = this;
-            $.ajaxSetup({ headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' } });
+                    init() {
+                        const self = this;
+                        $.ajaxSetup({
+                            headers: {
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            }
+                        });
 
-            // Destroy existing DataTable if already initialized
-            if ($.fn.DataTable.isDataTable('#followupReasonTable')) {
-                $('#followupReasonTable').DataTable().destroy();
-            }
+                        // Destroy existing DataTable if already initialized
+                        if ($.fn.DataTable.isDataTable('#followupReasonTable')) {
+                            $('#followupReasonTable').DataTable().destroy();
+                        }
 
-            // Initialize DataTable
-            this.table = $('#followupReasonTable').DataTable({
-                processing: true,
-                serverSide: true,
-                ajax: "{{ route('followup-reasons.index') }}",
-                columns: [
-                    { data: 'id', name: 'id' },
-                    { data: 'company', name: 'company' },
-                    { data: 'name', name: 'name' },
-                    { data: 'remark', name: 'remark', searchable: false },
-                    { data: 'date', name: 'date', searchable: false },
-                    { data: 'time', name: 'time', searchable: false },
-                    { data: 'email_template', name: 'email_template', orderable: false },
-                    { data: 'whatsapp_template', name: 'whatsapp_template', orderable: false },
-                    { data: 'is_active', name: 'is_active', searchable: false },
-                    { data: 'is_global', name: 'is_global', searchable: false },
-                    { data: 'action', name: 'action', orderable: false, searchable: false }
-                ],
-                order: [[0, 'asc']]
-            });
+                        // Initialize DataTable
+                        this.table = $('#followupReasonTable').DataTable({
+                            processing: true,
+                            serverSide: true,
+                            ajax: "{{ route('followup-reasons.index') }}",
+                            columns: [{
+                                    data: 'id',
+                                    name: 'id'
+                                },
+                                {
+                                    data: 'company',
+                                    name: 'company'
+                                },
+                                {
+                                    data: 'name',
+                                    name: 'name'
+                                },
+                                {
+                                    data: 'remark',
+                                    name: 'remark',
+                                    searchable: false
+                                },
+                                {
+                                    data: 'date',
+                                    name: 'date',
+                                    searchable: false
+                                },
+                                {
+                                    data: 'time',
+                                    name: 'time',
+                                    searchable: false
+                                },
+                                {
+                                    data: 'email_template',
+                                    name: 'email_template',
+                                    orderable: false
+                                },
+                                {
+                                    data: 'whatsapp_template',
+                                    name: 'whatsapp_template',
+                                    orderable: false
+                                },
+                                {
+                                    data: 'is_active',
+                                    name: 'is_active',
+                                    searchable: false
+                                },
+                                {
+                                    data: 'is_global',
+                                    name: 'is_global',
+                                    searchable: false
+                                },
+                                {
+                                    data: 'action',
+                                    name: 'action',
+                                    orderable: false,
+                                    searchable: false
+                                }
+                            ],
+                            order: [
+                                [0, 'asc']
+                            ]
+                        });
 
-            // Edit listener
-            window.addEventListener('edit-followup', e => self.openModal(e.detail));
+                        // Edit listener
+                        window.addEventListener('edit-followup', e => self.openModal(e.detail));
 
-            // Delete listener
-            $('#followupReasonTable').on('click', '.delete-btn', function() {
-                const id = $(this).data('id');
-                Swal.fire({
-                    title: 'Are you sure?',
-                    text: 'This action cannot be undone!',
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonText: 'Yes, delete it!',
-                    cancelButtonText: 'Cancel'
-                }).then(result => {
-                    if (result.isConfirmed) {
+                        // Delete listener
+                        $('#followupReasonTable').on('click', '.delete-btn', function() {
+                            const id = $(this).data('id');
+                            Swal.fire({
+                                title: 'Are you sure?',
+                                text: 'This action cannot be undone!',
+                                icon: 'warning',
+                                showCancelButton: true,
+                                confirmButtonText: 'Yes, delete it!',
+                                cancelButtonText: 'Cancel'
+                            }).then(result => {
+                                if (result.isConfirmed) {
+                                    $.ajax({
+                                        url: `{{ url('followup-reasons') }}/${id}`,
+                                        type: 'DELETE',
+                                        success: res => {
+                                            self.toast(res.message, 'success');
+                                            self.table.ajax.reload(null, false);
+                                        },
+                                        error: () => self.toast('Delete failed', 'error')
+                                    });
+                                }
+                            });
+                        });
+                    },
+
+                    openModal(reason = null) {
+                        this.modalTitle = reason ? 'Edit Followup Reason' : 'Add Followup Reason';
+                        this.followupReason = reason ? {
+                            id: reason.id,
+                            company_id: reason.company_id,
+                            name: reason.name,
+                            remark: reason.remark ? 1 : 0,
+                            date: reason.date ? 1 : 0,
+                            time: reason.time ? 1 : 0,
+                            email_template: reason.email_template,
+                            whatsapp_template: reason.whatsapp_template,
+                            is_active: reason.is_active ? 1 : 0,
+                            is_global: reason.is_global ? 1 : 0
+                        } : {
+                            ...this.followupReason,
+                            id: ''
+                        };
+                        this.modalOpen = true;
+                    },
+
+                    closeModal() {
+                        this.modalOpen = false;
+                    },
+
+                    saveFollowupReason() {
+                        // Convert selects (0/1) into booleans for Laravel validation
+                        const payload = {
+                            ...this.followupReason,
+                            remark: this.followupReason.remark == 1 || this.followupReason.remark === true,
+                            date: this.followupReason.date == 1 || this.followupReason.date === true,
+                            time: this.followupReason.time == 1 || this.followupReason.time === true,
+                            is_active: this.followupReason.is_active == 1 || this.followupReason.is_active === true,
+                            is_global: this.followupReason.is_global == 1 || this.followupReason.is_global === true
+                        };
+
+
+                        if (payload.is_global) payload.company_id = null;
+
+                        const url = payload.id ?
+                            `{{ url('followup-reasons') }}/${payload.id}` :
+                            `{{ route('followup-reasons.store') }}`;
+                        const method = payload.id ? 'PUT' : 'POST';
+
                         $.ajax({
-                            url: `{{ url('followup-reasons') }}/${id}`,
-                            type: 'DELETE',
+                            url,
+                            type: method,
+                            data: payload,
                             success: res => {
-                                self.toast(res.message, 'success');
-                                self.table.ajax.reload(null, false);
+                                this.toast(res.message, 'success');
+                                this.table.ajax.reload(null, false);
+                                this.closeModal();
                             },
-                            error: () => self.toast('Delete failed', 'error')
+                            error: err => {
+                                // Show detailed validation errors if any
+                                if (err.responseJSON?.errors) {
+                                    const errors = Object.values(err.responseJSON.errors).flat().join('<br>');
+                                    this.toast(errors, 'error');
+                                } else {
+                                    this.toast(err.responseJSON?.message || 'Validation error', 'error');
+                                }
+                            }
+                        });
+                    },
+
+                    toast(message, icon = 'success') {
+                        Swal.fire({
+                            toast: true,
+                            position: 'top-end',
+                            icon,
+                            html: message,
+                            showConfirmButton: false,
+                            timer: 2500,
+                            timerProgressBar: true
                         });
                     }
-                });
-            });
-        },
-
-        openModal(reason = null) {
-            this.modalTitle = reason ? 'Edit Followup Reason' : 'Add Followup Reason';
-            this.followupReason = reason ? {
-                id: reason.id,
-                company_id: reason.company_id,
-                name: reason.name,
-                remark: reason.remark ? 1 : 0,
-                date: reason.date ? 1 : 0,
-                time: reason.time ? 1 : 0,
-                email_template: reason.email_template,
-                whatsapp_template: reason.whatsapp_template,
-                is_active: reason.is_active ? 1 : 0,
-                is_global: reason.is_global ? 1 : 0
-            } : { ...this.followupReason, id: '' };
-            this.modalOpen = true;
-        },
-
-        closeModal() {
-            this.modalOpen = false;
-        },
-
-        saveFollowupReason() {
-            // Convert selects (0/1) into booleans for Laravel validation
-            const payload = {
-    ...this.followupReason,
-    remark: this.followupReason.remark == 1 || this.followupReason.remark === true,
-    date: this.followupReason.date == 1 || this.followupReason.date === true,
-    time: this.followupReason.time == 1 || this.followupReason.time === true,
-    is_active: this.followupReason.is_active == 1 || this.followupReason.is_active === true,
-    is_global: this.followupReason.is_global == 1 || this.followupReason.is_global === true
-};
-
-
-            if (payload.is_global) payload.company_id = null;
-
-            const url = payload.id
-                ? `{{ url('followup-reasons') }}/${payload.id}`
-                : `{{ route('followup-reasons.store') }}`;
-            const method = payload.id ? 'PUT' : 'POST';
-
-            $.ajax({
-                url,
-                type: method,
-                data: payload,
-                success: res => {
-                    this.toast(res.message, 'success');
-                    this.table.ajax.reload(null, false);
-                    this.closeModal();
-                },
-                error: err => {
-                    // Show detailed validation errors if any
-                    if (err.responseJSON?.errors) {
-                        const errors = Object.values(err.responseJSON.errors).flat().join('<br>');
-                        this.toast(errors, 'error');
-                    } else {
-                        this.toast(err.responseJSON?.message || 'Validation error', 'error');
-                    }
                 }
-            });
-        },
-
-        toast(message, icon = 'success') {
-            Swal.fire({
-                toast: true,
-                position: 'top-end',
-                icon,
-                html: message,
-                showConfirmButton: false,
-                timer: 2500,
-                timerProgressBar: true
-            });
-        }
-    }
-}
-</script>
+            }
+        </script>
 
 </x-app-layout>
