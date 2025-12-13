@@ -7,6 +7,37 @@
         <i class="fas fa-route text-blue-500"></i>
         <span>TRAVEL</span>
     </div>
+@if (session('success'))
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'success',
+                title: "{{ session('success') }}",
+                showConfirmButton: false,
+                timer: 2500,
+                timerProgressBar: true
+            });
+        });
+    </script>
+@endif
+
+@if (session('error'))
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'error',
+                title: "{{ session('error') }}",
+                showConfirmButton: false,
+                timer: 2500,
+                timerProgressBar: true
+            });
+        });
+    </script>
+@endif
 
     <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
 

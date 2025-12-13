@@ -38,6 +38,7 @@
         "laravel-vite-plugin": "^2.0",
         "moment": "^2.30.1",
         "pdfmake": "^0.2.20",
+        "sweetalert2": "^11.26.4",
         "tailwindcss": "^4.0.7",
         "tinymce": "^8.2.2",
         "vite": "^7.0.4"

@@ -4,7 +4,7 @@
 </a>
 
 <form action="{{ route('companies.destroy', $row->id) }}" method="POST"
-      class="inline" onsubmit="return confirm('Delete this company?')">
+      class="inline" onsubmit="return alert('Delete this company?')">
     @csrf
     @method('DELETE')
     <button class="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 inline-flex items-center gap-1">

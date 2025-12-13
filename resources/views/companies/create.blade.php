@@ -144,8 +144,8 @@
             image.onload = function() {
 
                 if (this.width !== requiredWidth || this.height !== requiredHeight) {
-                    alert(
-                        `Invalid Image Size!\nRequired: ${requiredWidth} x ${requiredHeight}\nUploaded: ${this.width} x ${this.height}`
+                    toast(`Invalid Image Size!\nRequired: ${requiredWidth} x ${requiredHeight}\nUploaded: ${this.width} x ${this.height}`,'error'
+                        
                         );
                     event.target.value = ""; // reset file
                     img.classList.add('hidden');

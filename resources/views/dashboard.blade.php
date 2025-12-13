@@ -452,7 +452,8 @@ $(document).ready(function() {
 
                     // Simple client-side validation
                     if (!lead_id || !note) {
-                        alert('Please enter a note.');
+                        
+                        toast('Please enter a note.','error');
                         return;
                     }
 
@@ -463,7 +464,7 @@ $(document).ready(function() {
                     // Close and clear
                     closeQuickModal();
                     // Optionally show a small toast — using simple alert (substitute with nicer UI)
-                    alert('Note saved.');
+                    toast('Note saved.');
                 });
             }
 
@@ -473,7 +474,7 @@ $(document).ready(function() {
                     const leadId = btn.getAttribute('data-lead');
                     // open dialer or modal, but for now just log
                     console.log('Call action for', leadId);
-                    alert('Initiating call (demo) for lead id: ' + leadId);
+                    toast('Initiating call (demo) for lead id: ' + leadId);
                 });
             });
 

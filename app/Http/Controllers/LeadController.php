@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Yajra\DataTables\DataTables;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
+use App\Models\LeadUser;
 use Illuminate\Support\Facades\DB;
 
 class LeadController extends Controller

@@ -458,13 +458,13 @@
 
                 // Validate user
                 if (!userId) {
-                    alert('Please select a user to assign.');
+                    toast('Please select a user to assign.');
                     return;
                 }
 
                 // Validate selected leads
                 if (selectedIds.size === 0) {
-                    alert('No leads selected.');
+                    toast('No leads selected.');
                     return;
                 }
 
@@ -498,14 +498,17 @@
                         // Refresh table
                         datatable.draw(false);
 
-                        alert(json.message || "Leads assigned successfully.");
+                        // Show success toast
+                        toast(json.message || "Leads assigned successfully.", 'success');
                     } else {
-                        alert(json.message || "Failed to assign leads.");
+                        // Show error toast
+                        toast(json.message || "Failed to assign leads.", 'error');
                     }
+
 
                 } catch (error) {
                     console.error(error);
-                    alert("An unexpected error occurred while assigning leads.");
+                    toast('An unexpected error occurred while assigning leads.', 'error');
                 }
 
                 // Re-enable button
