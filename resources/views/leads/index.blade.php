@@ -931,24 +931,43 @@
 
                 /* ---------------- SHARE MODAL ---------------- */
 
-                handleShare(lead) {
+                handleShare(event) {
+                    const button = event.currentTarget;
+
+                    // Read data attributes from button
+                    const lead = {
+                        id: button.dataset.id,
+                        name: button.dataset.name,
+                        email: button.dataset.email,
+                        phone_code: button.dataset.phoneCode,
+                        phone_number: button.dataset.phoneNumber,
+                        package_id: button.dataset.packageId,
+                        people_count: Number(button.dataset.peopleCount) || 1,
+                        child_count: Number(button.dataset.childCount) || 0,
+                    };
+
+                    // Set modal state
                     this.shareLeadId = lead.id;
                     this.shareLeadName = lead.name;
                     this.leadEmail = lead.email;
-
                     this.leadPhone = `${lead.phone_code}${lead.phone_number}`;
+                    this.peopleCount = lead.people_count;
+                    this.childCount = lead.child_count;
 
-                    this.peopleCount = lead.people_count ?? 1;
-                    this.childCount = lead.child_count ?? 0;
-
+                    // Default to first package if none selected
                     this.selectedPackage = lead.package_id || (this.allPackages[0]?.id ?? "");
 
+                    // Show modal
                     this.showDropdown = true;
                     this.showSelectedPackage = true;
-
-                    this.fetchPackageDocs(this.selectedPackage);
                     this.shareOpen = true;
+
+                    // Fetch package docs for the selected package
+                    if (this.selectedPackage) {
+                        this.fetchPackageDocs(this.selectedPackage);
+                    }
                 },
+
 
 
                 fetchPackageDocs(packageId) {
