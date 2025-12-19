@@ -144,6 +144,7 @@
                         </button>
 
                         @foreach ([
+                            'pending' => 'Pending',
         'followup_taken' => 'Follow-up Taken',
         'converted' => 'Converted',
         'approved' => 'Approved',
