@@ -139,14 +139,23 @@
                     <!-- Status buttons -->
                     <div class="flex flex-wrap gap-2 mb-4">
                         <button data-value=""
-                            class="status-btn px-4 py-2 rounded-lg border border-gray-300 text-sm hover:bg-blue-300 transition">All</button>
-                        @foreach (['Follow-up Taken', 'Converted', 'Approved', 'Rejected'] as $s)
-                            <button data-value="{{ $s }}"
-                                class="status-btn px-4 py-2 rounded-lg border border-gray-300 text-sm hover:bg-blue-300 transition">{{ $s }}</button>
+                            class="status-btn px-4 py-2 rounded-lg border border-gray-300 text-sm hover:bg-blue-300 transition">
+                            All
+                        </button>
+
+                        @foreach ([
+        'followup_taken' => 'Follow-up Taken',
+        'converted' => 'Converted',
+        'approved' => 'Approved',
+        'rejected' => 'Rejected',
+    ] as $value => $label)
+                            <button data-value="{{ $value }}"
+                                class="status-btn px-4 py-2 rounded-lg border border-gray-300 text-sm hover:bg-blue-300 transition">
+                                {{ $label }}
+                            </button>
                         @endforeach
-
-
                     </div>
+
                     <div class="flex flex-wrap gap-2 mb-4">
                         <button data-value=""
                             class="status-btn-lead px-4 py-2 rounded-lg border border-gray-300 text-sm hover:bg-blue-300 transition">All</button>
@@ -407,25 +416,58 @@
                 });
             });
 
-            document.querySelectorAll('.status-btn-lead').forEach(btn => {
+            document.querySelectorAll('.status-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
-                    document.querySelectorAll('.status-btn-lead').forEach(b => b.classList.remove(
-                        'bg-blue-500', 'text-white'));
+
+                    document.querySelectorAll('.status-btn')
+                        .forEach(b => b.classList.remove('bg-blue-500', 'text-white'));
+
                     this.classList.add('bg-blue-500', 'text-white');
-                    selectedLeadStatus = this.dataset.value || ''; // <-- correct variable
+
+                    const value = this.dataset.value || '';
+
+                    // ✅ FOLLOW-UP TAKEN → lead_status
+                    if (value === 'followup_taken') {
+                        selectedLeadStatus = 'followup_taken';
+                        selectedStatus = ''; // 🔥 clear normal status
+                        selectedDateRange = 'today';
+
+                        document.querySelectorAll('.date-range-btn')
+                            .forEach(b => b.classList.remove('bg-blue-500', 'text-white'));
+
+                        document.querySelector('.date-range-btn[data-value="today"]')
+                            ?.classList.add('bg-blue-500', 'text-white');
+
+                    } else {
+                        selectedStatus = value;
+                        selectedLeadStatus = '';
+                    }
+
                     datatable.page(0).draw(false);
                 });
             });
 
+
+
             document.querySelectorAll('.date-range-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
-                    document.querySelectorAll('.date-range-btn').forEach(b => b.classList.remove(
-                        'bg-blue-500', 'text-white'));
+
+                    // ❌ Prevent overriding Follow-up Taken logic
+                    if (selectedLeadStatus === 'followup_taken' && this.dataset.value !== 'today') {
+                        toast('Follow-up Taken always shows today’s follow-ups');
+                        return;
+                    }
+
+                    document.querySelectorAll('.date-range-btn')
+                        .forEach(b => b.classList.remove('bg-blue-500', 'text-white'));
+
                     this.classList.add('bg-blue-500', 'text-white');
                     selectedDateRange = this.dataset.value || 'all';
+
                     datatable.page(0).draw(false);
                 });
             });
+
 
             // ---------- Select All on current page ----------
             selectAllCheckbox.addEventListener('change', function() {

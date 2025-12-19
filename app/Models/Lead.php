@@ -91,6 +91,7 @@ class Lead extends Model
         return $this->views()->count();
     }
 
+
 public function latestFollowup()
 {
     return $this->hasOne(Followup::class)->latest('next_followup_date');
