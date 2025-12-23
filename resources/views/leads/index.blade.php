@@ -95,30 +95,21 @@
                         @foreach ($statusOthersCounts as $status => $count)
                             <div
                                 class="flex items-center gap-3 bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border dark:border-gray-700">
-
-                                <!-- Colored Icon -->
                                 <div
                                     class="w-10 h-10 flex items-center justify-center rounded-lg text-white {{ $statusColors[$status] ?? 'bg-gray-400' }}">
                                     <i class="fa-solid {{ $statusIcons[$status] ?? 'fa-circle-info' }}"></i>
                                 </div>
-
-                                <!-- Text -->
                                 <div class="flex flex-col">
                                     <span
                                         class="text-sm text-gray-500 dark:text-gray-400 font-medium">{{ $status }}</span>
                                     <span
                                         class="text-xl font-semibold text-gray-800 dark:text-gray-100">{{ $count }}</span>
                                 </div>
-
                             </div>
                         @endforeach
-
                     </div>
-
                 </div>
-                <!-- Filters & Table -->
                 <div class="bg-white dark:bg-gray-800 rounded-lg  p-4 shadow-sm overflow-x-auto">
-                    <!-- Filters -->
                     <div class="flex flex-wrap gap-2 mb-4 items-center">
                         <input type="text" id="filter-id" placeholder="Search ID"
                             class="border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-2 text-sm w-40 dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
@@ -126,7 +117,6 @@
                             class="border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-2 text-sm w-48 dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
                         <input type="text" id="filter-location" placeholder="Search Location"
                             class="border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-2 text-sm w-48 dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
-
                         <select id="filter-assigned"
                             class="w-44 rounded-lg border border-gray-300 dark:border-gray-700 px-4 py-2 text-sm dark:bg-gray-900 dark:text-white">
                             <option value="">All Assigned</option>
@@ -135,28 +125,24 @@
                             @endforeach
                         </select>
                     </div>
-
-                    <!-- Status buttons -->
                     <div class="flex flex-wrap gap-2 mb-4">
                         <button data-value=""
                             class="status-btn px-4 py-2 rounded-lg border border-gray-300 text-sm hover:bg-blue-300 transition">
                             All
                         </button>
-
                         @foreach ([
-                            'pending' => 'Pending',
-        'followup_taken' => 'Follow-up Taken',
-        'converted' => 'Converted',
-        'approved' => 'Approved',
-        'rejected' => 'Rejected',
-    ] as $value => $label)
+                                    'pending' => 'Pending',
+                                    'followup_taken' => 'Follow-up Taken',
+                                    'converted' => 'Converted',
+                                    'approved' => 'Approved',
+                                    'rejected' => 'Rejected',
+                                ] as $value => $label)
                             <button data-value="{{ $value }}"
                                 class="status-btn px-4 py-2 rounded-lg border border-gray-300 text-sm hover:bg-blue-300 transition">
                                 {{ $label }}
                             </button>
                         @endforeach
                     </div>
-
                     <div class="flex flex-wrap gap-2 mb-4">
                         <button data-value=""
                             class="status-btn-lead px-4 py-2 rounded-lg border border-gray-300 text-sm hover:bg-blue-300 transition">All</button>
@@ -165,7 +151,6 @@
                                 class="status-btn-lead px-4 py-2 rounded-lg border border-gray-300 text-sm hover:bg-blue-300 transition">{{ $s }}</button>
                         @endforeach
                     </div>
-                    <!-- Date range -->
                     <div class="flex flex-wrap gap-2 mb-4">
                         <button data-value="all"
                             class="date-range-btn px-4 py-2 rounded-lg border border-gray-300 text-sm hover:bg-blue-300 transition">All
@@ -186,7 +171,6 @@
                     <div id="bulkBar"
                         class="hidden mb-3 flex flex-wrap items-center gap-3 bg-white dark:bg-gray-800 p-4 rounded shadow-sm border">
                         <span class="font-medium text-gray-700 dark:text-gray-300">Assign Selected Leads:</span>
-
                         <select id="bulkAssignUser"
                             class="w-48 rounded-lg border border-gray-300 px-4 py-2 text-sm bg-white dark:bg-gray-900 dark:border-gray-700 dark:text-white">
                             <option value="">Select User</option>
@@ -194,15 +178,12 @@
                                 <option value="{{ $user->id }}">{{ $user->name }}</option>
                             @endforeach
                         </select>
-
                         <button id="bulkAssignBtn" disabled
                             class="px-3 py-1 bg-gray-800 text-white rounded hover:bg-black transition text-sm disabled:opacity-50">
                             <i class="fa-solid fa-user-check mr-2"></i> Assign
                         </button>
-
                         <span id="selectedCount" class="text-sm text-gray-500 dark:text-gray-400">0 selected</span>
                     </div>
-                    <!-- Table -->
                     <div class="overflow-x-auto">
                         <table id="Leads-table" class="min-w-full  border-gray-200 dark:border-gray-700 text-sm">
                             <thead class="bg-gray-50 dark:bg-gray-700">
@@ -211,7 +192,6 @@
                                         <input type="checkbox" id="selectAll"
                                             class="rounded border-gray-300 focus:ring-2 focus:ring-blue-500">
                                     </th>
-
                                     <th class="w-64 p-2 text-left">Client Info</th>
                                     <th class="w-32 p-2 text-left">Location</th>
                                     <th class="w-32 p-2 text-left">Reminder</th>
@@ -226,18 +206,14 @@
                         </table>
                     </div>
                 </div>
-
             </div>
         </div>
-
-
         <x-edit-lead />
         <x-followup-modal :packages="$packages" />
         <x-share-modal :packages="$packages" />
         <x-invoice-modal :packages="$packages" />
         <x-payment-modal />
     </div>
-
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             // ---------- state ----------
@@ -584,13 +560,6 @@
 
         }); // DOMContentLoaded
     </script>
-
-    <!-- Modals -->
-
-
-
-
-
     <script>
         function leadModals() {
             return {
@@ -1272,8 +1241,4 @@
             };
         }
     </script>
-
-
-
-
 </x-app-layout>
