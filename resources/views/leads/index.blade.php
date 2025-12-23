@@ -138,15 +138,16 @@
                         <button data-value="today"
                             class="date-range-btn px-4 py-2 rounded-lg border border-gray-300 text-sm hover:bg-blue-300 transition">Today
                             <span id="count-today" class="ml-2">0</span></button>
+                            <button data-value="yesterday"
+                            class="date-range-btn px-4 py-2 rounded-lg border border-gray-300 text-sm hover:bg-blue-300 transition">Yesterday
+                            <span id="count-yesterday" class="ml-2">0</span></button>
                         <button data-value="week"
                             class="date-range-btn px-4 py-2 rounded-lg border border-gray-300 text-sm hover:bg-blue-300 transition">This
                             Week <span id="count-week" class="ml-2">0</span></button>
                         <button data-value="month"
                             class="date-range-btn px-4 py-2 rounded-lg border border-gray-300 text-sm hover:bg-blue-300 transition">This
                             Month <span id="count-month" class="ml-2">0</span></button>
-                        <button data-value="yesterday"
-                            class="date-range-btn px-4 py-2 rounded-lg border border-gray-300 text-sm hover:bg-blue-300 transition">Yesterday
-                            <span id="count-yesterday" class="ml-2">0</span></button>
+                        
                     </div>
                     <div id="bulkBar"
                         class="hidden mb-3 flex flex-wrap items-center gap-3 bg-white dark:bg-gray-800 p-4 rounded shadow-sm border">
