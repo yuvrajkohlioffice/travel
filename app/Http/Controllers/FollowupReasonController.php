@@ -10,6 +10,33 @@ use Yajra\DataTables\DataTables;
 
 class FollowupReasonController extends Controller
 {
+public function indexApi(Request $request)
+{
+    $companyId = Auth::user()?->company_id;
+
+    $reasons = FollowupReason::active()
+        ->when($companyId, function ($q) use ($companyId) {
+            $q->where(function ($sub) use ($companyId) {
+                $sub->where('company_id', $companyId)
+                    ->orWhere('is_global', true);
+            });
+        }, function ($q) {
+            $q->where('is_global', true);
+        })
+        ->orderBy('name')
+        ->get([
+            'id', 'name', 'remark', 'date', 'time',
+            'email_template', 'whatsapp_template'
+        ]);
+
+    return response()->json([
+        'success' => true,
+        'data' => $reasons
+    ]);
+}
+
+
+
     // Display Followup Reasons (DataTable)
     public function index(Request $request)
     {

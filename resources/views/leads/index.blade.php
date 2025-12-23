@@ -131,12 +131,12 @@
                             All
                         </button>
                         @foreach ([
-                                    'pending' => 'Pending',
-                                    'followup_taken' => 'Follow-up Taken',
-                                    'converted' => 'Converted',
-                                    'approved' => 'Approved',
-                                    'rejected' => 'Rejected',
-                                ] as $value => $label)
+        'pending' => 'Pending',
+        'followup_taken' => 'Follow-up Taken',
+        'converted' => 'Converted',
+        'approved' => 'Approved',
+        'rejected' => 'Rejected',
+    ] as $value => $label)
                             <button data-value="{{ $value }}"
                                 class="status-btn px-4 py-2 rounded-lg border border-gray-300 text-sm hover:bg-blue-300 transition">
                                 {{ $label }}
@@ -429,11 +429,7 @@
             document.querySelectorAll('.date-range-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
 
-                    // ❌ Prevent overriding Follow-up Taken logic
-                    if (selectedLeadStatus === 'followup_taken' && this.dataset.value !== 'today') {
-                        toast('Follow-up Taken always shows today’s follow-ups');
-                        return;
-                    }
+
 
                     document.querySelectorAll('.date-range-btn')
                         .forEach(b => b.classList.remove('bg-blue-500', 'text-white'));
@@ -608,12 +604,7 @@
                 fullNumber: '',
                 selectedReason: '',
                 followups: [],
-                reasons: [
-                    'Call Back Later', 'Call Me Tomorrow', 'Payment Tomorrow',
-                    'Talk With My Partner', 'Work with other company',
-                    'Not Interested', 'Interested', 'Wrong Information',
-                    'Not Pickup', 'Other'
-                ],
+                reasons: [],
 
                 /* ---------------- SHARE ---------------- */
                 shareLeadId: '',
@@ -934,7 +925,85 @@
                             this.fullNumber = phone.full_number || '';
                             this.followups = data.followups || [];
                         });
+
+                    this.fetchFollowupReasons();
                 },
+
+                fetchFollowupReasons() {
+                    fetch('/followup-reasons-api', {
+                            method: 'GET',
+                            headers: {
+                                "Content-Type": "application/json",
+                                "X-CSRF-TOKEN": '{{ csrf_token() }}',
+
+                            }
+                        })
+                        .then(res => res.json())
+                        .then(res => {
+                            if (res.success) {
+                                this.reasons = res.data;
+                            }
+                        });
+                },
+
+
+                handleReasonChange(reason) {
+                    const now = new Date();
+                    let followDate = new Date(now);
+
+                    const isSunday = date => date.getDay() === 0;
+
+                    const dateInput = document.querySelector('input[name="next_followup_date"]');
+                    const timeInput = document.querySelector('input[name="next_followup_time"]');
+                    const remarkInput = document.querySelector('textarea[name="remark"]');
+
+                    const dateWrapper = document.getElementById('dateWrapper');
+                    const timeWrapper = document.getElementById('timeWrapper');
+                    const remarkWrapper = document.getElementById('remarkWrapper');
+
+                    /* ================= DATE ================= */
+                    if (reason.date) {
+                        dateWrapper.classList.remove('hidden');
+                        followDate.setDate(followDate.getDate() + 1);
+                        while (isSunday(followDate)) {
+                            followDate.setDate(followDate.getDate() + 1);
+                        }
+                        dateInput.value = followDate.toISOString().split('T')[0];
+                        dateInput.setAttribute('required', 'required');
+                    } else {
+                        dateWrapper.classList.add('hidden');
+                        dateInput.value = '';
+                        dateInput.removeAttribute('required');
+                    }
+
+                    /* ================= TIME ================= */
+                    if (reason.time) {
+                        timeWrapper.classList.remove('hidden');
+                        followDate.setHours(followDate.getHours() + 2);
+                        timeInput.value = followDate.toTimeString().slice(0, 5);
+                        timeInput.setAttribute('required', 'required');
+                    } else {
+                        timeWrapper.classList.add('hidden');
+                        timeInput.value = '';
+                        timeInput.removeAttribute('required');
+                    }
+
+                    /* ================= REMARK ================= */
+                    if (reason.remark) {
+                        remarkWrapper.classList.remove('hidden');
+                        remarkInput.removeAttribute('disabled');
+                        remarkInput.setAttribute('required', 'required');
+                    } else {
+                        remarkWrapper.classList.add('hidden');
+                        remarkInput.value = '';
+                        remarkInput.setAttribute('disabled', 'disabled');
+                        remarkInput.removeAttribute('required');
+                    }
+                },
+
+
+
+
 
                 closeFollow() {
                     this.followOpen = false;

@@ -9,6 +9,8 @@ class FollowupReason extends Model
 {
     use HasFactory;
 
+    /* ================= FILLABLE ================= */
+
     protected $fillable = [
         'company_id',
         'name',
@@ -21,19 +23,62 @@ class FollowupReason extends Model
         'is_global',
     ];
 
-    // Relationship: FollowupReason belongs to Company
+    /* ================= CASTS ================= */
+
+    protected $casts = [
+        'remark'    => 'boolean',
+        'date'      => 'boolean',
+        'time'      => 'boolean',
+        'is_active' => 'boolean',
+        'is_global' => 'boolean',
+    ];
+
+    /* ================= RELATION ================= */
+
     public function company()
     {
         return $this->belongsTo(Company::class);
     }
 
+    /* ================= SCOPES ================= */
+
     /**
-     * Mutator for is_global
-     * If a reason is global, company_id is set to null
+     * Only active reasons
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
+
+    /**
+     * Company reasons with global fallback
+     * - If company has reasons → only company
+     * - Else → global
+     */
+    public function scopeCompanyOrGlobal($query, $companyId)
+    {
+        return $query->where(function ($q) use ($companyId) {
+            $q->where('company_id', $companyId)
+              ->orWhere('is_global', true);
+        });
+    }
+
+    /**
+     * Only global reasons
+     */
+    public function scopeGlobal($query)
+    {
+        return $query->where('is_global', true);
+    }
+
+    /* ================= MUTATORS ================= */
+
+    /**
+     * If is_global = true → company_id must be NULL
      */
     public function setIsGlobalAttribute($value)
     {
-        $this->attributes['is_global'] = $value ? 1 : 0;
+        $this->attributes['is_global'] = (bool) $value;
 
         if ($value) {
             $this->attributes['company_id'] = null;
@@ -41,14 +86,14 @@ class FollowupReason extends Model
     }
 
     /**
-     * Mutator for company_id
-     * If company_id is set, is_global is automatically false
+     * If company_id is set → is_global must be false
      */
     public function setCompanyIdAttribute($value)
     {
         $this->attributes['company_id'] = $value;
-        if ($value) {
-            $this->attributes['is_global'] = 0;
+
+        if (!is_null($value)) {
+            $this->attributes['is_global'] = false;
         }
     }
 }

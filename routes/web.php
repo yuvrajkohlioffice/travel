@@ -227,7 +227,9 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         | Dashboard
         |--------------------------------------------------------------------------
         */
-       
+       // routes/api.php
+ Route::get('/followup-reasons-api', [FollowupReasonController::class, 'indexApi']);
+
 Route::resource('followup-reasons', FollowupReasonController::class)->except(['create', 'show']);
 Route::resource('lead-statuses', LeadStatusController::class)->except(['create', 'show']);
 

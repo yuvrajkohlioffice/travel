@@ -29,32 +29,31 @@
                         <!-- Followup Reasons -->
                         <div class="space-y-2">
                             <label class="font-semibold text-gray-700">Followup Reason</label>
-                            <template x-for="reason in reasons" :key="reason">
+                            <template x-for="reason in reasons" :key="reason.id">
                                 <div class="flex items-center gap-2">
-                                    <input type="radio" :value="reason" name="reason" x-model="selectedReason"
-                                        class="h-4 w-4" required>
-                                    <span x-text="reason" class="text-gray-700"></span>
+                                    <input type="radio" :value="reason.name" name="reason" x-model="selectedReason"
+                                        @change="handleReasonChange(reason)" class="h-4 w-4" required>
+                                    <span x-text="reason.name"></span>
                                 </div>
                             </template>
+
                         </div>
 
                         <!-- Remark -->
-                        <div>
+                        <div id="remarkWrapper" class="transition-all">
                             <label class="block font-semibold text-gray-700 mb-1">Remark</label>
                             <textarea name="remark" rows="3" class="w-full p-3 rounded-lg border" placeholder="Write remark here..."></textarea>
                         </div>
 
                         <!-- Next Followup Date & Time -->
                         <div class="grid grid-cols-2 gap-2">
-                            <div>
+                            <div id="dateWrapper">
                                 <label class="block font-semibold mb-1">Next Followup Date</label>
-                                <input type="date" name="next_followup_date" class="w-full p-3 rounded-lg border"
-                                    required>
+                                <input type="date" name="next_followup_date" class="w-full p-3 rounded-lg border">
                             </div>
-                            <div>
+                            <div id="timeWrapper">
                                 <label class="block font-semibold mb-1">Time</label>
-                                <input type="time" name="next_followup_time" class="w-full p-3 rounded-lg border"
-                                    required>
+                                <input type="time" name="next_followup_time" class="w-full p-3 rounded-lg border">
                             </div>
                         </div>
 
