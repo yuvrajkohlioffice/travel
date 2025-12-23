@@ -52,6 +52,8 @@
                                     <th>Name</th>
                                     <th>Color</th>
                                     <th>Status</th>
+                                    <th>Order by</th>
+
                                     <th>Global</th>
 
                                     <th>Action</th>
@@ -64,72 +66,105 @@
 
             <!-- Modal -->
             <div x-show="modalOpen" x-transition.opacity
-                class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                <div @click.outside="closeModal()" x-transition
-                    class="bg-white dark:bg-gray-800 w-full max-w-lg rounded-2xl shadow-xl p-6 relative">
+                class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+
+                <div x-transition class="bg-white dark:bg-gray-800 w-full max-w-xl rounded-3xl shadow-2xl p-6 relative">
 
                     <!-- Close -->
                     <button @click="closeModal()"
-                        class="absolute top-3 right-3 text-gray-500 hover:text-gray-700 transition">
-                        <i class="fa-solid fa-xmark text-2xl"></i>
+                        class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-white">
+                        <i class="fas fa-times text-xl"></i>
                     </button>
 
-                    <!-- Header -->
-                    <div class="text-center border-b pb-3 mb-4">
-                        <h2 class="text-2xl font-bold text-gray-800 dark:text-white" x-text="modalTitle"></h2>
-                    </div>
+                    <!-- Title -->
+                    <h2 class="text-2xl font-bold text-gray-800 dark:text-white mb-6 text-center" x-text="modalTitle">
+                    </h2>
 
                     <!-- Form -->
                     <form @submit.prevent="saveLeadStatus()" class="space-y-4">
-                        <input type="hidden" x-model="leadStatus.id">
 
+                        {{-- Company --}}
+                        @if (auth()->user()->role_id == 1)
+                            <div>
+                                <label class="text-sm font-semibold text-gray-600">Company</label>
+                                <select x-model="leadStatus.company_id" :disabled="leadStatus.is_global == 1"
+                                    class="mt-1 w-full p-3 rounded-xl border bg-gray-50 dark:bg-gray-700">
+                                    <option value="">Select company</option>
+                                    @foreach ($companies as $company)
+                                        <option value="{{ $company->id }}">{{ $company->company_name }}</option>
+                                    @endforeach
+                                </select>
+                                <p x-show="leadStatus.is_global == 1" class="text-xs text-gray-400 mt-1">
+                                    Global status is not linked to a company
+                                </p>
+                            </div>
+                        @endif
+
+                        {{-- Name --}}
                         <div>
-                            <label class="block font-medium text-gray-700 mb-1">Name</label>
-                            <input type="text" x-model="leadStatus.name"
-                                class="w-full p-3 rounded-xl border bg-gray-50 dark:bg-gray-700" required>
+                            <label class="text-sm font-semibold text-gray-600">Status Name</label>
+                            <input x-model="leadStatus.name"
+                                class="mt-1 w-full p-3 rounded-xl border bg-gray-50 dark:bg-gray-700"
+                                placeholder="e.g. New, Follow-up, Closed">
                         </div>
 
+                        {{-- Color with preview --}}
                         <div>
-                            <label class="block font-medium text-gray-700 mb-1">
-                                Color (
-                                <a href="https://tailwindcss.com/docs/colors" target="_blank" rel="noopener noreferrer"
-                                    class="text-blue-500 hover:underline">
-                                    Click here
-                                </a>
-                                )
-                            </label>
-                            <input type="text" x-model="leadStatus.color"
-                                class="w-full p-3 rounded-xl border bg-gray-50 dark:bg-gray-700">
+                            <label class="text-sm font-semibold text-gray-600">Color (Tailwind)</label>
+                            <div class="flex items-center gap-3 mt-1">
+                                <input x-model="leadStatus.color"
+                                    class="flex-1 p-3 rounded-xl border bg-gray-50 dark:bg-gray-700"
+                                    placeholder="bg-green-600">
+                                <span class="px-4 py-2 rounded-xl text-white"
+                                    :class="leadStatus.color || 'bg-gray-300'">
+                                    Preview
+                                </span>
+                            </div>
                         </div>
 
+                        {{-- Toggles --}}
                         <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <label class="block font-medium text-gray-700 mb-1">Status</label>
+                                <label class="text-sm font-semibold text-gray-600">Active</label>
                                 <select x-model="leadStatus.is_active"
-                                    class="w-full p-3 rounded-xl border bg-gray-50 dark:bg-gray-700">
+                                    class="mt-1 w-full p-3 rounded-xl border bg-gray-50 dark:bg-gray-700">
                                     <option value="1">Active</option>
                                     <option value="0">Inactive</option>
                                 </select>
                             </div>
+
                             <div>
-                                <label class="block font-medium text-gray-700 mb-1">Global</label>
+                                <label class="text-sm font-semibold text-gray-600">Global</label>
                                 <select x-model="leadStatus.is_global"
-                                    class="w-full p-3 rounded-xl border bg-gray-50 dark:bg-gray-700">
-                                    <option value="1">Yes</option>
+                                    class="mt-1 w-full p-3 rounded-xl border bg-gray-50 dark:bg-gray-700">
                                     <option value="0">No</option>
+                                    <option value="1">Yes</option>
                                 </select>
                             </div>
+                            <div>
+                                <label class="text-sm font-semibold text-gray-600">Order</label>
+                                <input type="number" x-model="leadStatus.order_by"
+                                    class="mt-1 w-full p-3 rounded-xl border bg-gray-50 dark:bg-gray-700"
+                                    placeholder="0">
+                            </div>
+
                         </div>
 
-                        <div class="flex justify-end gap-2 mt-4">
+                        <!-- Actions -->
+                        <div class="flex justify-end gap-3 pt-4">
                             <button type="button" @click="closeModal()"
-                                class="px-4 py-2 bg-gray-300 text-gray-800 rounded-xl">Cancel</button>
-                            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-xl">Save</button>
+                                class="px-5 py-2 rounded-xl bg-gray-200 hover:bg-gray-300">
+                                Cancel
+                            </button>
+                            <button type="submit"
+                                class="px-6 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow">
+                                Save
+                            </button>
                         </div>
                     </form>
-
                 </div>
             </div>
+
         </div>
         <script>
             function leadStatusModal() {
@@ -139,11 +174,14 @@
 
                     leadStatus: {
                         id: '',
+                        company_id: '',
                         name: '',
                         color: '',
+                        order_by: 0,
                         is_active: 1,
                         is_global: 0
                     },
+
 
                     table: null,
 
@@ -178,6 +216,11 @@
                                 {
                                     data: 'is_active',
                                     name: 'is_active',
+                                    searchable: false
+                                },
+                                {
+                                    data: 'order_by',
+                                    name: 'order_by',
                                     searchable: false
                                 },
                                 {
@@ -236,19 +279,26 @@
                         this.modalTitle = lead ? 'Edit Lead Status' : 'Add Lead Status';
 
                         this.leadStatus = lead ? {
-                            ...lead,
+                            id: lead.id,
+                            company_id: lead.company_id ?? '',
+                            name: lead.name,
+                            color: lead.color,
+                            order_by: lead.order_by ?? 0,
                             is_active: lead.is_active ? 1 : 0,
                             is_global: lead.is_global ? 1 : 0,
                         } : {
                             id: '',
+                            company_id: '',
                             name: '',
                             color: '',
+                            order_by: 0,
                             is_active: 1,
                             is_global: 0
                         };
 
                         this.modalOpen = true;
                     },
+
 
                     closeModal() {
                         this.modalOpen = false;
@@ -257,6 +307,7 @@
                     saveLeadStatus() {
                         const payload = {
                             ...this.leadStatus,
+                            company_id: this.leadStatus.is_global == 1 ? null : this.leadStatus.company_id,
                             is_active: this.leadStatus.is_active == 1,
                             is_global: this.leadStatus.is_global == 1
                         };
@@ -277,13 +328,11 @@
                                 this.closeModal();
                             },
                             error: err => {
-                                this.toast(
-                                    err.responseJSON?.message || 'Validation error',
-                                    'error'
-                                );
+                                this.toast(err.responseJSON?.message || 'Validation error', 'error');
                             }
                         });
                     },
+
 
                     // ✅ SweetAlert Toast (Global)
                     toast(message, icon = 'success') {

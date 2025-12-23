@@ -15,6 +15,7 @@ class LeadStatus extends Model
         'company_id',
         'name',
         'color',
+        'order_by',   // ✅ add this
         'is_active',
         'is_global',
     ];
@@ -22,6 +23,7 @@ class LeadStatus extends Model
     protected $casts = [
         'is_active' => 'boolean',
         'is_global' => 'boolean',
+        'order_by'  => 'integer',
     ];
 
     /**
@@ -33,5 +35,13 @@ class LeadStatus extends Model
             $q->where('is_global', true)
               ->orWhere('company_id', $companyId);
         });
+    }
+
+    /**
+     * Scope for default ordering
+     */
+    public function scopeOrdered($query)
+    {
+        return $query->orderBy('order_by')->orderBy('id');
     }
 }

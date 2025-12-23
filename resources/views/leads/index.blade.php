@@ -1,29 +1,3 @@
-@php
-    $statusColors = [
-        'Pending' => 'bg-lime-500',
-        'Approved' => 'bg-green-500',
-        'Quotation Sent' => 'bg-indigo-500',
-        'Follow-up Taken' => 'bg-purple-500',
-        'Converted' => 'bg-teal-500',
-        'Lost' => 'bg-gray-500',
-        'On Hold' => 'bg-amber-500',
-        'Rejected' => 'bg-red-500',
-        'In Progress' => 'bg-emerald-600',
-    ];
-
-    $statusIcons = [
-        'Pending' => 'fa-hourglass-half',
-        'Approved' => 'fa-circle-check',
-        'Quotation Sent' => 'fa-file-invoice',
-        'Follow-up Taken' => 'fa-headset',
-        'Converted' => 'fa-share-from-square',
-        'Lost' => 'fa-user-xmark',
-        'On Hold' => 'fa-pause-circle',
-        'In Progress' => 'fa-hourglass-half',
-        'Rejected' => 'fa-circle-xmark',
-    ];
-@endphp
-
 <x-app-layout>
     <div x-data="leadModals()" x-cloak class="min-h-screen ">
 
@@ -89,26 +63,32 @@
                 <!-- Bulk Assign bar (visible when selections exist) -->
 
 
-                <div class="bg-white dark:bg-gray-800 rounded-lg  p-4 shadow-sm overflow-x-auto">
+                <div class="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm overflow-x-auto">
                     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mt-4">
 
-                        @foreach ($statusOthersCounts as $status => $count)
+                        @foreach ($statusOthersCounts as $status => $data)
                             <div
                                 class="flex items-center gap-3 bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border dark:border-gray-700">
+
                                 <div
-                                    class="w-10 h-10 flex items-center justify-center rounded-lg text-white {{ $statusColors[$status] ?? 'bg-gray-400' }}">
-                                    <i class="fa-solid {{ $statusIcons[$status] ?? 'fa-circle-info' }}"></i>
+                                    class="w-10 h-10 flex items-center justify-center rounded-lg text-white {{ $data['color'] }}">
+                                    <i class="fa-solid {{ $data['icon'] }}"></i>
                                 </div>
+
                                 <div class="flex flex-col">
-                                    <span
-                                        class="text-sm text-gray-500 dark:text-gray-400 font-medium">{{ $status }}</span>
-                                    <span
-                                        class="text-xl font-semibold text-gray-800 dark:text-gray-100">{{ $count }}</span>
+                                    <span class="text-sm text-gray-500 dark:text-gray-400 font-medium">
+                                        {{ $status }}
+                                    </span>
+                                    <span class="text-xl font-semibold text-gray-800 dark:text-gray-100">
+                                        {{ $data['count'] }}
+                                    </span>
                                 </div>
                             </div>
                         @endforeach
+
                     </div>
                 </div>
+
                 <div class="bg-white dark:bg-gray-800 rounded-lg  p-4 shadow-sm overflow-x-auto">
                     <div class="flex flex-wrap gap-2 mb-4 items-center">
                         <input type="text" id="filter-id" placeholder="Search ID"

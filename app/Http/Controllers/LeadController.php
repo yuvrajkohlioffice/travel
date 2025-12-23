@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Yajra\DataTables\DataTables;
 use Illuminate\Support\Str;
+use App\Models\LeadStatus;
 use Carbon\Carbon;
 
 use App\Models\LeadUser;
@@ -26,6 +27,18 @@ class LeadController extends Controller
     public function index(Request $request)
     {
         $user = auth()->user();
+        $companyId = $user->company_id;
+
+        $leadStatuses = LeadStatus::where('is_active', true)
+            ->where(function ($q) use ($companyId) {
+                $q->where('company_id', $companyId) // company-specific
+                    ->orWhereNull('company_id'); // global
+            })
+            ->orderByRaw('company_id IS NULL') // company first, global after
+            ->orderBy('order_by', 'asc') // then by custom order
+            ->get()
+            ->unique('name') // ensure unique names
+            ->values();
 
         // Fetch required users and packages once
         $users = User::select('id', 'name')->get();
@@ -65,12 +78,30 @@ class LeadController extends Controller
         ];
 
         // Status counts using single DB query
-        $statusList = ['Pending', 'Approved', 'Quotation Sent', 'In Progress', 'Follow-up Taken', 'Converted', 'Lost', 'On Hold', 'Rejected'];
+        $statusList = $leadStatuses->pluck('name')->toArray();
         $statusCountsRaw = (clone $baseQuery)->select('status', DB::raw('COUNT(*) as total'))->groupBy('status')->pluck('total', 'status')->toArray();
 
-        $statusOthersCounts = array_merge(['All' => $timeCounts['all']], array_fill_keys($statusList, 0));
-        foreach ($statusCountsRaw as $status => $count) {
-            $statusOthersCounts[$status] = $count;
+        /*
+|--------------------------------------------------------------------------
+| Build status cards (count + color + icon)
+|--------------------------------------------------------------------------
+*/
+        $statusOthersCounts = [];
+
+        /* ALL CARD */
+        $statusOthersCounts['All'] = [
+            'count' => $timeCounts['all'],
+            'color' => 'bg-gray-500 text-white',
+            'icon' => 'fa-layer-group',
+        ];
+
+        /* STATUS CARDS FROM DB */
+        foreach ($leadStatuses as $status) {
+            $statusOthersCounts[$status->name] = [
+                'count' => $statusCountsRaw[$status->name] ?? 0,
+                'color' => $status->color ?? 'bg-gray-400 text-white',
+                'icon' => $status->icon ?? 'fa-circle-info',
+            ];
         }
 
         // Main paginated query with eager loading to prevent N+1
@@ -98,6 +129,17 @@ class LeadController extends Controller
     public function getLeadsData(Request $request)
     {
         $user = auth()->user();
+        $companyId = auth()->user()->company_id;
+
+        $leadStatuses = LeadStatus::where('is_active', true)
+            ->where(function ($q) use ($companyId) {
+                $q->where('company_id', $companyId)->orWhereNull('company_id'); // include global
+            })
+            ->orderByRaw('company_id IS NULL') // company first, global next
+            ->orderBy('order_by', 'asc') // then by order_by
+            ->get()
+            ->unique('name') // avoid duplicate names
+            ->values();
 
         $query = Lead::with(['package:id,package_name', 'latestAssignedUser.user:id,name', 'latestAssignedUser.assignedBy:id,name', 'createdBy:id,name', 'lastFollowup.user:id,name'])->orderByDesc('created_at');
 
@@ -179,7 +221,13 @@ class LeadController extends Controller
             ->addColumn('reminder', fn($lead) => view('leads.partials.reminder', compact('lead'))->render())
             ->addColumn('inquiry', fn($lead) => $lead->package->package_name ?? Str::limit($lead->inquiry_text, 20))
             ->addColumn('proposal', fn($lead) => view('leads.partials.proposal', compact('lead'))->render())
-            ->addColumn('status', fn($lead) => view('leads.partials.status_dropdown', compact('lead'))->render())
+            ->addColumn('status', function ($lead) use ($leadStatuses) {
+                return view('leads.partials.status_dropdown', [
+                    'lead' => $lead,
+                    'leadStatuses' => $leadStatuses,
+                ])->render();
+            })
+
             ->addColumn('assigned', fn($lead) => view('leads.partials.assigned', compact('lead'))->render())
             ->addColumn('action', fn($lead) => view('leads.partials.actions', compact('lead'))->render())
             ->rawColumns(['checkbox', 'client_info', 'location', 'reminder', 'inquiry', 'proposal', 'status', 'assigned', 'action'])
