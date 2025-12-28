@@ -21,9 +21,18 @@ class User extends Authenticatable
         'email',
         'password',
         'role_id',
+        'company_id',
         'whatsapp_api_key',
         'status',
-        'company_id', // linked to companies table
+
+        // ✅ SMTP fields
+        'smtp_host',
+        'smtp_port',
+        'smtp_encryption',
+        'smtp_username',
+        'smtp_password',
+        'smtp_from_email',
+        'smtp_from_name',
     ];
 
     /**
@@ -34,6 +43,9 @@ class User extends Authenticatable
         'remember_token',
         'two_factor_recovery_codes',
         'two_factor_secret',
+
+        // 🔐 hide sensitive smtp password
+        'smtp_password',
     ];
 
     /**
@@ -50,10 +62,17 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'created_at' => 'datetime',
         'password' => 'hashed',
+
+        // ✅ SMTP casts
+        'smtp_port' => 'integer',
     ];
 
+    /* -----------------------------------------------------------------
+     | Relationships
+     |------------------------------------------------------------------*/
+
     /**
-     * Relationship: User belongs to a Company
+     * User belongs to a Company
      */
     public function company()
     {
@@ -61,10 +80,36 @@ class User extends Authenticatable
     }
 
     /**
-     * Relationship: User belongs to a Role
+     * User belongs to a Role
      */
     public function role()
     {
         return $this->belongsTo(Role::class);
     }
+
+    /* -----------------------------------------------------------------
+     | 🔐 SMTP Password Encryption / Decryption
+     |------------------------------------------------------------------*/
+
+    /**
+     * Encrypt SMTP password before saving
+     */
+    public function setSmtpPasswordAttribute($value)
+{
+    $this->attributes['smtp_password'] = $value
+        ? encrypt($value)
+        : null;
+}
+
+public function getSmtpPasswordAttribute($value)
+{
+    if (!$value) return null;
+
+    try {
+        return decrypt($value);
+    } catch (\Exception $e) {
+        return $value; // backward compatibility
+    }
+}
+
 }

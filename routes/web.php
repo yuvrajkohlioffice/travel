@@ -4,73 +4,62 @@ use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 
 // Controllers
-use App\Http\Controllers\{CompanyController,FollowupReasonController,LeadStatusController, MessageTemplateController, CarController, DashboardController, UserController, InvoiceController, PackageTypeController, PackageCategoryController, DifficultyTypeController, HotelController, RoleController, PackageController, LeadController, FollowupController, PaymentController, WhatsAppController};
+use App\Http\Controllers\{CompanyController, FollowupReasonController, LeadStatusController, MessageTemplateController, CarController, DashboardController, UserController, InvoiceController, PackageTypeController, PackageCategoryController, DifficultyTypeController, HotelController, RoleController, PackageController, LeadController, FollowupController, PaymentController, WhatsAppController};
 use Livewire\Volt\Volt;
 
 use Symfony\Component\Process\Process;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Illuminate\Support\Facades\Artisan;
 
-
-
 Route::get('/link-storage', function () {
-    
-        Artisan::call('storage:link');
-        $output = Artisan::output();
-        return back()->with('success', "Storage linked successfully! \n$output");
-    
+    Artisan::call('storage:link');
+    $output = Artisan::output();
+    return back()->with('success', "Storage linked successfully! \n$output");
 });
 
 Route::get('/deploy', function () {
     $messages = [];
 
-    
-        $npm = new Process(['npm', 'run', 'build']);
-        $npm->run();
+    $npm = new Process(['npm', 'run', 'build']);
+    $npm->run();
 
-        if (!$npm->isSuccessful()) {
-            throw new ProcessFailedException($npm);
-        }
-        $messages[] = "NPM build completed successfully.";
+    if (!$npm->isSuccessful()) {
+        throw new ProcessFailedException($npm);
+    }
+    $messages[] = 'NPM build completed successfully.';
 
-        // 2. Run optimize
-        Artisan::call('optimize');
-        $messages[] = "Artisan optimize executed successfully.";
+    // 2. Run optimize
+    Artisan::call('optimize');
+    $messages[] = 'Artisan optimize executed successfully.';
 
-        // 3. Run migrate
-        Artisan::call('migrate', ['--force' => true]);
-        $messages[] = "Database migrations executed successfully.";
+    // 3. Run migrate
+    Artisan::call('migrate', ['--force' => true]);
+    $messages[] = 'Database migrations executed successfully.';
 
-        // 4. Run storage link
-        Artisan::call('storage:link');
-        $messages[] = "Storage linked successfully.";
+    // 4. Run storage link
+    Artisan::call('storage:link');
+    $messages[] = 'Storage linked successfully.';
 
-        // Join all messages into one flash message
-        return back()->with('success', implode(' | ', $messages));
-    
+    // Join all messages into one flash message
+    return back()->with('success', implode(' | ', $messages));
 })->middleware('auth');
 
 Route::get('/optimize-app', function () {
-   
-        Artisan::call('optimize');
-        $output = Artisan::output();
-        return back()->with('success', "App optimized successfully! \n$output");
-   
+    Artisan::call('optimize');
+    $output = Artisan::output();
+    return back()->with('success', "App optimized successfully! \n$output");
 });
 
 Route::get('/run-npm-build', function () {
- 
-        $process = new Process(['npm', 'run', 'build']);
-        $process->run();
+    $process = new Process(['npm', 'run', 'build']);
+    $process->run();
 
-        if (!$process->isSuccessful()) {
-            throw new ProcessFailedException($process);
-        }
+    if (!$process->isSuccessful()) {
+        throw new ProcessFailedException($process);
+    }
 
-        return back()->with('success', 'NPM Build completed successfully! Output: ' . $process->getOutput());
-   
+    return back()->with('success', 'NPM Build completed successfully! Output: ' . $process->getOutput());
 });
-
 
 /*
 |--------------------------------------------------------------------------
@@ -130,6 +119,36 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         | Lead Management
         |--------------------------------------------------------------------------
         */
+    Route::get('/composer-dump', function () {
+        // 🔒 Only allow admin
+        abort_unless(auth()->user()->role_id === 1, 403);
+
+        // 🔹 Replace this with the path you got from `which composer`
+        $composerPath = '/usr/bin/composer';
+
+        $process = new Process([$composerPath, 'dump-autoload']);
+        $process->setWorkingDirectory(base_path()); // Laravel root
+        $process->setTimeout(300); // 5 minutes
+
+        $process->run();
+
+        if (!$process->isSuccessful()) {
+            // show detailed error output for debugging
+            $errorOutput = $process->getErrorOutput();
+            return back()->with('error', "Composer failed: \n$errorOutput");
+        }
+
+        return back()->with('success', "✅ Composer dump-autoload executed successfully! \n" . $process->getOutput());
+    });
+    Route::get('/test-mail', function () {
+        setUserMailConfig(auth()->user());
+
+        Mail::raw('SMTP test successful!', function ($message) {
+            $message->to('yuvrajkohli8090ylt@gmail.com')->subject('SMTP Test');
+        });
+
+        return 'Mail sent';
+    });
     Route::patch('/leads/{lead}/status', [LeadController::class, 'updateStatus'])->name('leads.updateStatus');
 
     Route::get('/leads/data', [LeadController::class, 'getLeadsData'])->name('leads.data');
@@ -227,11 +246,11 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         | Dashboard
         |--------------------------------------------------------------------------
         */
-       // routes/api.php
- Route::get('/followup-reasons-api', [FollowupReasonController::class, 'indexApi']);
+    // routes/api.php
+    Route::get('/followup-reasons-api', [FollowupReasonController::class, 'indexApi']);
 
-Route::resource('followup-reasons', FollowupReasonController::class)->except(['create', 'show']);
-Route::resource('lead-statuses', LeadStatusController::class)->except(['create', 'show']);
+    Route::resource('followup-reasons', FollowupReasonController::class)->except(['create', 'show']);
+    Route::resource('lead-statuses', LeadStatusController::class)->except(['create', 'show']);
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 });

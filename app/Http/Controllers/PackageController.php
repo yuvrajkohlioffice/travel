@@ -292,94 +292,81 @@ class PackageController extends Controller
         ]);
     }
 
-   public function sendPackageEmail(Request $request)
-{
-    $request->validate([
-        'lead_name'  => 'required|string',
-        'package_id' => 'required|exists:packages,id',
-        'email'      => 'required|email',
-        'media_type' => 'nullable|string|in:template,banner,docs',
-    ]);
+    public function sendPackageEmail(Request $request)
+    {
+        $request->validate([
+            'lead_name' => 'required|string',
+            'package_id' => 'required|exists:packages,id',
+            'email' => 'required|email',
+            'media_type' => 'nullable|string|in:template,banner,docs',
+        ]);
 
-    $package  = Package::with('messageTemplate')->findOrFail($request->package_id);
-    $template = $package->messageTemplate;
-    $disk     = Storage::disk('public');
+        // ✅ Logged in user
+        $user = auth()->user();
 
-    // -------------------------------
-    // Normalize DB fields
-    // -------------------------------
-    $normalizeToArray = fn($value) => match(true) {
-        empty($value) => [],
-        is_array($value) => array_values(array_filter($value)),
-        str_contains($value, ',') => array_values(array_filter(array_map('trim', explode(',', $value)))),
-        default => [$value],
-    };
+        // ✅ Apply user SMTP credentials (DB based)
+        setUserMailConfig($user);
 
-    $packageDocs  = $normalizeToArray($package->package_docs);
-    $bannerArr    = $package->package_banner ? [$package->package_banner] : [];
-    $templateDocs = $template?->email_media ? [$template->email_media] : [];
+        // -------------------------------
+        // Load package & template
+        // -------------------------------
+        $package = Package::with('messageTemplate')->findOrFail($request->package_id);
+        $template = $package->messageTemplate;
+        $disk = Storage::disk('public');
 
-    // -------------------------------
-    // Select media file
-    // -------------------------------
-    $mediaFile = null;
-    switch ($request->media_type) {
-        case 'template': $mediaFile = $templateDocs[0] ?? null; break;
-        case 'banner':   $mediaFile = $bannerArr[0] ?? null; break;
-        case 'docs':     $mediaFile = $packageDocs[0] ?? null; break;
-    }
+        // -------------------------------
+        // Normalize fields
+        // -------------------------------
+        $normalizeToArray = fn($value) => match (true) {
+            empty($value) => [],
+            is_array($value) => array_values(array_filter($value)),
+            is_string($value) && str_contains($value, ',') => array_values(array_filter(array_map('trim', explode(',', $value)))),
+            default => [$value],
+        };
 
-    $documents    = [];
-    $documentUrls = [];
+        $packageDocs = $normalizeToArray($package->package_docs);
+        $bannerArr = $package->package_banner ? [$package->package_banner] : [];
+        $templateDocs = $template?->email_media ? [$template->email_media] : [];
 
-    // -------------------------------
-    // Attach files & generate URLs
-    // -------------------------------
-    $allFiles = [];
+        // -------------------------------
+        // Pick media
+        // -------------------------------
+        $allFiles = match ($request->media_type) {
+            'docs' => $packageDocs,
+            'banner' => $bannerArr,
+            'template' => $templateDocs,
+            default => [],
+        };
 
-    if ($request->media_type === 'docs') {
-        $allFiles = $packageDocs;
-    } elseif ($request->media_type === 'banner') {
-        $allFiles = $bannerArr;
-    } elseif ($request->media_type === 'template') {
-        $allFiles = $templateDocs;
-    }
+        $documents = [];
+        $documentUrls = [];
 
-    foreach ($allFiles as $file) {
-        if ($disk->exists($file)) {
-            $documents[]    = $disk->path($file);
-            $documentUrls[] = asset('storage/' . ltrim($file, '/'));
+        foreach ($allFiles as $file) {
+            if ($disk->exists($file)) {
+                $documents[] = $disk->path($file);
+                $documentUrls[] = asset('storage/' . ltrim($file, '/'));
+            }
         }
+
+        // -------------------------------
+        // Subject & Body
+        // -------------------------------
+        $subject = $template->email_subject ?? "Package Details: {$package->package_name}";
+
+        $body = $template->email_body ?? "Hello {$request->lead_name}, please find the package details.";
+
+        // -------------------------------
+        // Send email (USER SMTP)
+        // -------------------------------
+        Mail::to($request->email)->send(new SharePackageMail($request->lead_name, $subject, $body, $documents, $documentUrls));
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Package email sent successfully using user SMTP!',
+            'media_type' => $request->media_type,
+            'documents_sent' => $documentUrls,
+        ]);
     }
-
-    // -------------------------------
-    // Subject & Body
-    // -------------------------------
-    $subject = $template->email_subject ?? "Package Details: {$package->package_name}";
-    $body    = $template->email_body ?? "Hello, please find the package details for {$package->package_name}.";
-
-    // -------------------------------
-    // Send Email
-    // -------------------------------
-    Mail::to($request->email)->send(
-        new SharePackageMail(
-            $request->lead_name,
-            $subject,
-            $body,
-            $documents,       // local attachment paths
-            $documentUrls      // URLs for blade display
-        )
-    );
-
-    return response()->json([
-        'success'        => true,
-        'message'        => 'Package email sent successfully!',
-        'media_type'     => $request->media_type,
-        'media_used'     => $documentUrls[0] ?? null,
-        'documents_sent' => $documentUrls,
-    ]);
-}
-
 
     public function filterPackageItems(Request $request)
     {
