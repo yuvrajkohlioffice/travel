@@ -63,17 +63,19 @@
                         ]" :excel="true" :print="true"
                             title="Packages List" resourceName="Packages">
                             @foreach ($packages as $package)
-                                <tr
-                                    class="border-b border-gray-200 dark:border-gray-700
-                   hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors
-                   {{ $package->trashed() ? 'bg-red-50 opacity-70' : '' }}">
+                               <tr
+    class="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+    @if($package->trashed())
+        style="background-color:#fef2f2 !important;"
+    @endif
+>
                                     {{-- ID --}}
-                                    <td class="p-3 text-center text-sm font-medium text-gray-700 {{ $package->trashed() ? 'bg-red-50 opacity-70' : '' }} ">
+                                    <td class="p-3 text-center text-sm font-medium text-gray-700">
                                         {{ $package->id }}
                                     </td>
 
                                     {{-- Name --}}
-                                    <td class="p-3 text-sm font-semibold text-gray-800 {{ $package->trashed() ? 'bg-red-50 opacity-70' : '' }}">
+                                    <td class="p-3 text-sm font-semibold text-gray-800">
                                         <div class="truncate max-w-[260px]">
                                             {{ $package->package_name }}
                                         </div>
