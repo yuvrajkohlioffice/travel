@@ -73,7 +73,7 @@
                                     </td>
 
                                     {{-- Name --}}
-                                    <td class="p-3 text-sm font-semibold text-gray-800">
+                                    <td class="p-3 text-sm font-semibold text-gray-800 {{ $package->trashed() ? 'bg-red-50 opacity-70' : '' }}">
                                         <div class="truncate max-w-[260px]">
                                             {{ $package->package_name }}
                                         </div>
