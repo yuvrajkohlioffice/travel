@@ -78,7 +78,7 @@
                 <div class="mt-4">
                     <label class="block font-semibold text-gray-700 mb-1">Select Media Type</label>
                     <select x-model="selectedMediaType" class="w-full p-2 border rounded-xl">
-                        <option value="template">Template</option>
+                        <option value="banner">Template</option>
                         <option value="banner">Banner</option>
                         <option value="docs">Document</option>
                     </select>

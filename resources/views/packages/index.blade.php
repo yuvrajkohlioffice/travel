@@ -10,7 +10,8 @@
                         <i class="fa-solid fa-box-open text-gray-700 text-lg"></i>
                     </div>
                     <div>
-                        <h1 class="text-2xl md:text-3xl font-semibold text-gray-800 dark:text-gray-200 leading-tight">Packages</h1>
+                        <h1 class="text-2xl md:text-3xl font-semibold text-gray-800 dark:text-gray-200 leading-tight">
+                            Packages</h1>
                         <p class="text-sm text-gray-500 mt-0.5">Manage all travel packages — create, edit, link
                             relations, view and delete.</p>
                     </div>
@@ -61,21 +62,20 @@
                             'Action',
                         ]" :excel="true" :print="true"
                             title="Packages List" resourceName="Packages">
-
                             @foreach ($packages as $package)
-                                <tr class="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors transition-colors">
+                                <tr
+                                    class="border-b border-gray-200 dark:border-gray-700
+                   hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors
+                   {{ $package->trashed() ? 'bg-red-50 opacity-70' : '' }}">
                                     {{-- ID --}}
-                                    <td class="p-3 whitespace-nowrap text-center text-sm text-gray-700 font-medium">
+                                    <td class="p-3 text-center text-sm font-medium text-gray-700">
                                         {{ $package->id }}
                                     </td>
 
                                     {{-- Name --}}
-                                    <td class="p-3 text-sm text-gray-800 font-medium">
-                                        <div class="flex flex-col md:flex-row md:items-center md:gap-3">
-                                            <div class="leading-tight">
-                                                <div class="text-sm font-semibold truncate max-w-[260px]">
-                                                    {{ $package->package_name }}</div>
-                                            </div>
+                                    <td class="p-3 text-sm font-semibold text-gray-800">
+                                        <div class="truncate max-w-[260px]">
+                                            {{ $package->package_name }}
                                         </div>
                                     </td>
 
@@ -88,6 +88,8 @@
                                     <td class="p-3 text-center text-sm text-gray-600">
                                         {{ $package->packageCategory->name ?? '-' }}
                                     </td>
+
+                                    {{-- Company --}}
                                     <td class="p-3 text-center text-sm text-gray-600">
                                         {{ $package->company->company_name ?? '-' }}
                                     </td>
@@ -110,54 +112,74 @@
                                     {{-- Price --}}
                                     <td class="p-3 text-center text-sm">
                                         <span
-                                            class="inline-flex items-center px-2 py-1 rounded-md text-green-700 bg-green-50 border border-green-100 font-semibold">
+                                            class="inline-flex items-center px-2 py-1 rounded-md
+                             text-green-700 bg-green-50 border border-green-100 font-semibold">
                                             ₹{{ number_format($package->package_price) }}
                                         </span>
                                     </td>
 
                                     {{-- Actions --}}
-                                    <td class="p-3 text-sm text-gray-700">
-                                        <div class="flex flex-wrap items-center justify-center gap-2">
-                                            {{-- Edit (link styled subtle) --}}
-                                            <a href="{{ route('packages.edit', $package->id) }}"
-                                                class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 bg-white hover:shadow-sm hover:bg-gray-50 transition text-sm">
-                                                <i class="fa-solid fa-pen-to-square"></i>
-                                                <span class="hidden sm:inline">Edit</span>
-                                            </a>
+                                    <td class="p-3 text-sm">
+                                        <div class="flex flex-wrap justify-center gap-2">
+                                            @if (!$package->trashed())
+                                                {{-- Edit --}}
+                                                <a href="{{ route('packages.edit', $package->id) }}"
+                                                    class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg
+                                  border bg-white hover:bg-gray-50 text-sm">
+                                                    <i class="fa-solid fa-pen-to-square"></i>
+                                                    <span class="hidden sm:inline">Edit</span>
+                                                </a>
 
-                                            {{-- Show --}}
-                                            <a href="{{ route('packages.show', $package->id) }}"
-                                                class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition text-sm shadow-sm">
-                                                <i class="fa-solid fa-eye"></i>
-                                                <span class="hidden sm:inline">Show</span>
-                                            </a>
+                                                {{-- Show --}}
+                                                <a href="{{ route('packages.show', $package->id) }}"
+                                                    class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg
+                                  bg-indigo-600 text-white hover:bg-indigo-700 text-sm">
+                                                    <i class="fa-solid fa-eye"></i>
+                                                    <span class="hidden sm:inline">Show</span>
+                                                </a>
 
-                                            {{-- Relations --}}
-                                            <a href="{{ route('packages.edit-relations', $package->id) }}"
-                                                class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition text-sm shadow-sm">
-                                                <i class="fa-solid fa-link"></i>
-                                                <span class="hidden sm:inline">Package Details</span>
-                                            </a>
+                                                {{-- Package Details --}}
+                                                <a href="{{ route('packages.edit-relations', $package->id) }}"
+                                                    class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg
+                                  bg-emerald-600 text-white hover:bg-emerald-700 text-sm">
+                                                    <i class="fa-solid fa-link"></i>
+                                                    <span class="hidden sm:inline">Package Details</span>
+                                                </a>
 
-                                            {{-- Delete --}}
-                                            <form action="{{ route('packages.destroy', $package->id) }}" method="POST"
-                                                class="inline"
-                                                onsubmit="return confirmDelete(event, '{{ addslashes($package->package_name) }}')">
-                                                @csrf
-                                                @method('DELETE')
+                                                {{-- Delete --}}
+                                                <form action="{{ route('packages.destroy', $package->id) }}"
+                                                    method="POST"
+                                                    onsubmit="return confirmDelete(event, '{{ addslashes($package->package_name) }}')">
+                                                    @csrf
+                                                    @method('DELETE')
 
-                                                <button type="submit"
-                                                    class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-600 text-white hover:bg-red-700 transition text-sm shadow-sm">
-                                                    <i class="fa-solid fa-trash"></i>
-                                                    <span class="hidden sm:inline">Delete</span>
-                                                </button>
-                                            </form>
+                                                    <button type="submit"
+                                                        class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg
+                                       bg-red-600 text-white hover:bg-red-700 text-sm">
+                                                        <i class="fa-solid fa-trash"></i>
+                                                        <span class="hidden sm:inline">Delete</span>
+                                                    </button>
+                                                </form>
+                                            @else
+                                                {{-- Restore --}}
+                                                <form action="{{ route('packages.restore', $package->id) }}"
+                                                    method="POST">
+                                                    @csrf
+                                                    @method('PATCH')
+                                                    <button
+                                                        class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg
+                                       bg-green-600 text-white hover:bg-green-700 text-sm">
+                                                        <i class="fa-solid fa-rotate-left"></i>
+                                                        Restore
+                                                    </button>
+                                                </form>
+                                            @endif
                                         </div>
                                     </td>
                                 </tr>
                             @endforeach
-
                         </x-data-table>
+
                     </div>
                 </div>
             </section>

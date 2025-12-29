@@ -21,6 +21,14 @@ use Illuminate\Support\Facades\Auth;
 
 class PackageController extends Controller
 {
+    public function restore($id)
+{
+    $package = Package::withTrashed()->findOrFail($id);
+    $package->restore();
+
+    return redirect()->route('packages.index')
+        ->with('success', 'Package restored successfully!');
+}
     public function index()
     {
         $query = Package::with(['packageType', 'packageCategory', 'difficultyType']);

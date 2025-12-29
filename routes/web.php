@@ -209,6 +209,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         | Packages
         |--------------------------------------------------------------------------
         */
+    Route::patch('packages/{id}/restore', [PackageController::class, 'restore'])->name('packages.restore');
     Route::delete('packages/item/{item}', [PackageController::class, 'deleteRelation'])->name('packages.item.delete');
 
     Route::put('packages/item/{item}', [PackageController::class, 'updatePackageItem'])->name('packages.item.update');
