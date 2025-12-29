@@ -68,7 +68,7 @@
                    hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors
                    {{ $package->trashed() ? 'bg-red-50 opacity-70' : '' }}">
                                     {{-- ID --}}
-                                    <td class="p-3 text-center text-sm font-medium text-gray-700">
+                                    <td class="p-3 text-center text-sm font-medium text-gray-700 {{ $package->trashed() ? 'bg-red-50 opacity-70' : '' }} ">
                                         {{ $package->id }}
                                     </td>
 
