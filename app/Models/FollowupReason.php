@@ -11,24 +11,14 @@ class FollowupReason extends Model
 
     /* ================= FILLABLE ================= */
 
-    protected $fillable = [
-        'company_id',
-        'name',
-        'remark',
-        'date',
-        'time',
-        'email_template',
-        'whatsapp_template',
-        'is_active',
-        'is_global',
-    ];
+    protected $fillable = ['company_id', 'name', 'remark', 'date', 'time', 'email_template', 'whatsapp_template', 'is_active', 'lead_status_id', 'is_global'];
 
     /* ================= CASTS ================= */
 
     protected $casts = [
-        'remark'    => 'boolean',
-        'date'      => 'boolean',
-        'time'      => 'boolean',
+        'remark' => 'boolean',
+        'date' => 'boolean',
+        'time' => 'boolean',
         'is_active' => 'boolean',
         'is_global' => 'boolean',
     ];
@@ -45,6 +35,11 @@ class FollowupReason extends Model
     /**
      * Only active reasons
      */
+    public function leadStatus()
+    {
+        return $this->belongsTo(LeadStatus::class);
+    }
+
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
@@ -58,8 +53,7 @@ class FollowupReason extends Model
     public function scopeCompanyOrGlobal($query, $companyId)
     {
         return $query->where(function ($q) use ($companyId) {
-            $q->where('company_id', $companyId)
-              ->orWhere('is_global', true);
+            $q->where('company_id', $companyId)->orWhere('is_global', true);
         });
     }
 

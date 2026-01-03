@@ -15,7 +15,7 @@ class LeadStatus extends Model
         'company_id',
         'name',
         'color',
-        'order_by',   // ✅ add this
+        'order_by', // ✅ add this
         'is_active',
         'is_global',
     ];
@@ -23,8 +23,12 @@ class LeadStatus extends Model
     protected $casts = [
         'is_active' => 'boolean',
         'is_global' => 'boolean',
-        'order_by'  => 'integer',
+        'order_by' => 'integer',
     ];
+    public function followupReasons()
+    {
+        return $this->hasMany(FollowupReason::class);
+    }
 
     /**
      * Scope to fetch statuses that are global or belong to a specific company
@@ -32,8 +36,7 @@ class LeadStatus extends Model
     public function scopeForCompany($query, $companyId)
     {
         return $query->where(function ($q) use ($companyId) {
-            $q->where('is_global', true)
-              ->orWhere('company_id', $companyId);
+            $q->where('is_global', true)->orWhere('company_id', $companyId);
         });
     }
 
