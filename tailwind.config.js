@@ -25,6 +25,6 @@ export default {
     safelist: [
         'bg-lime-500', 'bg-green-500', 'bg-indigo-500', 'bg-purple-500',
         'bg-teal-500', 'bg-gray-500', 'bg-amber-500', 'bg-red-500',
-        'bg-gray-300', 'text-white'
+        'bg-gray-300', 'text-white','bg-fuchsia-500'
     ],
 };

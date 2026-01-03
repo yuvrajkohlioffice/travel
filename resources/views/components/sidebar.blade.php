@@ -7,80 +7,179 @@
         <i class="fas fa-route text-blue-500"></i>
         <span>TRAVEL</span>
     </div>
-@if (session('success'))
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            Swal.fire({
-                toast: true,
-                position: 'top-end',
-                icon: 'success',
-                title: "{{ session('success') }}",
-                showConfirmButton: false,
-                timer: 2500,
-                timerProgressBar: true
+    @if (session('success'))
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'success',
+                    title: "{{ session('success') }}",
+                    showConfirmButton: false,
+                    timer: 2500,
+                    timerProgressBar: true
+                });
             });
-        });
-    </script>
-@endif
+        </script>
+    @endif
 
-@if (session('error'))
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            Swal.fire({
-                toast: true,
-                position: 'top-end',
-                icon: 'error',
-                title: "{{ session('error') }}",
-                showConfirmButton: false,
-                timer: 2500,
-                timerProgressBar: true
+    @if (session('error'))
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'error',
+                    title: "{{ session('error') }}",
+                    showConfirmButton: false,
+                    timer: 2500,
+                    timerProgressBar: true
+                });
             });
-        });
-    </script>
-@endif
+        </script>
+    @endif
 
     <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
+@php
+$links = [
 
-        @php
-            $links = [
-                ['route' => 'dashboard', 'label' => 'Dashboard', 'icon' => 'fas fa-chart-line'],
+    /* =====================
+       DASHBOARD
+    ====================== */
+    [
+        'route' => 'dashboard',
+        'label' => 'Dashboard',
+        'icon'  => 'fas fa-chart-line',
+    ],
 
-                ['route' => 'profile.show', 'label' => 'Profile', 'icon' => 'fas fa-user-circle'],
+    /* =====================
+       USER & PROFILE
+    ====================== */
+    [
+        'route' => 'profile.show',
+        'label' => 'My Profile',
+        'icon'  => 'fas fa-user-circle',
+    ],
 
-                ['route' => 'companies.index', 'label' => 'Companies', 'icon' => 'fas fa-building'],
+    [
+        'route' => 'users.index',
+        'label' => 'Users',
+        'icon'  => 'fas fa-users',
+    ],
 
-                ['route' => 'leads.index', 'label' => 'Leads', 'icon' => 'fas fa-user-check'],
+    [
+        'route' => 'roles.index',
+        'label' => 'Roles & Permissions',
+        'icon'  => 'fas fa-user-shield',
+    ],
 
-                ['route' => 'lead-statuses.index', 'label' => 'Lead Status', 'icon' => 'fas fa-tags'],
-                 ['route' => 'followup-reasons.index', 'label' => 'Followup Reasons', 'icon' => 'fas fa-tags'],
+    /* =====================
+       CRM / LEADS
+    ====================== */
+    [
+        'route' => 'companies.index',
+        'label' => 'Companies',
+        'icon'  => 'fas fa-building',
+    ],
 
-                ['route' => 'packages.index', 'label' => 'Packages', 'icon' => 'fas fa-suitcase-rolling'],
+    [
+        'route' => 'leads.index',
+        'label' => 'Leads',
+        'icon'  => 'fas fa-user-check',
+    ],
 
-                [
-                    'route' => 'package-categories.index',
-                    'label' => 'Package Categories',
-                    'icon' => 'fas fa-layer-group',
-                ],
+    [
+        'route' => 'lead-statuses.index',
+        'label' => 'Lead Statuses',
+        'icon'  => 'fas fa-tags',
+    ],
 
-                ['route' => 'package-types.index', 'label' => 'Package Types', 'icon' => 'fas fa-list-ul'],
+    [
+        'route' => 'followup-reasons.index',
+        'label' => 'Follow-up Reasons',
+        'icon'  => 'fas fa-phone-alt',
+    ],
 
-                ['route' => 'cars.index', 'label' => 'Cars / Cabs', 'icon' => 'fas fa-car-side'],
+    /* =====================
+       PACKAGES & SERVICES
+    ====================== */
+    [
+        'route' => 'packages.index',
+        'label' => 'Packages',
+        'icon'  => 'fas fa-suitcase-rolling',
+    ],
 
-                ['route' => 'hotels.index', 'label' => 'Hotels', 'icon' => 'fas fa-hotel'],
+    [
+        'route' => 'package-categories.index',
+        'label' => 'Package Categories',
+        'icon'  => 'fas fa-layer-group',
+    ],
 
-                ['route' => 'pickup-points.index', 'label' => 'Pickup Points', 'icon' => 'fas fa-map-marked-alt'],
+    [
+        'route' => 'package-types.index',
+        'label' => 'Package Types',
+        'icon'  => 'fas fa-list-ul',
+    ],
 
-                ['route' => 'difficulty-types.index', 'label' => 'Difficulty Types', 'icon' => 'fas fa-mountain'],
+    [
+        'route' => 'difficulty-types.index',
+        'label' => 'Difficulty Levels',
+        'icon'  => 'fas fa-mountain',
+    ],
 
-                ['route' => 'templates.index', 'label' => 'Message Templates', 'icon' => 'fas fa-comment-dots'],
+    /* =====================
+       LOGISTICS
+    ====================== */
+    [
+        'route' => 'cars.index',
+        'label' => 'Cars / Cabs',
+        'icon'  => 'fas fa-car-side',
+    ],
 
-                ['route' => 'invoices.index', 'label' => 'Invoices', 'icon' => 'fas fa-file-invoice-dollar'],
+    [
+        'route' => 'hotels.index',
+        'label' => 'Hotels',
+        'icon'  => 'fas fa-hotel',
+    ],
 
-                ['route' => 'users.index', 'label' => 'Users', 'icon' => 'fas fa-users-cog'],
+    [
+        'route' => 'pickup-points.index',
+        'label' => 'Pickup Points',
+        'icon'  => 'fas fa-map-marker-alt',
+    ],
 
-                ['route' => 'roles.index', 'label' => 'Roles & Permissions', 'icon' => 'fas fa-user-shield'],
-            ];
-        @endphp
+    /* =====================
+       BILLING & PAYMENTS
+    ====================== */
+    [
+        'route' => 'invoices.index',
+        'label' => 'Invoices',
+        'icon'  => 'fas fa-file-invoice-dollar',
+    ],
+
+    [
+        'route' => 'payments.index',
+        'label' => 'Payments',
+        'icon'  => 'fas fa-credit-card',
+    ],
+
+    [
+        'route' => 'payment-methods.index',
+        'label' => 'Payment Methods',
+        'icon'  => 'fas fa-university',
+    ],
+
+    /* =====================
+       COMMUNICATION
+    ====================== */
+    [
+        'route' => 'templates.index',
+        'label' => 'Message Templates',
+        'icon'  => 'fas fa-comment-dots',
+    ],
+];
+@endphp
+
 
 
         @foreach ($links as $link)

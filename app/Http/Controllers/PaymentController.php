@@ -4,244 +4,118 @@ namespace App\Http\Controllers;
 
 use App\Models\Payment;
 use App\Models\Invoice;
-use App\Models\Followup;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Auth;
+use Yajra\DataTables\DataTables;
 
 class PaymentController extends Controller
 {
     /**
-     * Get all payments (optionally by invoice)
+     * Datatable View
      */
     public function index(Request $request)
     {
-        $query = Payment::with(['invoice', 'user']);
+        if ($request->ajax()) {
+            $query = Payment::with(['invoice', 'user'])->latest();
 
-        if ($request->invoice_id) {
-            $query->where('invoice_id', $request->invoice_id);
+            return DataTables::of($query)
+                ->addColumn('invoice_no', fn($row) => $row->invoice?->invoice_no ?? '-')
+                ->addColumn('paid_amount', fn($row) => '₹' . number_format($row->paid_amount, 2))
+                ->addColumn('remaining_amount', fn($row) => '₹' . number_format($row->remaining_amount, 2))
+                ->addColumn('status', function ($row) {
+                    $color = match ($row->status) {
+                        'paid' => 'text-green-600',
+                        'partial' => 'text-yellow-600',
+                        default => 'text-red-600',
+                    };
+                    return "<span class='{$color} font-semibold'>" . ucfirst($row->status) . "</span>";
+                })
+                ->addColumn('action', function ($row) {
+                    $data = htmlspecialchars(json_encode($row), ENT_QUOTES, 'UTF-8');
+
+                    return '
+                        <button x-data x-on:click="$dispatch(\'edit-payment\', ' . $data . ')"
+                            class="px-3 py-1 bg-blue-600 text-white rounded text-sm mr-2">Edit</button>
+
+                        <button data-id="' . $row->id . '"
+                            class="delete-btn px-3 py-1 bg-red-600 text-white rounded text-sm">
+                            Delete
+                        </button>
+                    ';
+                })
+                ->rawColumns(['status', 'action'])
+                ->make(true);
         }
 
-        $payments = $query->orderBy('created_at', 'desc')->get();
+        $invoices = Invoice::select('id', 'invoice_no')->get();
 
-        return response()->json([
-            'status' => 'success',
-            'payments' => $payments,
-        ]);
+        return view('payments.index', compact('invoices'));
     }
 
     /**
-     * Store a new payment or partial payment
+     * Store Payment
      */
     public function store(Request $request)
     {
-        $validator = Validator::make($request->all(), [
+        $request->validate([
             'invoice_id' => 'required|exists:invoices,id',
-            'amount' => 'required|numeric|min:0.01',
-            'paid_amount' => 'required|numeric|min:0',
-            'payment_method' => 'nullable|string',
-            'transaction_id' => 'nullable|string',
-            'notes' => 'nullable|string',
-            'next_payment_date' => 'nullable|date',
-            'next_payment_time' => 'nullable',
-            'reminder_date' => 'nullable|date',
+            'paid_amount' => 'required|numeric|min:1',
         ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => 'error',
-                'errors' => $validator->errors(),
-            ], 422);
-        }
 
         $invoice = Invoice::findOrFail($request->invoice_id);
-        $lead = $invoice->lead;
 
-        // Total paid so far
-        $totalPaidSoFar = Payment::where('invoice_id', $invoice->id)->sum('paid_amount');
-        $newTotalPaid = $totalPaidSoFar + $request->paid_amount;
+        $totalPaid = Payment::where('invoice_id', $invoice->id)->sum('paid_amount') + $request->paid_amount;
+        $remaining = max($invoice->final_price - $totalPaid, 0);
 
-        // Remaining amount
-        $remaining = max($invoice->final_price - $newTotalPaid, 0);
+        $status = $totalPaid >= $invoice->final_price ? 'paid' : 'partial';
 
-        // Determine payment & lead status
-        if ($newTotalPaid == 0) {
-            $paymentStatus = 'pending';
-            $leadStatus = 'Pending';
-        } elseif ($newTotalPaid < $invoice->final_price) {
-            $paymentStatus = 'partial';
-            $leadStatus = 'Pending';
-        } else {
-            $paymentStatus = 'paid';
-            $leadStatus = 'Converted';
-           
-            $lead->update([
-                'lead_status' => $paymentStatus,
-                'status' => $leadStatus === 'Converted' ? 'Converted' : $lead->status,
-            ]); // Lead is fully paid → Converted
-        }
-
-        // Create payment record
         $payment = Payment::create([
             'invoice_id' => $invoice->id,
-            'user_id' => auth()->id(),
-            'amount' => $request->amount,
+            'user_id' => Auth::id(),
+            'amount' => $invoice->final_price,
             'paid_amount' => $request->paid_amount,
             'remaining_amount' => $remaining,
-            'status' => $paymentStatus,
+            'status' => $status,
             'payment_method' => $request->payment_method,
-            'transaction_id' => $request->transaction_id,
             'notes' => $request->notes,
-            'next_payment_date' => $request->next_payment_date,
-            'reminder_date' => $request->reminder_date,
         ]);
 
-        // Update lead status and status
-        if ($lead) {
-            $lead->update([
-                'lead_status' => $paymentStatus,
-                
-            ]);
-        }
-
-        // Create follow-up if partial payment
-        if ($paymentStatus === 'partial' && $request->next_payment_date && $lead) {
-            Followup::create([
-                'lead_id' => $lead->id,
-                'user_id' => auth()->id(),
-                'reason' => 'Payment Follow-up',
-                'remark' => 'Next payment scheduled',
-                'next_followup_date' => $request->next_payment_date,
-                'next_followup_time' => $request->next_payment_time ?? null,
-                'last_followup_date' => now(),
-            ]);
-        }
-
         return response()->json([
-            'status' => 'success',
-            'payment' => $payment,
-            'remaining' => $remaining,
-            'status_label' => $paymentStatus,
+            'status' => true,
+            'message' => 'Payment saved successfully',
+            'data' => $payment,
         ]);
     }
 
     /**
-     * Update an existing payment
+     * Update Payment
      */
     public function update(Request $request, $id)
     {
         $payment = Payment::findOrFail($id);
-        $invoice = $payment->invoice;
-        $lead = $invoice->lead;
-
-        $validator = Validator::make($request->all(), [
-            'paid_amount' => 'nullable|numeric|min:0',
-            'payment_method' => 'nullable|string',
-            'transaction_id' => 'nullable|string',
-            'notes' => 'nullable|string',
-            'next_payment_date' => 'nullable|date',
-            'next_payment_time' => 'nullable',
-            'reminder_date' => 'nullable|date',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => 'error',
-                'errors' => $validator->errors(),
-            ], 422);
-        }
-
-        // Update payment fields
-        if ($request->has('paid_amount')) {
-            $payment->paid_amount = $request->paid_amount;
-            $payment->amount = $request->amount ?? $payment->amount;
-        }
 
         $payment->update($request->only([
+            'paid_amount',
             'payment_method',
-            'transaction_id',
             'notes',
-            'next_payment_date',
-            'next_payment_time',
-            'reminder_date',
         ]));
 
-        // Recalculate total paid
-        $totalPaid = Payment::where('invoice_id', $invoice->id)->sum('paid_amount');
-        $remaining = max($invoice->final_price - $totalPaid, 0);
-
-        // Determine new status
-        if ($totalPaid == 0) {
-            $paymentStatus = 'pending';
-            $leadStatus = 'Pending';
-        } elseif ($totalPaid < $invoice->final_price) {
-            $paymentStatus = 'partial';
-            $leadStatus = 'Pending';
-        } else {
-            $paymentStatus = 'paid';
-            $leadStatus = 'Converted';
-        }
-
-        $payment->update([
-            'remaining_amount' => $remaining,
-            'status' => $paymentStatus,
-        ]);
-
-        // Update lead status and status
-        if ($lead) {
-            $lead->update([
-                'lead_status' => $leadStatus,
-                'status' => $leadStatus === 'Converted' ? 'Converted' : $lead->status,
-            ]);
-        }
-
-        // Create follow-up if partial
-        if ($paymentStatus === 'partial' && $request->next_payment_date && $lead) {
-            Followup::create([
-                'lead_id' => $lead->id,
-                'user_id' => auth()->id(),
-                'reason' => 'Payment Follow-up',
-                'remark' => 'Next payment scheduled',
-                'next_followup_date' => $request->next_payment_date,
-                'next_followup_time' => $request->next_payment_time ?? null,
-                'last_followup_date' => now(),
-            ]);
-        }
-
         return response()->json([
-            'status' => 'success',
-            'payment' => $payment,
-            'remaining' => $remaining,
-            'status_label' => $paymentStatus,
+            'status' => true,
+            'message' => 'Payment updated successfully',
         ]);
     }
 
     /**
-     * Delete a payment
+     * Delete Payment
      */
     public function destroy($id)
     {
-        $payment = Payment::findOrFail($id);
-        $payment->delete();
+        Payment::findOrFail($id)->delete();
 
         return response()->json([
-            'status' => 'success',
+            'status' => true,
             'message' => 'Payment deleted successfully',
-        ]);
-    }
-
-    /**
-     * Get payments that need reminders
-     */
-    public function reminders()
-    {
-        $payments = Payment::with('invoice')
-            ->where('status', 'partial')
-            ->whereDate('reminder_date', '<=', now())
-            ->get();
-
-        return response()->json([
-            'status' => 'success',
-            'payments' => $payments,
         ]);
     }
 }

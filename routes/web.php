@@ -185,13 +185,16 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         | Payment Management
         |--------------------------------------------------------------------------
         */
-    Route::prefix('payments')->group(function () {
-        Route::get('/', [PaymentController::class, 'index']);
-        Route::post('/', [PaymentController::class, 'store']);
-        Route::put('/{id}', [PaymentController::class, 'update']);
-        Route::delete('/{id}', [PaymentController::class, 'destroy']);
-        Route::get('/reminders', [PaymentController::class, 'reminders']);
-    });
+ Route::resource('payment-methods', \App\Http\Controllers\PaymentMethodController::class);
+Route::prefix('payments')->name('payments.')->group(function () {
+    Route::get('/', [PaymentController::class, 'index'])->name('index');       // Page + DataTable AJAX
+    Route::post('/', [PaymentController::class, 'store'])->name('store');
+    Route::put('/{id}', [PaymentController::class, 'update'])->name('update');
+    Route::delete('/{id}', [PaymentController::class, 'destroy'])->name('destroy');
+
+    Route::get('/reminders', [PaymentController::class, 'reminders'])->name('reminders');
+});
+
 
     /*
         |--------------------------------------------------------------------------
