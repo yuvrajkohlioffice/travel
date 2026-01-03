@@ -51,16 +51,7 @@ Route::get('/optimize-app', function () {
     return back()->with('success', "App optimized successfully! \n$output");
 });
 
-Route::get('/run-npm-build', function () {
-    $process = new Process(['npm', 'run', 'build']);
-    $process->run();
 
-    if (!$process->isSuccessful()) {
-        throw new ProcessFailedException($process);
-    }
-
-    return back()->with('success', 'NPM Build completed successfully! Output: ' . $process->getOutput());
-});
 
 /*
 |--------------------------------------------------------------------------

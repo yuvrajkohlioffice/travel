@@ -204,12 +204,7 @@
             <i class="fas fa-rocket w-5"></i>
             <span>Run Deploy</span>
         </a>
-        <a href="{{ url('/run-npm-build') }}"
-           class="flex items-center space-x-3 px-3 py-2 rounded-lg transition-all
-                  text-gray-700 dark:text-gray-200 hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900 dark:hover:text-green-400">
-            <i class="fas fa-box w-5"></i>
-            <span>NPM Build</span>
-        </a>
+        
         <a href="{{ url('/optimize-app') }}"
            class="flex items-center space-x-3 px-3 py-2 rounded-lg transition-all
                   text-gray-700 dark:text-gray-200 hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900 dark:hover:text-green-400">
