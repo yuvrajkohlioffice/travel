@@ -57,11 +57,7 @@ class CheckRoleRoute
     protected function deny(Request $request)
     {
         // For API / AJAX requests
-        if ($request->expectsJson()) {
-            return response()->json([
-                'message' => 'Access Denied! Ask Admin for permission.'
-            ], 403);
-        }
+        
 
         // For web requests
         return redirect()
