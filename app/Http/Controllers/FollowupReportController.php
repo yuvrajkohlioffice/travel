@@ -49,17 +49,17 @@ class FollowupReportController extends Controller
             }
         }
 
-        $user = auth()->user();
+        $authUser = auth()->user();
 
-        // Base query
-        $query = Followup::select('user_id', 'reason', DB::raw('COUNT(DISTINCT lead_id) as calls_count'))
+        // Base query with eager loading
+        $query = Followup::with('user') // eager load users
+            ->select('user_id', 'reason', DB::raw('COUNT(DISTINCT lead_id) as calls_count'))
             ->whereBetween('created_at', [$start, $end])
             ->groupBy('user_id', 'reason');
 
         // Role-based filtering
-        if ($user->role_id != 1) {
-            // Get all users in the same company
-            $companyUserIds = User::where('company_id', $user->company_id)->pluck('id')->toArray();
+        if ($authUser->role_id != 1) {
+            $companyUserIds = User::where('company_id', $authUser->company_id)->pluck('id')->toArray();
             $query->whereIn('user_id', $companyUserIds);
         }
 
@@ -69,7 +69,7 @@ class FollowupReportController extends Controller
         $report = [];
         foreach ($followups as $f) {
             $userId = $f->user_id;
-            $userName = optional(User::find($userId))->name ?? 'Unknown';
+            $userName = $f->user->name ?? 'Unknown'; // uses eager-loaded relation
 
             if (!isset($report[$userId])) {
                 $report[$userId] = [
