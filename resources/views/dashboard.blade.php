@@ -86,7 +86,7 @@
                     color="text-green-500 dark:text-green-300" link="{{ route('invoices.index') }}"
                     subtitle="All-time" />
                 <x-dashboard-card title="Total Revenue" value="₹{{ number_format($totalRevenue, 2) }}"
-                    icon="fa fa-rupee-sign" color="text-green-600 dark:text-green-400" subtitle="All-time" />
+                    icon="fa fa-rupee-sign" link="{{ route('payments.index') }}" color="text-green-600 dark:text-green-400" subtitle="All-time" />
                 <x-dashboard-card title="Packages" value="{{ $packageCount }}" icon="fa fa-box"
                     color="text-purple-500 dark:text-purple-300" link="{{ route('packages.index') }}"
                     subtitle="Active packages" />
