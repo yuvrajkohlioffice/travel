@@ -18,6 +18,7 @@ class Payment extends Model
         'remaining_amount',
         'status',
         'payment_method',
+        'payment_method_id',
         'transaction_id',
         'notes',
         'next_payment_date',
