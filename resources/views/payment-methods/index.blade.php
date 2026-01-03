@@ -44,108 +44,152 @@
         </div>
 
         <!-- MODAL -->
-        <div x-show="modalOpen" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-            <div class="bg-white w-full max-w-2xl rounded-xl p-6 relative">
+        <!-- Modal -->
+        <div x-show="modalOpen"
+            class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 transition-opacity duration-300"
+            x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200"
+            x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
 
-                <button @click="closeModal()" class="absolute top-3 right-3">✖</button>
+            <div
+                class="bg-white dark:bg-gray-800 w-full max-w-2xl rounded-xl shadow-xl p-6 relative overflow-y-auto max-h-[90vh]">
 
-                <h2 class="text-xl font-bold mb-4" x-text="modalTitle"></h2>
+                <!-- Close Button -->
+                <button @click="closeModal()"
+                    class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 text-xl">
+                    ✖
+                </button>
 
-                <form @submit.prevent="saveMethod()" class="space-y-4">
+                <!-- Modal Title -->
+                <h2 class="text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100" x-text="modalTitle"></h2>
 
+                <!-- Form -->
+                <form @submit.prevent="saveMethod()" class="space-y-5">
+
+                    <!-- Hidden ID -->
                     <input type="hidden" x-model="method.id">
 
-                    <!-- Name -->
-                    <input x-model="method.name" class="w-full p-2 border rounded" placeholder="Payment Method Name">
-
-                    <!-- Type -->
-                    <select x-model="method.type" class="w-full p-2 border rounded">
-                        <option value="">Select Type</option>
-                        <option value="cash">Cash</option>
-                        <option value="bank">Bank</option>
-                        <option value="online">Online</option>
-                        <option value="wallet">Wallet</option>
-                    </select>
-                    <select x-model="method.company_id" class="w-full p-2 border rounded">
-                        <option value="">Select Company</option>
-                        @foreach ($companies as $company)
-                            <option value="{{ $company->id }}">{{ $company->company_name }}</option>
-                        @endforeach
-
-
-                    </select>
-
-                    <!-- BANK FIELDS -->
-                    <div x-show="method.type === 'bank'" class="grid grid-cols-2 gap-3">
-                        <input x-model="method.bank_name" placeholder="Bank Name" class="p-2 border rounded">
-                        <input x-model="method.account_name" placeholder="Account Name" class="p-2 border rounded">
-                        <input x-model="method.account_number" placeholder="Account Number" class="p-2 border rounded">
-                        <input x-model="method.ifsc_code" placeholder="IFSC Code" class="p-2 border rounded">
+                    <!-- Payment Method Name -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Payment Method
+                            Name</label>
+                        <input x-model="method.name"
+                            class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
+                            placeholder="Enter payment method name">
                     </div>
 
-                    <!-- TAX -->
-                    <!-- TAX -->
-                    <div class="flex items-center gap-4">
-                        <label class="flex items-center cursor-pointer">
-                            <div class="relative">
-                                <input type="checkbox" x-model="method.is_tax_applicable" class="sr-only">
-                                <div class="w-11 h-6 bg-gray-300 rounded-full shadow-inner transition-colors duration-300"
-                                    :class="{ 'bg-green-500': method.is_tax_applicable }"></div>
-                                <div class="dot absolute w-5 h-5 bg-white rounded-full shadow -left-1 -top-1 transition transform duration-300"
-                                    :class="{ 'translate-x-full': method.is_tax_applicable }"></div>
-                            </div>
-                            <span class="ml-3 text-gray-700 dark:text-gray-200">Tax Applicable</span>
-                        </label>
+                    <!-- Type & Company -->
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Type</label>
+                            <select x-model="method.type"
+                                class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100">
+                                <option value="">Select Type</option>
+                                <option value="cash">Cash</option>
+                                <option value="bank">Bank</option>
+                                <option value="online">Online</option>
+                                <option value="wallet">Wallet</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Company</label>
+                            <select x-model="method.company_id"
+                                class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100">
+                                <option value="">Select Company</option>
+                                @foreach ($companies as $company)
+                                    <option value="{{ $company->id }}">{{ $company->company_name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
 
-                    <!-- IMAGE PROOF -->
-                    <div class="flex items-center gap-4">
-                        <label class="flex items-center cursor-pointer">
-                            <div class="relative">
-                                <input type="checkbox" x-model="method.image_proof_required" class="sr-only">
-                                <div class="w-11 h-6 bg-gray-300 rounded-full shadow-inner transition-colors duration-300"
-                                    :class="{ 'bg-green-500': method.image_proof_required }"></div>
-                                <div class="dot absolute w-5 h-5 bg-white rounded-full shadow -left-1 -top-1 transition transform duration-300"
-                                    :class="{ 'translate-x-full': method.image_proof_required }"></div>
-                            </div>
-                            <span class="ml-3 text-gray-700 dark:text-gray-200">Image Proof Required</span>
-                        </label>
+                    <!-- Bank Fields -->
+                    <div x-show="method.type === 'bank'" class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Bank
+                                Name</label>
+                            <input x-model="method.bank_name"
+                                class="w-full p-3 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
+                                placeholder="Bank Name">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Account
+                                Name</label>
+                            <input x-model="method.account_name"
+                                class="w-full p-3 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
+                                placeholder="Account Name">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Account
+                                Number</label>
+                            <input x-model="method.account_number"
+                                class="w-full p-3 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
+                                placeholder="Account Number">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">IFSC
+                                Code</label>
+                            <input x-model="method.ifsc_code"
+                                class="w-full p-3 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
+                                placeholder="IFSC Code">
+                        </div>
                     </div>
 
-                    <!-- STATUS -->
-                    <div class="flex items-center gap-4">
-                        <label class="flex items-center cursor-pointer">
-                            <div class="relative">
-                                <input type="checkbox" x-model="method.is_active" class="sr-only">
-                                <div class="w-11 h-6 bg-gray-300 rounded-full shadow-inner transition-colors duration-300"
-                                    :class="{ 'bg-green-500': method.is_active }"></div>
-                                <div class="dot absolute w-5 h-5 bg-white rounded-full shadow -left-1 -top-1 transition transform duration-300"
-                                    :class="{ 'translate-x-full': method.is_active }"></div>
-                            </div>
-                            <span class="ml-3 text-gray-700 dark:text-gray-200">Active</span>
-                        </label>
+                    <!-- Toggles -->
+                    <div class="grid md:grid-cols-3 gap-4">
+
+                        <!-- Tax Applicable -->
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" x-model="method.is_tax_applicable" class="toggle-checkbox"
+                                id="taxToggle">
+                            <label for="taxToggle" class="text-gray-700 dark:text-gray-200">Tax Applicable</label>
+                        </div>
+
+                        <!-- Image Proof Required -->
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" x-model="method.image_proof_required" class="toggle-checkbox"
+                                id="imageProofToggle">
+                            <label for="imageProofToggle" class="text-gray-700 dark:text-gray-200">Image Proof
+                                Required</label>
+                        </div>
+
+                        <!-- Active -->
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" x-model="method.is_active" class="toggle-checkbox" id="activeToggle">
+                            <label for="activeToggle" class="text-gray-700 dark:text-gray-200">Active</label>
+                        </div>
+
                     </div>
 
-
-                    <div x-show="method.is_tax_applicable" class="grid grid-cols-3 gap-3">
-                        <input x-model="method.tax_percentage" placeholder="Tax %" class="p-2 border rounded">
-                        <input x-model="method.tax_name" placeholder="GST/VAT" class="p-2 border rounded">
-                        <input x-model="method.tax_number" placeholder="Tax Number" class="p-2 border rounded">
+                    <!-- Tax Details -->
+                    <div x-show="method.is_tax_applicable" class="grid md:grid-cols-3 gap-4">
+                        <input x-model="method.tax_percentage" placeholder="Tax %"
+                            class="w-full p-3 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100">
+                        <input x-model="method.tax_name" placeholder="GST/VAT"
+                            class="w-full p-3 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100">
+                        <input x-model="method.tax_number" placeholder="Tax Number"
+                            class="w-full p-3 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100">
                     </div>
 
-                    <!-- STATUS -->
-                    <label class="flex gap-2 items-center">
-                        <input type="checkbox" x-model="method.is_active">
-                        Active
-                    </label>
+                    <!-- Description -->
+                    <div>
+                        <label
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Description</label>
+                        <textarea x-model="method.description" rows="3"
+                            class="w-full p-3 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
+                            placeholder="Enter description"></textarea>
+                    </div>
 
-                    <textarea x-model="method.description" class="w-full p-2 border rounded" placeholder="Description"></textarea>
-
-                    <div class="flex justify-end gap-3">
-                        <button type="button" @click="closeModal()" class="px-4 py-2 bg-gray-200 rounded">
+                    <!-- Buttons -->
+                    <div class="flex justify-end gap-3 pt-2">
+                        <button type="button" @click="closeModal()"
+                            class="px-5 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition">
                             Cancel
                         </button>
-                        <button type="submit" class="px-5 py-2 bg-blue-600 text-white rounded">
+                        <button type="submit"
+                            class="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
                             Save
                         </button>
                     </div>
@@ -154,160 +198,245 @@
             </div>
         </div>
 
-        <!-- SCRIPT -->
-     <script>
-function paymentMethodModal() {
-    return {
-        modalOpen: false,
-        modalTitle: 'Add Payment Method',
-        table: null,
-        loading: false, // optional loading state
-        method: {},
-
-        // Initialize/reset the form
-        resetForm() {
-            this.method = {
-                id: '',
-                name: '',
-                type: '',
-                company_id: '',
-                bank_name: '',
-                account_name: '',
-                account_number: '',
-                ifsc_code: '',
-                is_tax_applicable: false,
-                tax_percentage: '',
-                tax_name: '',
-                tax_number: '',
-                description: '',
-                is_active: true,
-                image_proof_required: false, // added
-            };
-        },
-
-        // Initialize the DataTable and AJAX setup
-        init() {
-            $.ajaxSetup({
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                }
-            });
-
-            this.resetForm();
-
-            this.table = $('#paymentMethodsTable').DataTable({
-                processing: true,
-                serverSide: true,
-                ajax: "{{ route('payment-methods.index') }}",
-                columns: [
-                    { data: 'DT_RowIndex', orderable: false, searchable: false },
-                    { data: 'name' },
-                    { data: 'company' },
-                    { data: 'type' },
-                    { data: 'tax' },
-                    { data: 'status' },
-                    { data: 'action', orderable: false, searchable: false },
-                ]
-            });
-
-            // Edit button click
-            $('#paymentMethodsTable').on('click', '.edit-btn', e => {
-                const data = $(e.currentTarget).data('row');
-                if (data) this.openModal(data);
-            });
-
-            // Delete button click
-            $('#paymentMethodsTable').on('click', '.delete-btn', e => {
-                const id = $(e.currentTarget).data('id');
-                if (id) this.deleteMethod(id);
-            });
-        },
-
-        // Open modal for Add/Edit
-        openModal(data = null) {
-            this.resetForm();
-            if (data) {
-                this.method = {
-                    id: data.id,
-                    name: data.name,
-                    type: data.type,
-                    company_id: data.company_id,
-                    bank_name: data.bank_name,
-                    account_name: data.account_name,
-                    account_number: data.account_number,
-                    ifsc_code: data.ifsc_code,
-                    is_tax_applicable: Boolean(data.is_tax_applicable),
-                    tax_percentage: data.tax_percentage,
-                    tax_name: data.tax_name,
-                    tax_number: data.tax_number,
-                    description: data.description,
-                    is_active: Boolean(data.is_active),
-                    image_proof_required: Boolean(data.image_proof_required),
-                };
-                this.modalTitle = 'Edit Payment Method';
-            } else {
-                this.modalTitle = 'Add Payment Method';
+        <!-- Custom Toggle Styles -->
+        <style>
+            .toggle-checkbox {
+                width: 2.5rem;
+                height: 1.25rem;
+                appearance: none;
+                background-color: #e5e7eb;
+                border-radius: 9999px;
+                position: relative;
+                cursor: pointer;
+                transition: background-color 0.3s;
             }
-            this.modalOpen = true;
-        },
 
-        // Close modal
-        closeModal() {
-            this.modalOpen = false;
-        },
+            .toggle-checkbox:checked {
+                background-color: #10b981;
+            }
 
-        // Save method via AJAX
-        saveMethod() {
-            this.loading = true;
-            const url = this.method.id ? `/payment-methods/${this.method.id}` : `/payment-methods`;
-            const type = this.method.id ? 'PUT' : 'POST';
+            .toggle-checkbox::before {
+                content: '';
+                position: absolute;
+                width: 1rem;
+                height: 1rem;
+                border-radius: 50%;
+                background-color: white;
+                top: 1px;
+                left: 1px;
+                transition: transform 0.3s;
+            }
 
-            // Convert booleans to 1/0
-            const payload = {
-                ...this.method,
-                is_active: this.method.is_active ? 1 : 0,
-                is_tax_applicable: this.method.is_tax_applicable ? 1 : 0,
-                image_proof_required: this.method.image_proof_required ? 1 : 0,
-            };
+            .toggle-checkbox:checked::before {
+                transform: translateX(1.25rem);
+            }
+        </style>
 
-            $.ajax({
-                url,
-                type,
-                data: payload,
-                success: (res) => {
-                    this.table.ajax.reload(null, false);
-                    this.closeModal();
-                    this.loading = false;
-                    // Optional: show success toast
-                },
-                error: (err) => {
-                    this.loading = false;
-                    console.error('Error saving payment method:', err);
-                    alert('Failed to save. Please check the console.');
+
+        <!-- SCRIPT -->
+        <script>
+            function paymentMethodModal() {
+                return {
+                    modalOpen: false,
+                    modalTitle: 'Add Payment Method',
+                    table: null,
+                    loading: false,
+                    method: {},
+
+                    // Initialize/reset the form
+                    resetForm() {
+                        this.method = {
+                            id: '',
+                            name: '',
+                            type: '',
+                            company_id: '',
+                            bank_name: '',
+                            account_name: '',
+                            account_number: '',
+                            ifsc_code: '',
+                            is_tax_applicable: false,
+                            tax_percentage: '',
+                            tax_name: '',
+                            tax_number: '',
+                            description: '',
+                            is_active: true,
+                            image_proof_required: false,
+                        };
+                    },
+
+                    // Initialize DataTable
+                    init() {
+                        const self = this;
+
+                        $.ajaxSetup({
+                            headers: {
+                                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                            }
+                        });
+
+                        this.resetForm();
+
+                        // Initialize DataTable
+                        this.table = $('#paymentMethodsTable').DataTable({
+                            processing: true,
+                            serverSide: true,
+                            ajax: "{{ route('payment-methods.index') }}",
+                            columns: [{
+                                    data: 'DT_RowIndex',
+                                    orderable: false,
+                                    searchable: false
+                                },
+                                {
+                                    data: 'name'
+                                },
+                                {
+                                    data: 'company'
+                                },
+                                {
+                                    data: 'type'
+                                },
+                                {
+                                    data: 'tax'
+                                },
+                                {
+                                    data: 'status'
+                                },
+                                {
+                                    data: 'action',
+                                    orderable: false,
+                                    searchable: false
+                                },
+                            ]
+                        });
+
+                        // Edit button click
+                        $('#paymentMethodsTable').on('click', '.edit-btn', function() {
+                            const data = $(this).data('row');
+                            if (data) self.openModal(data);
+                        });
+
+                        // Soft delete
+                        $('#paymentMethodsTable').on('click', '.delete-btn', function() {
+                            const id = $(this).data('id');
+                            if (!id) return;
+                            if (!confirm('Are you sure you want to delete this payment method?')) return;
+
+                            $.ajax({
+                                url: `/payment-methods/${id}`,
+                                type: 'DELETE',
+                                success: function(res) {
+                                    alert(res.message);
+                                    self.table.ajax.reload(null, false);
+                                },
+                                error: function(err) {
+                                    console.error(err);
+                                    alert('Failed to delete.');
+                                }
+                            });
+                        });
+
+                        // Restore
+                        $('#paymentMethodsTable').on('click', '.restore-btn', function() {
+                            const id = $(this).data('id');
+                            if (!id) return;
+
+                            $.post(`/payment-methods/restore/${id}`, {
+                                _token: $('meta[name="csrf-token"]').attr('content')
+                            }, function(res) {
+                                alert(res.message);
+                                self.table.ajax.reload(null, false);
+                            });
+                        });
+
+                        // Hard delete
+                        $('#paymentMethodsTable').on('click', '.hard-delete-btn', function() {
+                            const id = $(this).data('id');
+                            if (!id) return;
+                            if (!confirm('Are you sure to permanently delete?')) return;
+
+                            $.ajax({
+                                url: `/payment-methods/force-delete/${id}`,
+                                type: 'DELETE',
+                                success: function(res) {
+                                    alert(res.message);
+                                    self.table.ajax.reload(null, false);
+                                },
+                                error: function(err) {
+                                    console.error(err);
+                                    alert('Failed to delete permanently.');
+                                }
+                            });
+                        });
+                    },
+
+                    // Open modal
+                    openModal(data = null) {
+                        this.resetForm();
+                        if (data) {
+                            this.method = {
+                                id: data.id,
+                                name: data.name,
+                                type: data.type,
+                                company_id: data.company_id,
+                                bank_name: data.bank_name,
+                                account_name: data.account_name,
+                                account_number: data.account_number,
+                                ifsc_code: data.ifsc_code,
+                                is_tax_applicable: Boolean(data.is_tax_applicable),
+                                tax_percentage: data.tax_percentage,
+                                tax_name: data.tax_name,
+                                tax_number: data.tax_number,
+                                description: data.description,
+                                is_active: Boolean(data.is_active),
+                                image_proof_required: Boolean(data.image_proof_required),
+                            };
+                            this.modalTitle = 'Edit Payment Method';
+                        } else {
+                            this.modalTitle = 'Add Payment Method';
+                        }
+                        this.modalOpen = true;
+                    },
+
+                    // Close modal
+                    closeModal() {
+                        this.modalOpen = false;
+                    },
+
+                    // Save method
+                    saveMethod() {
+                        this.loading = true;
+                        const self = this;
+                        const url = this.method.id ? `/payment-methods/${this.method.id}` : `/payment-methods`;
+                        const type = this.method.id ? 'PUT' : 'POST';
+
+                        const payload = {
+                            ...this.method,
+                            is_active: this.method.is_active ? 1 : 0,
+                            is_tax_applicable: this.method.is_tax_applicable ? 1 : 0,
+                            image_proof_required: this.method.image_proof_required ? 1 : 0,
+                        };
+
+                        $.ajax({
+                            url,
+                            type,
+                            data: payload,
+                            success(res) {
+                                self.table.ajax.reload(null, false);
+                                self.closeModal();
+                                self.loading = false;
+                                alert('Payment method saved successfully.');
+                            },
+                            error(err) {
+                                self.loading = false;
+                                console.error(err);
+                                alert('Failed to save payment method.');
+                            }
+                        });
+                    }
                 }
-            });
-        },
+            }
+        </script>
 
-        // Delete method
-        deleteMethod(id) {
-            if (!confirm('Are you sure you want to delete this payment method?')) return;
-
-            $.ajax({
-                url: `/payment-methods/${id}`,
-                type: 'DELETE',
-                success: () => {
-                    this.table.ajax.reload(null, false);
-                    // Optional: show delete success toast
-                },
-                error: (err) => {
-                    console.error('Error deleting payment method:', err);
-                    alert('Failed to delete. Please check the console.');
-                }
-            });
-        },
-    };
-}
-</script>
 
 
     </div>

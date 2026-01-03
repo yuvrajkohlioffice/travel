@@ -13,37 +13,69 @@ class PaymentMethodController extends Controller
        INDEX
     ============================== */
     public function index(Request $request)
+{
+    if ($request->ajax()) {
+        $data = PaymentMethod::with('company')->withTrashed()->latest();
+
+        $user = auth()->user(); // get the logged-in user
+
+        return DataTables::of($data)
+            ->addIndexColumn()
+            ->addColumn('company', function ($row) {
+                return $row->company ? $row->company->company_name : 'No Company';
+            })
+            ->addColumn('tax', function ($row) {
+                return $row->is_tax_applicable ? "{$row->tax_percentage}% ({$row->tax_name})" : 'No';
+            })
+            ->addColumn('status', function ($row) {
+                if ($row->trashed()) {
+                    return '<span class="badge bg-warning">Deleted</span>';
+                }
+                return $row->is_active ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-danger">Inactive</span>';
+            })
+            ->addColumn('action', function ($row) use ($user) {
+                $buttons = '';
+
+                // Edit button is visible to everyone
+                $buttons .= '<button data-row=\'' . json_encode($row) . '\' class="px-3 py-1 bg-blue-600 text-white rounded text-sm mr-2 edit-btn">Edit</button>';
+
+                // Only admin (role_id=1) can see Delete/Restore buttons
+                if ($user->role_id == 1) {
+                    if ($row->trashed()) {
+                        $buttons .= '<button data-id="'.$row->id.'" class="px-3 py-1 bg-green-600 text-white rounded text-sm restore-btn">Restore</button> ';
+                        $buttons .= '<button data-id="'.$row->id.'" class="px-3 py-1 bg-red-700 text-white rounded text-sm hard-delete-btn">Delete Permanently</button>';
+                    } else {
+                        $buttons .= '<button data-id="'.$row->id.'" class="px-3 py-1 bg-red-600 text-white rounded text-sm delete-btn">Delete</button>';
+                    }
+                }
+
+                return $buttons;
+            })
+            ->rawColumns(['status', 'action'])
+            ->make(true);
+    }
+
+    $companies = Company::all();
+    return view('payment-methods.index', compact('companies'));
+}
+
+      public function restore($id)
     {
-        if ($request->ajax()) {
-            $data = PaymentMethod::with('company')->latest(); // eager load company
+        $method = PaymentMethod::withTrashed()->findOrFail($id);
+        $method->restore();
 
-            return DataTables::of($data)
-                ->addIndexColumn()
-                ->addColumn('company', function ($row) {
-                    return $row->company ? $row->company->company_name : 'No Company';
-                })
-                ->addColumn('tax', function ($row) {
-                    return $row->is_tax_applicable ? "{$row->tax_percentage}% ({$row->tax_name})" : 'No';
-                })
-                ->addColumn('status', function ($row) {
-                    return $row->is_active ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-danger">Inactive</span>';
-                })
-                ->addColumn('action', function ($row) {
-                    return '
-                        <button data-row=\'' .
-                        json_encode($row) .
-                        '\' class="px-3 py-1 bg-blue-600 text-white rounded text-sm mr-2 edit-btn">Edit</button>
-                        <button class="px-3 py-1 bg-red-600 text-white rounded text-sm delete-btn" data-id="' .
-                        $row->id .
-                        '">Delete</button>
-                    ';
-                })
-                ->rawColumns(['status', 'action'])
-                ->make(true);
-        }
+        return response()->json(['message' => 'Payment method restored successfully.']);
+    }
 
-        $companies = Company::all(); // for modal dropdown
-        return view('payment-methods.index', compact('companies'));
+    // ===========================
+    // HARD DELETE
+    // ===========================
+    public function forceDelete($id)
+    {
+        $method = PaymentMethod::withTrashed()->findOrFail($id);
+        $method->forceDelete();
+
+        return response()->json(['message' => 'Payment method permanently deleted.']);
     }
 
     /* =============================

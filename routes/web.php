@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 
 // Controllers
-use App\Http\Controllers\{CompanyController, FollowupReasonController, LeadStatusController, MessageTemplateController, CarController, DashboardController, UserController, InvoiceController, PackageTypeController, PackageCategoryController, DifficultyTypeController, HotelController, RoleController, PackageController, LeadController, FollowupController, PaymentController, WhatsAppController};
+use App\Http\Controllers\{CompanyController, PaymentMethodController, PickupPointController, FollowupReasonController, LeadStatusController, MessageTemplateController, CarController, DashboardController, UserController, InvoiceController, PackageTypeController, PackageCategoryController, DifficultyTypeController, HotelController, RoleController, PackageController, LeadController, FollowupController, PaymentController, WhatsAppController};
 use Livewire\Volt\Volt;
 
 use Symfony\Component\Process\Process;
@@ -185,16 +185,19 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         | Payment Management
         |--------------------------------------------------------------------------
         */
- Route::resource('payment-methods', \App\Http\Controllers\PaymentMethodController::class);
-Route::prefix('payments')->name('payments.')->group(function () {
-    Route::get('/', [PaymentController::class, 'index'])->name('index');       // Page + DataTable AJAX
-    Route::post('/', [PaymentController::class, 'store'])->name('store');
-    Route::put('/{id}', [PaymentController::class, 'update'])->name('update');
-    Route::delete('/{id}', [PaymentController::class, 'destroy'])->name('destroy');
+    Route::resource('payment-methods', PaymentMethodController::class);
+    Route::post('/payment-methods/restore/{id}', [PaymentMethodController::class, 'restore'])->name('payment-methods.restore');
+    Route::delete('/payment-methods/force-delete/{id}', [PaymentMethodController::class, 'forceDelete'])->name('payment-methods.forceDelete');
+    Route::prefix('payments')
+        ->name('payments.')
+        ->group(function () {
+            Route::get('/', [PaymentController::class, 'index'])->name('index'); // Page + DataTable AJAX
+            Route::post('/', [PaymentController::class, 'store'])->name('store');
+            Route::put('/{id}', [PaymentController::class, 'update'])->name('update');
+            Route::delete('/{id}', [PaymentController::class, 'destroy'])->name('destroy');
 
-    Route::get('/reminders', [PaymentController::class, 'reminders'])->name('reminders');
-});
-
+            Route::get('/reminders', [PaymentController::class, 'reminders'])->name('reminders');
+        });
 
     /*
         |--------------------------------------------------------------------------
@@ -242,7 +245,7 @@ Route::prefix('payments')->name('payments.')->group(function () {
         'package-categories' => PackageCategoryController::class,
         'difficulty-types' => DifficultyTypeController::class,
         'roles' => RoleController::class,
-        'pickup-points' => \App\Http\Controllers\PickupPointController::class,
+        'pickup-points' => PickupPointController::class,
     ]);
 
     /*
