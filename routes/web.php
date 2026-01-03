@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 
 // Controllers
-use App\Http\Controllers\{CompanyController, PaymentMethodController, PickupPointController, FollowupReasonController, LeadStatusController, MessageTemplateController, CarController, DashboardController, UserController, InvoiceController, PackageTypeController, PackageCategoryController, DifficultyTypeController, HotelController, RoleController, PackageController, LeadController, FollowupController, PaymentController, WhatsAppController};
+use App\Http\Controllers\{CompanyController, FollowupReportController, PaymentMethodController, PickupPointController, FollowupReasonController, LeadStatusController, MessageTemplateController, CarController, DashboardController, UserController, InvoiceController, PackageTypeController, PackageCategoryController, DifficultyTypeController, HotelController, RoleController, PackageController, LeadController, FollowupController, PaymentController, WhatsAppController};
 use Livewire\Volt\Volt;
 
 use Symfony\Component\Process\Process;
@@ -185,9 +185,9 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         | Payment Management
         |--------------------------------------------------------------------------
         */
-    Route::resource('payment-methods', PaymentMethodController::class)
-    ->except(['show']);
-
+    Route::resource('payment-methods', PaymentMethodController::class)->except(['show']);
+    Route::get('/followup-report', [FollowupReportController::class, 'index'])->name('followup.report');
+    Route::get('/followup-report/data', [FollowupReportController::class, 'getReport'])->name('followup.report.data');
     Route::post('/payment-methods/restore/{id}', [PaymentMethodController::class, 'restore'])->name('payment-methods.restore');
     Route::delete('/payment-methods/force-delete/{id}', [PaymentMethodController::class, 'forceDelete'])->name('payment-methods.forceDelete');
     Route::prefix('payments')
