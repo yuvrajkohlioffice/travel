@@ -540,53 +540,32 @@
     <script>
         function leadModals() {
             return {
-
-                /* ======================================================
-                   MODAL STATES
-                ====================================================== */
+                /* ---------------- MODAL STATES ---------------- */
                 invoiceOpen: false,
                 followOpen: false,
                 shareOpen: false,
                 editOpen: false,
                 paymentOpen: false,
+                leadPhone: "",
+                whatsappMessage: "",
+                whatsappPdfUrl: "", // PDF URL you want to send
                 sending: false,
-
-                /* ======================================================
-                   LEAD INFO
-                ====================================================== */
+                /* ---------------- LEAD INFO ---------------- */
                 leadId: "",
                 leadName: "",
                 leadEmail: "",
-                leadPhone: "",
                 peopleCount: 1,
                 childCount: 0,
 
-                /* ======================================================
-                   WHATSAPP
-                ====================================================== */
-                whatsappMessage: "",
-                whatsappPdfUrl: "",
-
-                /* ======================================================
-                   PACKAGES
-                ====================================================== */
+                /* ---------------- PACKAGES ---------------- */
                 packages: @json($packages),
-                allPackages: @json($packages),
-
                 selectedPackageInvoice: "",
-                selectedPackage: "",
-                selectedPackageName: "",
-                selectedPackageDocs: [],
-                selectedPackagePdf: null,
-
                 packageData: null,
                 selectedInvoiceItems: null,
-                selectedRoomType: "standard_price",
+                selectedRoomType: 'standard_price',
                 filteredItems: [],
 
-                /* ======================================================
-                   PRICING
-                ====================================================== */
+                /* ---------------- PRICING ---------------- */
                 packagePrice: 0,
                 itemPrice: 0,
                 totalPrice: 0,
@@ -596,45 +575,38 @@
                 travelStartDate: "",
                 animatedPrice: 0,
 
-                /* ======================================================
-                   CARS
-                ====================================================== */
+                /* ---------------- CARS ---------------- */
                 cars: [],
                 selectedCar: "",
 
-                /* ======================================================
-                   FOLLOW-UP
-                ====================================================== */
-                phoneNumber: "",
-                phoneCode: "",
-                fullNumber: "",
-                selectedReason: "",
+                /* ---------------- FOLLOW-UP ---------------- */
+                phoneNumber: '',
+                phoneCode: '',
+                fullNumber: '',
+                selectedReason: '',
                 followups: [],
                 reasons: [],
 
-                /* ======================================================
-                   SHARE
-                ====================================================== */
-                shareLeadId: "",
-                shareLeadName: "",
+                /* ---------------- SHARE ---------------- */
+                shareLeadId: '',
+                shareLeadName: '',
+                selectedPackage: '',
+                selectedPackageName: '',
+                selectedPackageDocs: [],
+                selectedPackagePdf: null,
                 selectedDocs: [],
                 showDropdown: false,
                 showSelectedPackage: false,
+                allPackages: @json($packages),
 
-                /* ======================================================
-                   EDIT
-                ====================================================== */
+                /* ---------------- EDIT ---------------- */
                 editForm: {},
 
-                /* ======================================================
-                   BULK
-                ====================================================== */
+                /* ---------------- BULK ---------------- */
                 selected: [],
-                bulkUser: "",
+                bulkUser: '',
 
-                /* ======================================================
-                   PAYMENT
-                ====================================================== */
+                /* ---------------- PAYMENT FIELDS ---------------- */
                 paymentInvoiceId: null,
                 paymentInvoiceNumber: "",
                 amount: 0,
@@ -655,72 +627,10 @@
                 paymentMethods: [],
                 paymentMethodId: '',
 
+                /* ---------------- PAYMENT MODAL FUNCTIONS ---------------- */
 
-             
-               /* ======================================================
-   COMPUTED
-====================================================== */
+                // Open payment modal with invoice data
 
-get isPartial() {
-    return this.paidAmount > 0 && this.paidAmount < this.remainingAmount;
-},
-
-get remainingAmountReactive() {
-    return Math.max(
-        Number(this.remainingAmount) - Number(this.paidAmount || 0),
-        0
-    );
-},
-
-get hasBankDetails() {
-    if (!this.selectedMethod) return false;
-
-    return Boolean(
-        this.selectedMethod.bank_name ||
-        this.selectedMethod.account_name ||
-        this.selectedMethod.account_number ||
-        this.selectedMethod.ifsc_code
-    );
-},
-
-
-
-
-                
-
-
-                get partialPaymentWithoutNextDate() {
-                    return this.isPartial && !this.nextPaymentDate;
-                },
-
-                /* ======================================================
-                   HELPERS
-                ====================================================== */
-                formatCurrency(value) {
-                    return Number(value || 0).toLocaleString(undefined, {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                    });
-                },
-
-                resetPaymentForm() {
-                    this.paidAmount = 0;
-                    this.paymentMethodId = '';
-                    this.selectedMethod = null;
-                    this.transactionId = '';
-                    this.nextPaymentDate = '';
-                    this.paymentNotes = '';
-                    this.paymentImage = null;
-                    this.nextDateError = false;
-                },
-
-                handleImageUpload(e) {
-                    this.paymentImage = e.target.files?.[0] || null;
-                },
-
-                /* ======================================================
-                   PAYMENT MODAL
-                ====================================================== */
                 openPaymentModal(invoice) {
                     this.paymentInvoiceId = invoice.id;
                     this.paymentInvoiceNumber = invoice.invoice_no;
@@ -731,22 +641,84 @@ get hasBankDetails() {
                     this.fetchPaymentMethods();
                     this.paymentOpen = true;
                 },
+                handleImageUpload(e) {
+                    this.paymentImage = e.target.files?.[0] || null;
+                },
+                get partialPaymentWithoutNextDate() {
+                    return this.isPartial && !this.nextPaymentDate;
+                },
+                get isPartial() {
+                    return this.paidAmount > 0 && this.paidAmount < this.remainingAmount;
+                },
+                resetPaymentForm() {
+                    this.paidAmount = 0;
+                    this.paymentMethodId = '';
+                    this.selectedMethod = null;
+                    this.transactionId = '';
+                    this.nextPaymentDate = '';
+                    this.paymentNotes = '';
+                    this.paymentImage = null;
+                    this.nextDateError = false;
+                },
+                init() {
+                    this.$watch('paymentMethodId', id => {
+                        this.selectedMethod =
+                            this.paymentMethods.find(m => m.id == id) || null;
+                    });
+                },
+                get remainingAmountReactive() {
+                    return Math.max(
+                        Number(this.remainingAmount) - Number(this.paidAmount || 0),
+                        0
+                    );
+                },
 
+                get hasBankDetails() {
+                    if (!this.selectedMethod) return false;
+
+                    return Boolean(
+                        this.selectedMethod.bank_name ||
+                        this.selectedMethod.account_name ||
+                        this.selectedMethod.account_number ||
+                        this.selectedMethod.ifsc_code
+                    );
+                },
+
+
+
+                // Close payment modal and reset fields
                 closePaymentModal() {
                     this.paymentOpen = false;
+                    this.paymentInvoiceId = '';
+                    this.paymentInvoiceNumber = '';
+                    this.amount = 0;
+                    this.remainingAmount = 0;
+                    this.paidAmount = 0;
+                    this.paymentMethod = '';
+                    this.transactionId = '';
+                    this.nextPaymentDate = '';
+                    this.paymentNotes = '';
+                    this.partialPaymentWithoutNextDate = false;
                 },
-init() {
-    this.$watch('paymentMethodId', id => {
-        this.selectedMethod =
-            this.paymentMethods.find(m => m.id == id) || null;
-    });
-},
+
+                // Reactive remaining amount display
+                get remainingAmountReactive() {
+                    return Math.max(this.remainingAmount - this.paidAmount, 0);
+                },
+
+                // Format numbers as currency
+                formatCurrency(value) {
+                    return Number(value || 0).toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    });
+                },
                 fetchPaymentMethods() {
                     fetch('/payment-methods/active')
                         .then(res => res.json())
                         .then(data => this.paymentMethods = data || []);
                 },
-
+                // Submit payment logic (handles full/partial)
                 submitPayment() {
                     if (this.isPartial && !this.nextPaymentDate) {
                         this.nextDateError = true;
@@ -789,24 +761,26 @@ init() {
                         .catch(() => alert('Payment failed'));
                 },
 
-                /* ======================================================
-                   INVOICE LOGIC
-                ====================================================== */
-                openInvoiceModal(id, name, people = 1, child = 0, packageId = null, email = '') {
-                    Object.assign(this, {
-                        leadId: id,
-                        leadName: name,
-                        leadEmail: email,
-                        peopleCount: Number(people) || 1,
-                        childCount: Number(child) || 0,
-                        selectedPackageInvoice: packageId || this.packages?.[0]?.id || ""
-                    });
 
+                /* ---------------- INIT HELPERS ---------------- */
+                openInvoiceModal(id, name, people = 1, child = 0, packageId = null, email = '') {
+                    this.leadId = id;
+                    this.leadName = name;
+                    this.leadEmail = email;
+
+                    this.peopleCount = Number(people) || 1;
+                    this.childCount = Number(child) || 0;
+
+                    this.selectedPackageInvoice = packageId || (this.packages[0]?.id ?? "");
                     this.invoiceOpen = true;
+
                     this.loadCars();
 
+                    // Fetch package details only if a package is preselected
                     if (this.selectedPackageInvoice) {
                         this.fetchPackageDetails(this.selectedPackageInvoice);
+                    } else {
+                        this.packageData = null;
                     }
                 },
 
@@ -815,36 +789,70 @@ init() {
 
                     fetch(`/packages/${packageId}/json`)
                         .then(res => res.json())
-                        .then(({
-                            success,
-                            package
-                        }) => {
-                            if (!success) return;
+                        .then(res => {
+                            if (res.success) {
+                                this.packageData = res.package;
 
-                            this.packageData = package;
-                            const firstItem = package.packageItems?.[0] || null;
+                                // Preselect first package item
+                                if (this.packageData.packageItems?.length > 0) {
+                                    this.selectedInvoiceItems = this.packageData.packageItems[0].id;
+                                    this.updateInvoicePrice(this.packageData.packageItems[0]);
+                                } else {
+                                    this.selectedInvoiceItems = null;
+                                    this.itemPrice = this.totalPrice = this.discountedPrice = 0;
+                                }
 
-                            this.selectedInvoiceItems = firstItem?.id || null;
-                            this.updateInvoicePrice(firstItem);
+                                this.calculateDiscountedPrice();
+                            }
+                        });
+                },
+
+                fetchFilteredItems() {
+                    if (!this.selectedPackageInvoice) return;
+
+                    const url =
+                        `/package-items/filter?package_id=${this.selectedPackageInvoice}&adult_count=${this.peopleCount}&child_count=${this.childCount}&car_id=${this.selectedCar}`;
+
+                    fetch(url)
+                        .then(res => res.json())
+                        .then(res => {
+                            this.filteredItems = res.data;
+                            this.packageData.packageItems = res.data;
+
+                            if (res.data.length > 0) {
+                                const firstItem = res.data[0];
+                                this.selectedInvoiceItems = firstItem.id;
+                                this.updateInvoicePrice(firstItem);
+                            } else {
+                                this.selectedInvoiceItems = null;
+                                this.itemPrice = this.totalPrice = this.discountedPrice = 0;
+                            }
+
                             this.calculateDiscountedPrice();
                         });
                 },
 
-                updateInvoicePrice(item) {
+                updateInvoicePrice(item = null) {
+                    if (!this.packageData || !this.selectedInvoiceItems) return;
+
+                    if (!item) {
+                        item = this.packageData.packageItems.find(i => i.id == this.selectedInvoiceItems);
+                    }
                     if (!item) return;
 
-                    const price = Number(item[this.selectedRoomType]) || 0;
+                    const roomPrice = Number(item[this.selectedRoomType]) || 0;
+                    const carPrice = item.car?.price?.per_day ? Number(item.car.price.per_day) : 0;
+
+                    this.itemPrice = roomPrice;
                     const oldTotal = this.totalPrice;
+                    this.totalPrice = this.itemPrice;
 
-                    this.itemPrice = price;
-                    this.totalPrice = price;
-
-                    this.animateNumber(oldTotal, price);
+                    this.animateNumber(oldTotal, this.totalPrice);
                     this.calculateDiscountedPrice();
                 },
 
                 calculateDiscountedPrice() {
-                    const discount = Number(this.selectedDiscount) || 0;
+                    const discount = parseFloat(this.selectedDiscount) || 0;
                     const base = this.totalPrice * (1 - discount / 100);
 
                     this.finalPricePerAdult = base;
@@ -857,38 +865,450 @@ init() {
 
                 animateNumber(from, to, duration = 400) {
                     const start = performance.now();
-                    const animate = (now) => {
-                        const progress = Math.min((now - start) / duration, 1);
-                        this.animatedPrice = Math.floor(from + (to - from) * progress);
-                        if (progress < 1) requestAnimationFrame(animate);
+                    const animate = (time) => {
+                        const p = Math.min((time - start) / duration, 1);
+                        this.animatedPrice = Math.floor(from + (to - from) * p);
+                        if (p < 1) requestAnimationFrame(animate);
                     };
                     requestAnimationFrame(animate);
                 },
 
-                /* ======================================================
-                   CARS
-                ====================================================== */
+                closeInvoice() {
+                    this.invoiceOpen = false;
+                    this.packageData = null;
+                    this.selectedPackageInvoice = "";
+                    this.selectedInvoiceItems = null;
+                    this.travelStartDate = '';
+                    this.selectedDiscount = 0;
+                    this.totalPrice = 0;
+                    this.discountedPrice = 0;
+                    this.selectedRoomType = 'standard_price';
+                    this.selectedCar = "";
+                },
+
+                createQuickInvoice() {
+                    if (!this.selectedPackageInvoice) return alert("Please select a package first!");
+
+                    const payload = {
+                        lead_id: this.leadId,
+                        package_id: this.selectedPackageInvoice,
+                        package_items_id: this.selectedInvoiceItems,
+                        package_type: this.selectedRoomType,
+                        adult_count: this.peopleCount,
+                        child_count: this.childCount,
+                        discount_amount: this.selectedDiscount,
+                        price_per_person: this.discountedPrice,
+                        travel_start_date: this.travelStartDate
+                    };
+
+                    fetch('/invoices/create-quick', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            },
+                            body: JSON.stringify(payload)
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success && data.data?.id) {
+                                window.location.href = '{{ route('invoices.create') }}?invoice_id=' + data.data.id;
+                            } else {
+                                alert('Failed to create invoice.');
+                            }
+                        })
+                        .catch(err => console.error(err));
+                },
+
                 loadCars() {
                     fetch('/api/cars')
                         .then(res => res.json())
-                        .then(res => this.cars = res.data || []);
+                        .then(data => this.cars = data.data || []);
                 },
 
-                /* ======================================================
-                   BULK ASSIGN
-                ====================================================== */
-                toggleLead(e) {
-                    const id = Number(e.target.value);
-                    e.target.checked ?
-                        this.selected.push(id) :
-                        this.selected = this.selected.filter(i => i !== id);
+
+
+
+                /* ---------------- FOLLOW-UP MODAL ---------------- */
+
+                openFollowModal(id, name) {
+                    this.leadId = id;
+                    this.leadName = name;
+                    this.followOpen = true;
+
+                    fetch(`/leads/${id}/details`)
+                        .then(res => res.json())
+                        .then(data => {
+                            const phone = data.phone || {};
+                            this.phoneNumber = phone.phone_number || '';
+                            this.phoneCode = phone.phone_code || '';
+                            this.fullNumber = phone.full_number || '';
+                            this.followups = data.followups || [];
+                        });
+
+                    this.fetchFollowupReasons();
+                },
+
+                fetchFollowupReasons() {
+                    fetch('/followup-reasons-api', {
+                            method: 'GET',
+                            headers: {
+                                "Content-Type": "application/json",
+                                "X-CSRF-TOKEN": '{{ csrf_token() }}',
+
+                            }
+                        })
+                        .then(res => res.json())
+                        .then(res => {
+                            if (res.success) {
+                                this.reasons = res.data;
+                            }
+                        });
+                },
+
+
+                handleReasonChange(reason) {
+                    const now = new Date();
+                    let followDate = new Date(now);
+
+                    const isSunday = date => date.getDay() === 0;
+
+                    const dateInput = document.querySelector('input[name="next_followup_date"]');
+                    const timeInput = document.querySelector('input[name="next_followup_time"]');
+                    const remarkInput = document.querySelector('textarea[name="remark"]');
+
+                    const dateWrapper = document.getElementById('dateWrapper');
+                    const timeWrapper = document.getElementById('timeWrapper');
+                    const remarkWrapper = document.getElementById('remarkWrapper');
+
+                    /* ================= DATE ================= */
+                    if (reason.date) {
+                        dateWrapper.classList.remove('hidden');
+                        followDate.setDate(followDate.getDate() + 1);
+                        while (isSunday(followDate)) {
+                            followDate.setDate(followDate.getDate() + 1);
+                        }
+                        dateInput.value = followDate.toISOString().split('T')[0];
+                        dateInput.setAttribute('required', 'required');
+                    } else {
+                        dateWrapper.classList.add('hidden');
+                        dateInput.value = '';
+                        dateInput.removeAttribute('required');
+                    }
+
+                    /* ================= TIME ================= */
+                    if (reason.time) {
+                        timeWrapper.classList.remove('hidden');
+                        followDate.setHours(followDate.getHours() + 2);
+                        timeInput.value = followDate.toTimeString().slice(0, 5);
+                        timeInput.setAttribute('required', 'required');
+                    } else {
+                        timeWrapper.classList.add('hidden');
+                        timeInput.value = '';
+                        timeInput.removeAttribute('required');
+                    }
+
+                    /* ================= REMARK ================= */
+                    if (reason.remark) {
+                        remarkWrapper.classList.remove('hidden');
+                        remarkInput.removeAttribute('disabled');
+                        remarkInput.setAttribute('required', 'required');
+                    } else {
+                        remarkWrapper.classList.add('hidden');
+                        remarkInput.value = '';
+                        remarkInput.setAttribute('disabled', 'disabled');
+                        remarkInput.removeAttribute('required');
+                    }
+                },
+
+
+
+
+
+                closeFollow() {
+                    this.followOpen = false;
+                },
+
+
+                /* ---------------- SHARE MODAL ---------------- */
+
+                handleShare(event) {
+                    const button = event.currentTarget;
+
+                    // Read data attributes from button
+                    const lead = {
+                        id: button.dataset.id,
+                        name: button.dataset.name,
+                        email: button.dataset.email,
+                        phone_code: button.dataset.phoneCode,
+                        phone_number: button.dataset.phoneNumber,
+                        package_id: button.dataset.packageId,
+                        people_count: Number(button.dataset.peopleCount) || 1,
+                        child_count: Number(button.dataset.childCount) || 0,
+                    };
+
+                    // Set modal state
+                    this.shareLeadId = lead.id;
+                    this.shareLeadName = lead.name;
+                    this.leadEmail = lead.email;
+                    this.leadPhone = `${lead.phone_code}${lead.phone_number}`;
+                    this.peopleCount = lead.people_count;
+                    this.childCount = lead.child_count;
+
+                    // Default to first package if none selected
+                    this.selectedPackage = lead.package_id || (this.allPackages[0]?.id ?? "");
+
+                    // Show modal
+                    this.showDropdown = true;
+                    this.showSelectedPackage = true;
+                    this.shareOpen = true;
+
+                    // Fetch package docs for the selected package
+                    if (this.selectedPackage) {
+                        this.fetchPackageDocs(this.selectedPackage);
+                    }
+                },
+
+
+
+                fetchPackageDocs(packageId) {
+                    fetch(`/packages/${packageId}/json`)
+                        .then(res => res.json())
+                        .then(data => {
+                            let docs = data.package.package_docs_url;
+                            if (typeof docs === 'string') docs = [docs];
+                            if (!Array.isArray(docs)) docs = [];
+
+                            this.selectedPackageDocs = docs;
+                            this.selectedPackagePdf = docs[0] || null;
+                            this.selectedDocs = [...docs];
+                            this.selectedPackageName = data.package.package_name;
+
+                            // Load template messages if exists
+                            this.whatsappMessage = data.package.messageTemplate?.whatsapp?.text || "";
+                            this.whatsappMedia = data.package.messageTemplate?.whatsapp?.media || "";
+                            this.emailSubject = data.package.messageTemplate?.email?.subject || "";
+                            this.emailBody = data.package.messageTemplate?.email?.body || "";
+                            this.emailMedia = data.package.messageTemplate?.email?.media || "";
+
+                            // Reset checkboxes
+                            this.sendWhatsAppChecked = false;
+                            this.sendEmailChecked = false;
+                            this.selectedMediaType = 'template'; // default media type
+                        });
+                },
+
+                closeShare() {
+                    this.shareOpen = false;
+                    this.selectedPackageDocs = [];
+                    this.selectedDocs = [];
+                    this.selectedPackagePdf = null;
+                    this.whatsappMessage = "";
+                    this.whatsappMedia = "";
+                    this.emailSubject = "";
+                    this.emailBody = "";
+                    this.emailMedia = "";
+                    this.sendWhatsAppChecked = false;
+                    this.sendEmailChecked = false;
+                    this.selectedMediaType = 'template';
+                },
+
+                sendSelected() {
+                    if (this.sendEmailChecked) this.sendEmail();
+                    if (this.sendWhatsAppChecked) this.sendWhatsApp();
+                },
+
+                sendEmail() {
+                    if (!this.leadEmail || !this.selectedPackage) {
+                        alert("Email & Package are required.");
+                        return;
+                    }
+
+                    const payload = {
+                        lead_name: this.shareLeadName,
+                        package_id: this.selectedPackage,
+                        email: this.leadEmail,
+                        subject: this.emailSubject,
+                        body: this.emailBody,
+                        media_type: this.selectedMediaType, // send media type
+                    };
+
+                    this.sending = true;
+
+                    fetch("{{ route('leads.sendPackageEmail') }}", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "X-CSRF-TOKEN": '{{ csrf_token() }}'
+                            },
+                            body: JSON.stringify(payload)
+                        })
+                        .then(res => res.json())
+                        .then(response => {
+                            this.sending = false;
+                            if (response.success) {
+                                alert("📧 Package Email Sent Successfully!");
+                                this.closeShare();
+                            } else {
+                                alert("Failed to send email.");
+                            }
+                        })
+                        .catch(err => {
+                            this.sending = false;
+                            console.error(err);
+                            alert("Error sending email.");
+                        });
+                },
+
+                async sendWhatsApp() {
+                    if (!this.leadPhone || !this.selectedPackage) {
+                        alert("Phone number & Package are required.");
+                        return;
+                    }
+
+                    if (!this.whatsappMessage && !this.whatsappMedia && !this.selectedPackagePdf) {
+                        alert("WhatsApp message or media is required.");
+                        return;
+                    }
+
+                    const payload = {
+                        recipient: this.leadPhone,
+                        text: this.whatsappMessage,
+                        package_id: this.selectedPackage,
+                        media_type: this.selectedMediaType // send selected media type
+                    };
+
+                    this.sending = true;
+
+                    try {
+                        const res = await fetch("{{ url('whatsapp/send-media-json') }}", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content
+                            },
+                            credentials: "same-origin",
+                            body: JSON.stringify(payload),
+                        });
+
+                        let data = await res.json();
+
+                        const successMessage = data.message?.toLowerCase() ?? "";
+                        if (data.success || data.status === "success" || successMessage.includes("sent successfully")) {
+                            alert("📨 WhatsApp sent successfully!");
+                            this.closeShare();
+                            return;
+                        }
+
+                        console.error("WhatsApp API Error:", data);
+                        alert(data.error ?? data.message ?? "Failed to send WhatsApp message.");
+
+                    } catch (err) {
+                        console.error("WhatsApp Error:", err);
+                        alert("Error sending WhatsApp. Please check logs.");
+                    } finally {
+                        this.sending = false;
+                    }
+                },
+
+
+
+
+
+
+                /* ---------------- EDIT MODAL ---------------- */
+
+                openEditModal(id) {
+                    fetch(`/leads/${id}/json`)
+                        .then(res => res.json())
+                        .then(data => {
+                            this.editForm = {
+                                ...data
+                            };
+                            this.editOpen = true;
+                        });
+                },
+
+                closeEditModal() {
+                    this.editOpen = false;
+                },
+                async submitEdit() {
+                    try {
+                        if (!this.editForm.id) {
+                            alert("Lead ID missing—cannot update.");
+                            return;
+                        }
+
+                        const response = await fetch(`/leads/${this.editForm.id}`, {
+                            method: "PATCH",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "X-CSRF-TOKEN": document
+                                    .querySelector('meta[name="csrf-token"]')
+                                    .getAttribute("content"),
+                            },
+                            body: JSON.stringify(this.editForm),
+                        });
+
+                        const result = await response.json();
+
+                        if (!response.ok) {
+                            alert(result.message || "Validation failed");
+                            return;
+                        }
+
+                        alert("Lead Updated Successfully");
+                        this.closeEditModal();
+                        window.location.reload();
+
+                    } catch (error) {
+                        console.error(error);
+                        alert("Something went wrong while updating lead");
+                    }
+                },
+                async updateStatus(id, newStatus) {
+                    try {
+                        const response = await fetch(`/leads/${id}/status`, {
+                            method: "PATCH",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "X-CSRF-TOKEN": document
+                                    .querySelector('meta[name="csrf-token"]')
+                                    .getAttribute("content"),
+                            },
+                            body: JSON.stringify({
+                                status: newStatus
+                            }),
+                        });
+
+                        const result = await response.json();
+
+                        if (!response.ok) {
+                            alert(result.message || "Failed to update status");
+                            return;
+                        }
+                        window.location.reload();
+                        console.log("Status updated:", result.status);
+
+                    } catch (error) {
+                        console.error(error);
+                        alert("Error while updating status");
+                    }
+                },
+
+
+
+                /* ---------------- BULK ASSIGN ---------------- */
+
+                toggleLead(event) {
+                    const id = parseInt(event.target.value);
+                    if (event.target.checked) this.selected.push(id);
+                    else this.selected = this.selected.filter(i => i !== id);
                 },
 
                 assignUser() {
-                    if (!this.bulkUser || !this.selected.length) {
-                        alert('Select user and at least one lead');
-                        return;
-                    }
+                    if (!this.bulkUser) return alert('Select a user');
+                    if (!this.selected.length) return alert('Select at least one lead');
 
                     fetch('{{ route('leads.bulkAssign') }}', {
                             method: 'POST',
@@ -902,10 +1322,12 @@ init() {
                             })
                         })
                         .then(res => res.json())
-                        .then(res => res.success && window.location.reload());
+                        .then(resp => {
+                            if (resp.success) window.location.reload();
+                        });
                 }
+
             };
         }
     </script>
-
 </x-app-layout>
