@@ -36,6 +36,7 @@
                                 <th>Remark</th>
                                 <th>Date</th>
                                 <th>Time</th>
+                                <th>Lead Status </th>
                                 <th>Email Template</th>
                                 <th>WhatsApp Template</th>
                                 <th>Active</th>
@@ -122,7 +123,7 @@
                         </div>
                         <!-- Date & Time -->
                         <div class="grid grid-cols-2 gap-4">
-                            
+
                         </div>
 
                         <!-- Templates -->
@@ -134,6 +135,18 @@
                             <label class="block font-medium text-gray-700 mb-1">WhatsApp Template</label>
                             <textarea x-model="followupReason.whatsapp_template" class="w-full p-3 rounded-xl border bg-gray-50 dark:bg-gray-700"></textarea>
                         </div>
+                        <!-- Lead Status -->
+                        <div>
+                            <label class="block font-medium text-gray-700 mb-1">Lead Status</label>
+                            <select x-model="followupReason.lead_status_id"
+                                class="w-full p-3 rounded-xl border bg-gray-50 dark:bg-gray-700">
+                                <option value="">Select Lead Status</option>
+                                @foreach ($leadStatuses as $status)
+                                    <option value="{{ $status->id }}">{{ $status->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
 
                         <!-- Active & Global -->
                         <div class="grid grid-cols-2 gap-4">
@@ -176,6 +189,7 @@
                     followupReason: {
                         id: '',
                         company_id: '',
+                        lead_status_id: '',
                         name: '',
                         remark: 0,
                         date: 0,
@@ -185,6 +199,7 @@
                         is_active: 1,
                         is_global: 0
                     },
+
                     table: null,
 
                     init() {
@@ -232,6 +247,12 @@
                                     name: 'time',
                                     searchable: false
                                 },
+                                {
+                                    data: 'lead_status',
+                                    name: 'lead_status',
+                                    orderable: false
+                                },
+
                                 {
                                     data: 'email_template',
                                     name: 'email_template',
@@ -295,9 +316,11 @@
 
                     openModal(reason = null) {
                         this.modalTitle = reason ? 'Edit Followup Reason' : 'Add Followup Reason';
+
                         this.followupReason = reason ? {
                             id: reason.id,
                             company_id: reason.company_id,
+                            lead_status_id: reason.lead_status_id ?? '',
                             name: reason.name,
                             remark: reason.remark ? 1 : 0,
                             date: reason.date ? 1 : 0,
@@ -307,11 +330,22 @@
                             is_active: reason.is_active ? 1 : 0,
                             is_global: reason.is_global ? 1 : 0
                         } : {
-                            ...this.followupReason,
-                            id: ''
+                            id: '',
+                            company_id: '',
+                            lead_status_id: '',
+                            name: '',
+                            remark: 0,
+                            date: 0,
+                            time: 0,
+                            email_template: '',
+                            whatsapp_template: '',
+                            is_active: 1,
+                            is_global: 0
                         };
+
                         this.modalOpen = true;
                     },
+
 
                     closeModal() {
                         this.modalOpen = false;

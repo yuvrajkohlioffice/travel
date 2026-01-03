@@ -4,38 +4,37 @@ namespace App\Http\Controllers;
 
 use App\Models\FollowupReason;
 use App\Models\Company;
+use App\Models\LeadStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Yajra\DataTables\DataTables;
 
 class FollowupReasonController extends Controller
 {
-public function indexApi(Request $request)
-{
-    $companyId = Auth::user()?->company_id;
+    public function indexApi(Request $request)
+    {
+        $companyId = Auth::user()?->company_id;
 
-    $reasons = FollowupReason::active()
-        ->when($companyId, function ($q) use ($companyId) {
-            $q->where(function ($sub) use ($companyId) {
-                $sub->where('company_id', $companyId)
-                    ->orWhere('is_global', true);
-            });
-        }, function ($q) {
-            $q->where('is_global', true);
-        })
-        ->orderBy('name')
-        ->get([
-            'id', 'name', 'remark', 'date', 'time',
-            'email_template', 'whatsapp_template'
+        $reasons = FollowupReason::active()
+            ->when(
+                $companyId,
+                function ($q) use ($companyId) {
+                    $q->where(function ($sub) use ($companyId) {
+                        $sub->where('company_id', $companyId)->orWhere('is_global', true);
+                    });
+                },
+                function ($q) {
+                    $q->where('is_global', true);
+                },
+            )
+            ->orderBy('name')
+            ->get(['id', 'name', 'remark', 'date', 'time', 'email_template', 'whatsapp_template', 'lead_status_id']);
+
+        return response()->json([
+            'success' => true,
+            'data' => $reasons,
         ]);
-
-    return response()->json([
-        'success' => true,
-        'data' => $reasons
-    ]);
-}
-
-
+    }
 
     // Display Followup Reasons (DataTable)
     public function index(Request $request)
@@ -43,24 +42,28 @@ public function indexApi(Request $request)
         $user = Auth::user();
 
         if ($request->ajax()) {
-            $query = $user->role_id == 1
-                ? FollowupReason::with('company')
-                : FollowupReason::where('company_id', $user->company_id)
-                    ->orWhere('is_global', true)
-                    ->with('company');
+            $query = $user->role_id == 1 ? FollowupReason::with('company') : FollowupReason::where('company_id', $user->company_id)->orWhere('is_global', true)->with('company');
 
             return DataTables::of($query)
                 ->addColumn('company', fn($row) => $row->company?->company_name ?? '-')
                 ->addColumn('remark', fn($row) => $row->remark ? 'Yes' : 'No')
                 ->addColumn('date', fn($row) => $row->date ? 'Yes' : 'No')
+                ->addColumn('lead_status', fn($row) => $row->leadStatus?->name ?? '-')
+
                 ->addColumn('time', fn($row) => $row->time ? 'Yes' : 'No')
                 ->addColumn('is_active', fn($row) => $row->is_active ? 'Active' : 'Inactive')
                 ->addColumn('is_global', fn($row) => $row->is_global ? 'Yes' : 'No')
                 ->addColumn('action', function ($row) {
                     $data = htmlspecialchars(json_encode($row), ENT_QUOTES, 'UTF-8');
-                    $btn = '<button type="button" x-data x-on:click="$dispatch(\'edit-followup\', ' . $data . ')"
+                    $btn =
+                        '<button type="button" x-data x-on:click="$dispatch(\'edit-followup\', ' .
+                        $data .
+                        ')"
                                 class="px-3 py-1 bg-blue-600 text-white rounded text-sm mr-2">Edit</button>';
-                    $btn .= '<button type="button" data-id="' . $row->id . '"
+                    $btn .=
+                        '<button type="button" data-id="' .
+                        $row->id .
+                        '"
                                 class="delete-btn px-3 py-1 bg-red-600 text-white rounded text-sm">Delete</button>';
                     return $btn;
                 })
@@ -68,11 +71,10 @@ public function indexApi(Request $request)
                 ->make(true);
         }
 
-        $companies = $user->role_id == 1
-            ? Company::all()
-            : Company::where('id', $user->company_id)->get();
+        $companies = $user->role_id == 1 ? Company::all() : Company::where('id', $user->company_id)->get();
+        $leadStatuses = LeadStatus::all();
 
-        return view('followup_reasons.index', compact('companies', 'user'));
+        return view('followup_reasons.index', compact('companies', 'user','leadStatuses'));
     }
 
     // Store new FollowupReason
@@ -81,9 +83,10 @@ public function indexApi(Request $request)
         $this->validateBooleanFields($request);
 
         $reason = FollowupReason::create([
-            'company_id' => $request->is_global ? null : ($request->company_id ?? Auth::id()),
+            'company_id' => $request->is_global ? null : $request->company_id ?? Auth::id(),
             'name' => $request->name,
             'remark' => $request->remark,
+            'lead_status_id' => $request->lead_status_id,
             'date' => $request->date,
             'time' => $request->time,
             'email_template' => $request->email_template,
@@ -95,7 +98,7 @@ public function indexApi(Request $request)
         return response()->json([
             'status' => true,
             'message' => 'Followup Reason saved successfully',
-            'data' => $reason
+            'data' => $reason,
         ]);
     }
 
@@ -107,7 +110,8 @@ public function indexApi(Request $request)
         $reason = FollowupReason::findOrFail($id);
 
         $reason->update([
-            'company_id' => $request->is_global ? null : ($request->company_id ?? Auth::id()),
+            'company_id' => $request->is_global ? null : $request->company_id ?? Auth::user()->company_id,
+            'lead_status_id' => $request->lead_status_id,
             'name' => $request->name,
             'remark' => $request->remark,
             'date' => $request->date,
@@ -121,7 +125,7 @@ public function indexApi(Request $request)
         return response()->json([
             'status' => true,
             'message' => 'Followup Reason updated successfully',
-            'data' => $reason
+            'data' => $reason,
         ]);
     }
 
@@ -146,7 +150,6 @@ public function indexApi(Request $request)
     // Common method to validate boolean fields
     protected function validateBooleanFields(Request $request, $id = null)
     {
-        // Convert string "true"/"false" to boolean
         $request->merge([
             'remark' => filter_var($request->remark, FILTER_VALIDATE_BOOLEAN),
             'date' => filter_var($request->date, FILTER_VALIDATE_BOOLEAN),
@@ -157,6 +160,7 @@ public function indexApi(Request $request)
 
         $rules = [
             'company_id' => 'nullable|exists:companies,id',
+            'lead_status_id' => 'nullable|exists:lead_statuses,id',
             'name' => 'required|string|unique:followup_reasons,name' . ($id ? ",$id" : ''),
             'remark' => 'required|boolean',
             'date' => 'required|boolean',
