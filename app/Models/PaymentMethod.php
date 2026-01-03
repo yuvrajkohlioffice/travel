@@ -9,7 +9,7 @@ class PaymentMethod extends Model
 {
     use SoftDeletes;
 
-    protected $fillable = ['name', 'type', 'is_active', 'is_tax_applicable', 'tax_percentage', 'tax_name', 'tax_number', 'bank_name', 'account_name', 'account_number', 'ifsc_code', 'description'];
+    protected $fillable = ['name', 'type','company_id', 'is_active', 'is_tax_applicable', 'tax_percentage', 'tax_name', 'tax_number', 'bank_name', 'account_name', 'account_number', 'ifsc_code', 'description'];
 
     protected $casts = [
         'is_active' => 'boolean',
@@ -24,5 +24,8 @@ class PaymentMethod extends Model
     public function scopeActive($query)
     {
         return $query->where('is_active', 1);
+    }
+    public function company(){
+        return $this->belongsTo(Company::class);
     }
 }

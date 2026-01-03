@@ -30,6 +30,7 @@
                             <tr>
                                 <th>#</th>
                                 <th>Name</th>
+                                <th>Company</th>
                                 <th>Type</th>
                                 <th>Tax</th>
                                 <th>Status</th>
@@ -64,6 +65,14 @@
                         <option value="bank">Bank</option>
                         <option value="online">Online</option>
                         <option value="wallet">Wallet</option>
+                    </select>
+                    <select x-model="method.company_id" class="w-full p-2 border rounded">
+                        <option value="">Select Company</option>
+                        @foreach ($companies as $company)
+                            <option value="{{ $company->id }}">{{ $company->company_name }}</option>
+                        @endforeach
+
+
                     </select>
 
                     <!-- BANK FIELDS -->
@@ -129,6 +138,7 @@
                             bank_name: '',
                             account_name: '',
                             account_number: '',
+                            company_id: '',
                             ifsc_code: '',
                             description: '',
                             is_active: true,
@@ -155,6 +165,9 @@
                                 },
                                 {
                                     data: 'name'
+                                },
+                                {
+                                    data: 'company'
                                 },
                                 {
                                     data: 'type'
