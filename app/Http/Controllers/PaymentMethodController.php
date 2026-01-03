@@ -13,53 +13,53 @@ class PaymentMethodController extends Controller
        INDEX
     ============================== */
     public function index(Request $request)
-{
-    if ($request->ajax()) {
-        $data = PaymentMethod::with('company')->withTrashed()->latest();
+    {
+        if ($request->ajax()) {
+            $data = PaymentMethod::with('company')->withTrashed()->latest();
 
-        $user = auth()->user(); // get the logged-in user
+            $user = auth()->user(); // get the logged-in user
 
-        return DataTables::of($data)
-            ->addIndexColumn()
-            ->addColumn('company', function ($row) {
-                return $row->company ? $row->company->company_name : 'No Company';
-            })
-            ->addColumn('tax', function ($row) {
-                return $row->is_tax_applicable ? "{$row->tax_percentage}% ({$row->tax_name})" : 'No';
-            })
-            ->addColumn('status', function ($row) {
-                if ($row->trashed()) {
-                    return '<span class="badge bg-warning">Deleted</span>';
-                }
-                return $row->is_active ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-danger">Inactive</span>';
-            })
-            ->addColumn('action', function ($row) use ($user) {
-                $buttons = '';
-
-                // Edit button is visible to everyone
-                $buttons .= '<button data-row=\'' . json_encode($row) . '\' class="px-3 py-1 bg-blue-600 text-white rounded text-sm mr-2 edit-btn">Edit</button>';
-
-                // Only admin (role_id=1) can see Delete/Restore buttons
-                if ($user->role_id == 1) {
+            return DataTables::of($data)
+                ->addIndexColumn()
+                ->addColumn('company', function ($row) {
+                    return $row->company ? $row->company->company_name : 'No Company';
+                })
+                ->addColumn('tax', function ($row) {
+                    return $row->is_tax_applicable ? "{$row->tax_percentage}% ({$row->tax_name})" : 'No';
+                })
+                ->addColumn('status', function ($row) {
                     if ($row->trashed()) {
-                        $buttons .= '<button data-id="'.$row->id.'" class="px-3 py-1 bg-green-600 text-white rounded text-sm restore-btn">Restore</button> ';
-                        $buttons .= '<button data-id="'.$row->id.'" class="px-3 py-1 bg-red-700 text-white rounded text-sm hard-delete-btn">Delete Permanently</button>';
-                    } else {
-                        $buttons .= '<button data-id="'.$row->id.'" class="px-3 py-1 bg-red-600 text-white rounded text-sm delete-btn">Delete</button>';
+                        return '<span class="badge bg-warning">Deleted</span>';
                     }
-                }
+                    return $row->is_active ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-danger">Inactive</span>';
+                })
+                ->addColumn('action', function ($row) use ($user) {
+                    $buttons = '';
 
-                return $buttons;
-            })
-            ->rawColumns(['status', 'action'])
-            ->make(true);
+                    // Edit button is visible to everyone
+                    $buttons .= '<button data-row=\'' . json_encode($row) . '\' class="px-3 py-1 bg-blue-600 text-white rounded text-sm mr-2 edit-btn">Edit</button>';
+
+                    // Only admin (role_id=1) can see Delete/Restore buttons
+                    if ($user->role_id == 1) {
+                        if ($row->trashed()) {
+                            $buttons .= '<button data-id="' . $row->id . '" class="px-3 py-1 bg-green-600 text-white rounded text-sm restore-btn">Restore</button> ';
+                            $buttons .= '<button data-id="' . $row->id . '" class="px-3 py-1 bg-red-700 text-white rounded text-sm hard-delete-btn">Delete Permanently</button>';
+                        } else {
+                            $buttons .= '<button data-id="' . $row->id . '" class="px-3 py-1 bg-red-600 text-white rounded text-sm delete-btn">Delete</button>';
+                        }
+                    }
+
+                    return $buttons;
+                })
+                ->rawColumns(['status', 'action'])
+                ->make(true);
+        }
+
+        $companies = Company::all();
+        return view('payment-methods.index', compact('companies'));
     }
 
-    $companies = Company::all();
-    return view('payment-methods.index', compact('companies'));
-}
-
-      public function restore($id)
+    public function restore($id)
     {
         $method = PaymentMethod::withTrashed()->findOrFail($id);
         $method->restore();
@@ -86,7 +86,7 @@ class PaymentMethodController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'type' => 'required|in:bank,cash,online,wallet',
-            'company_id' => 'required|exists:companies,id',
+            'company_id' => 'nullable|exists:companies,id',
             'tax_percentage' => 'nullable|numeric|min:0|max:100',
         ]);
 
@@ -97,14 +97,14 @@ class PaymentMethodController extends Controller
             'message' => $request->id ? 'Payment Method Updated Successfully' : 'Payment Method Created Successfully',
         ]);
     }
-public function update(Request $request, $id)
+    public function update(Request $request, $id)
     {
         $paymentMethod = PaymentMethod::findOrFail($id);
 
-       $request->validate([
+        $request->validate([
             'name' => 'required|string|max:255',
             'type' => 'required|in:bank,cash,online,wallet',
-            'company_id' => 'required|exists:companies,id',
+            'company_id' => 'nullable|exists:companies,id',
             'tax_percentage' => 'nullable|numeric|min:0|max:100',
         ]);
 
@@ -127,4 +127,21 @@ public function update(Request $request, $id)
             'message' => 'Payment Method Deleted',
         ]);
     }
+    public function active()
+{
+    $user = auth()->user();
+
+    $query = PaymentMethod::query()
+        ->active()
+        ->whereNull('deleted_at')
+        ->orderBy('name');
+
+    // 🔐 Company restriction for non-admin
+    if ($user->role_id != 1) {
+        $query->where('company_id', $user->company_id);
+    }
+
+    return response()->json($query->get());
+}
+
 }

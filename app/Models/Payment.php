@@ -17,6 +17,7 @@ class Payment extends Model
         'paid_amount',
         'remaining_amount',
         'status',
+        'image',   
         'payment_method',
         'payment_method_id',
         'transaction_id',
@@ -47,7 +48,10 @@ class Payment extends Model
     {
         return $this->belongsTo(User::class);
     }
-
+ public function paymentMethod()
+    {
+        return $this->belongsTo(PaymentMethod::class);
+    }
     /**
      * Record a payment
      *

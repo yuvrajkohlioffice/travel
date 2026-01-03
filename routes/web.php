@@ -185,7 +185,9 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         | Payment Management
         |--------------------------------------------------------------------------
         */
-    Route::resource('payment-methods', PaymentMethodController::class);
+    Route::resource('payment-methods', PaymentMethodController::class)
+    ->except(['show']);
+
     Route::post('/payment-methods/restore/{id}', [PaymentMethodController::class, 'restore'])->name('payment-methods.restore');
     Route::delete('/payment-methods/force-delete/{id}', [PaymentMethodController::class, 'forceDelete'])->name('payment-methods.forceDelete');
     Route::prefix('payments')
@@ -219,6 +221,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     Route::delete('packages/item/{item}', [PackageController::class, 'deleteRelation'])->name('packages.item.delete');
 
     Route::put('packages/item/{item}', [PackageController::class, 'updatePackageItem'])->name('packages.item.update');
+    Route::get('/payment-methods/active', [PaymentMethodController::class, 'active'])->name('payment-methods.active');
 
     Route::resource('packages', PackageController::class);
 

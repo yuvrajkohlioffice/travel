@@ -138,7 +138,7 @@
                         <button data-value="today"
                             class="date-range-btn px-4 py-2 rounded-lg border border-gray-300 text-sm hover:bg-blue-300 transition">Today
                             <span id="count-today" class="ml-2">0</span></button>
-                            <button data-value="yesterday"
+                        <button data-value="yesterday"
                             class="date-range-btn px-4 py-2 rounded-lg border border-gray-300 text-sm hover:bg-blue-300 transition">Yesterday
                             <span id="count-yesterday" class="ml-2">0</span></button>
                         <button data-value="week"
@@ -147,7 +147,7 @@
                         <button data-value="month"
                             class="date-range-btn px-4 py-2 rounded-lg border border-gray-300 text-sm hover:bg-blue-300 transition">This
                             Month <span id="count-month" class="ml-2">0</span></button>
-                        
+
                     </div>
                     <div id="bulkBar"
                         class="hidden mb-3 flex flex-wrap items-center gap-3 bg-white dark:bg-gray-800 p-4 rounded shadow-sm border">
@@ -540,32 +540,53 @@
     <script>
         function leadModals() {
             return {
-                /* ---------------- MODAL STATES ---------------- */
+
+                /* ======================================================
+                   MODAL STATES
+                ====================================================== */
                 invoiceOpen: false,
                 followOpen: false,
                 shareOpen: false,
                 editOpen: false,
                 paymentOpen: false,
-                leadPhone: "",
-                whatsappMessage: "",
-                whatsappPdfUrl: "", // PDF URL you want to send
                 sending: false,
-                /* ---------------- LEAD INFO ---------------- */
+
+                /* ======================================================
+                   LEAD INFO
+                ====================================================== */
                 leadId: "",
                 leadName: "",
                 leadEmail: "",
+                leadPhone: "",
                 peopleCount: 1,
                 childCount: 0,
 
-                /* ---------------- PACKAGES ---------------- */
+                /* ======================================================
+                   WHATSAPP
+                ====================================================== */
+                whatsappMessage: "",
+                whatsappPdfUrl: "",
+
+                /* ======================================================
+                   PACKAGES
+                ====================================================== */
                 packages: @json($packages),
+                allPackages: @json($packages),
+
                 selectedPackageInvoice: "",
+                selectedPackage: "",
+                selectedPackageName: "",
+                selectedPackageDocs: [],
+                selectedPackagePdf: null,
+
                 packageData: null,
                 selectedInvoiceItems: null,
-                selectedRoomType: 'standard_price',
+                selectedRoomType: "standard_price",
                 filteredItems: [],
 
-                /* ---------------- PRICING ---------------- */
+                /* ======================================================
+                   PRICING
+                ====================================================== */
                 packagePrice: 0,
                 itemPrice: 0,
                 totalPrice: 0,
@@ -575,173 +596,217 @@
                 travelStartDate: "",
                 animatedPrice: 0,
 
-                /* ---------------- CARS ---------------- */
+                /* ======================================================
+                   CARS
+                ====================================================== */
                 cars: [],
                 selectedCar: "",
 
-                /* ---------------- FOLLOW-UP ---------------- */
-                phoneNumber: '',
-                phoneCode: '',
-                fullNumber: '',
-                selectedReason: '',
+                /* ======================================================
+                   FOLLOW-UP
+                ====================================================== */
+                phoneNumber: "",
+                phoneCode: "",
+                fullNumber: "",
+                selectedReason: "",
                 followups: [],
                 reasons: [],
 
-                /* ---------------- SHARE ---------------- */
-                shareLeadId: '',
-                shareLeadName: '',
-                selectedPackage: '',
-                selectedPackageName: '',
-                selectedPackageDocs: [],
-                selectedPackagePdf: null,
+                /* ======================================================
+                   SHARE
+                ====================================================== */
+                shareLeadId: "",
+                shareLeadName: "",
                 selectedDocs: [],
                 showDropdown: false,
                 showSelectedPackage: false,
-                allPackages: @json($packages),
 
-                /* ---------------- EDIT ---------------- */
+                /* ======================================================
+                   EDIT
+                ====================================================== */
                 editForm: {},
 
-                /* ---------------- BULK ---------------- */
+                /* ======================================================
+                   BULK
+                ====================================================== */
                 selected: [],
-                bulkUser: '',
+                bulkUser: "",
 
-                /* ---------------- PAYMENT FIELDS ---------------- */
-                paymentInvoiceId: '', // Invoice ID
-                paymentInvoiceNumber: '', // Invoice number
-                amount: 0, // Total invoice amount
-                remainingAmount: 0, // Remaining amount
-                paidAmount: 0, // Paid amount input
-                paymentMethod: '', // Payment method
-                transactionId: '', // Transaction ID
-                nextPaymentDate: '', // Next payment date (for partial)
-                paymentNotes: '', // Notes
-                partialPaymentWithoutNextDate: false, // Validation flag
+                /* ======================================================
+                   PAYMENT
+                ====================================================== */
+                paymentInvoiceId: null,
+                paymentInvoiceNumber: "",
+                amount: 0,
+                remainingAmount: 0,
 
-                /* ---------------- PAYMENT MODAL FUNCTIONS ---------------- */
+                paidAmount: 0,
+                paymentMethodId: "",
+                selectedMethod: null,
+                paymentMethods: [],
 
-                // Open payment modal with invoice data
-                openPaymentModal(invoice) {
-                    this.paymentInvoiceId = invoice.id;
-                    this.paymentInvoiceNumber = invoice.invoice_no;
-                    this.amount = Number(invoice.amount || invoice.remaining_amount || 0);
-                    this.remainingAmount = Number(invoice.remaining_amount || this.amount);
-                    this.paidAmount = 0;
-                    this.paymentMethod = '';
-                    this.transactionId = '';
-                    this.nextPaymentDate = '';
-                    this.paymentNotes = '';
-                    this.partialPaymentWithoutNextDate = false;
-                    this.paymentOpen = true;
+                transactionId: "",
+                nextPaymentDate: "",
+                paymentNotes: "",
+                paymentImage: null,
+
+                partialPaymentWithoutNextDate: false,
+                nextDateError: false,
+                paymentMethods: [],
+                paymentMethodId: '',
+
+
+             
+               /* ======================================================
+   COMPUTED
+====================================================== */
+
+get isPartial() {
+    return this.paidAmount > 0 && this.paidAmount < this.remainingAmount;
+},
+
+get remainingAmountReactive() {
+    return Math.max(
+        Number(this.remainingAmount) - Number(this.paidAmount || 0),
+        0
+    );
+},
+
+get hasBankDetails() {
+    if (!this.selectedMethod) return false;
+
+    return Boolean(
+        this.selectedMethod.bank_name ||
+        this.selectedMethod.account_name ||
+        this.selectedMethod.account_number ||
+        this.selectedMethod.ifsc_code
+    );
+},
+
+
+
+
+                
+
+
+                get partialPaymentWithoutNextDate() {
+                    return this.isPartial && !this.nextPaymentDate;
                 },
 
-
-                // Close payment modal and reset fields
-                closePaymentModal() {
-                    this.paymentOpen = false;
-                    this.paymentInvoiceId = '';
-                    this.paymentInvoiceNumber = '';
-                    this.amount = 0;
-                    this.remainingAmount = 0;
-                    this.paidAmount = 0;
-                    this.paymentMethod = '';
-                    this.transactionId = '';
-                    this.nextPaymentDate = '';
-                    this.paymentNotes = '';
-                    this.partialPaymentWithoutNextDate = false;
-                },
-
-                // Reactive remaining amount display
-                get remainingAmountReactive() {
-                    return Math.max(this.remainingAmount - this.paidAmount, 0);
-                },
-
-                // Format numbers as currency
+                /* ======================================================
+                   HELPERS
+                ====================================================== */
                 formatCurrency(value) {
-                    return parseFloat(value).toLocaleString(undefined, {
+                    return Number(value || 0).toLocaleString(undefined, {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2
                     });
                 },
 
-                // Submit payment logic (handles full/partial)
+                resetPaymentForm() {
+                    this.paidAmount = 0;
+                    this.paymentMethodId = '';
+                    this.selectedMethod = null;
+                    this.transactionId = '';
+                    this.nextPaymentDate = '';
+                    this.paymentNotes = '';
+                    this.paymentImage = null;
+                    this.nextDateError = false;
+                },
+
+                handleImageUpload(e) {
+                    this.paymentImage = e.target.files?.[0] || null;
+                },
+
+                /* ======================================================
+                   PAYMENT MODAL
+                ====================================================== */
+                openPaymentModal(invoice) {
+                    this.paymentInvoiceId = invoice.id;
+                    this.paymentInvoiceNumber = invoice.invoice_no;
+                    this.amount = Number(invoice.final_price);
+                    this.remainingAmount = Number(invoice.remaining_amount);
+
+                    this.resetPaymentForm();
+                    this.fetchPaymentMethods();
+                    this.paymentOpen = true;
+                },
+
+                closePaymentModal() {
+                    this.paymentOpen = false;
+                },
+init() {
+    this.$watch('paymentMethodId', id => {
+        this.selectedMethod =
+            this.paymentMethods.find(m => m.id == id) || null;
+    });
+},
+                fetchPaymentMethods() {
+                    fetch('/payment-methods/active')
+                        .then(res => res.json())
+                        .then(data => this.paymentMethods = data || []);
+                },
+
                 submitPayment() {
-                    // Validation
-                    if (this.paidAmount <= 0) {
-                        alert('Paid amount must be greater than 0');
+                    if (this.isPartial && !this.nextPaymentDate) {
+                        this.nextDateError = true;
                         return;
-                    }
-                    if (this.paidAmount > this.remainingAmount) {
-                        alert('Paid amount cannot exceed remaining amount');
-                        return;
-                    }
-                    if (this.paidAmount < this.remainingAmount && !this.nextPaymentDate) {
-                        this.partialPaymentWithoutNextDate = true;
-                        return;
-                    } else {
-                        this.partialPaymentWithoutNextDate = false;
                     }
 
-                    // Prepare payload
-                    const payload = {
-                        invoice_id: this.paymentInvoiceId,
-                        amount: this.amount,
-                        paid_amount: this.paidAmount,
-                        remaining_amount: this.remainingAmount - this.paidAmount,
-                        status: this.paidAmount === this.remainingAmount ? 'paid' : 'partial',
-                        payment_method: this.paymentMethod,
-                        transaction_id: this.transactionId,
-                        notes: this.paymentNotes,
-                        next_payment_date: this.paidAmount < this.remainingAmount ? this.nextPaymentDate : null,
-                    };
+                    if (this.selectedMethod?.image_proof_required && !this.paymentImage) {
+                        alert('Payment proof image is required');
+                        return;
+                    }
 
-                    // Submit to backend
+                    const formData = new FormData();
+                    [
+                        ['invoice_id', this.paymentInvoiceId],
+                        ['paid_amount', this.paidAmount],
+                        ['payment_method_id', this.paymentMethodId],
+                        ['transaction_id', this.transactionId],
+                        ['notes', this.paymentNotes],
+                    ].forEach(([k, v]) => formData.append(k, v ?? ''));
+
+                    if (this.isPartial) {
+                        formData.append('next_payment_date', this.nextPaymentDate);
+                    }
+                    if (this.paymentImage) {
+                        formData.append('image', this.paymentImage);
+                    }
+
                     fetch('/payments', {
                             method: 'POST',
                             headers: {
-                                'Content-Type': 'application/json',
                                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                             },
-                            body: JSON.stringify(payload)
+                            body: formData
                         })
                         .then(res => res.json())
-                        .then(data => {
-                            if (data.status === 'success') {
-                                alert('Payment recorded successfully!');
-                                this.closePaymentModal();
-                                // TODO: refresh table or update UI
-                            } else if (data.errors) {
-                                alert(Object.values(data.errors).flat().join('\n'));
-                            } else {
-                                alert('Failed to record payment.');
-                            }
+                        .then(() => {
+                            this.closePaymentModal();
+                            window.location.reload();
                         })
-                        .catch(err => {
-                            console.error(err);
-                            alert('Something went wrong.');
-                        });
+                        .catch(() => alert('Payment failed'));
                 },
 
-
-                /* ---------------- INIT HELPERS ---------------- */
+                /* ======================================================
+                   INVOICE LOGIC
+                ====================================================== */
                 openInvoiceModal(id, name, people = 1, child = 0, packageId = null, email = '') {
-                    this.leadId = id;
-                    this.leadName = name;
-                    this.leadEmail = email;
+                    Object.assign(this, {
+                        leadId: id,
+                        leadName: name,
+                        leadEmail: email,
+                        peopleCount: Number(people) || 1,
+                        childCount: Number(child) || 0,
+                        selectedPackageInvoice: packageId || this.packages?.[0]?.id || ""
+                    });
 
-                    this.peopleCount = Number(people) || 1;
-                    this.childCount = Number(child) || 0;
-
-                    this.selectedPackageInvoice = packageId || (this.packages[0]?.id ?? "");
                     this.invoiceOpen = true;
-
                     this.loadCars();
 
-                    // Fetch package details only if a package is preselected
                     if (this.selectedPackageInvoice) {
                         this.fetchPackageDetails(this.selectedPackageInvoice);
-                    } else {
-                        this.packageData = null;
                     }
                 },
 
@@ -750,70 +815,36 @@
 
                     fetch(`/packages/${packageId}/json`)
                         .then(res => res.json())
-                        .then(res => {
-                            if (res.success) {
-                                this.packageData = res.package;
+                        .then(({
+                            success,
+                            package
+                        }) => {
+                            if (!success) return;
 
-                                // Preselect first package item
-                                if (this.packageData.packageItems?.length > 0) {
-                                    this.selectedInvoiceItems = this.packageData.packageItems[0].id;
-                                    this.updateInvoicePrice(this.packageData.packageItems[0]);
-                                } else {
-                                    this.selectedInvoiceItems = null;
-                                    this.itemPrice = this.totalPrice = this.discountedPrice = 0;
-                                }
+                            this.packageData = package;
+                            const firstItem = package.packageItems?.[0] || null;
 
-                                this.calculateDiscountedPrice();
-                            }
-                        });
-                },
-
-                fetchFilteredItems() {
-                    if (!this.selectedPackageInvoice) return;
-
-                    const url =
-                        `/package-items/filter?package_id=${this.selectedPackageInvoice}&adult_count=${this.peopleCount}&child_count=${this.childCount}&car_id=${this.selectedCar}`;
-
-                    fetch(url)
-                        .then(res => res.json())
-                        .then(res => {
-                            this.filteredItems = res.data;
-                            this.packageData.packageItems = res.data;
-
-                            if (res.data.length > 0) {
-                                const firstItem = res.data[0];
-                                this.selectedInvoiceItems = firstItem.id;
-                                this.updateInvoicePrice(firstItem);
-                            } else {
-                                this.selectedInvoiceItems = null;
-                                this.itemPrice = this.totalPrice = this.discountedPrice = 0;
-                            }
-
+                            this.selectedInvoiceItems = firstItem?.id || null;
+                            this.updateInvoicePrice(firstItem);
                             this.calculateDiscountedPrice();
                         });
                 },
 
-                updateInvoicePrice(item = null) {
-                    if (!this.packageData || !this.selectedInvoiceItems) return;
-
-                    if (!item) {
-                        item = this.packageData.packageItems.find(i => i.id == this.selectedInvoiceItems);
-                    }
+                updateInvoicePrice(item) {
                     if (!item) return;
 
-                    const roomPrice = Number(item[this.selectedRoomType]) || 0;
-                    const carPrice = item.car?.price?.per_day ? Number(item.car.price.per_day) : 0;
-
-                    this.itemPrice = roomPrice;
+                    const price = Number(item[this.selectedRoomType]) || 0;
                     const oldTotal = this.totalPrice;
-                    this.totalPrice = this.itemPrice;
 
-                    this.animateNumber(oldTotal, this.totalPrice);
+                    this.itemPrice = price;
+                    this.totalPrice = price;
+
+                    this.animateNumber(oldTotal, price);
                     this.calculateDiscountedPrice();
                 },
 
                 calculateDiscountedPrice() {
-                    const discount = parseFloat(this.selectedDiscount) || 0;
+                    const discount = Number(this.selectedDiscount) || 0;
                     const base = this.totalPrice * (1 - discount / 100);
 
                     this.finalPricePerAdult = base;
@@ -826,450 +857,38 @@
 
                 animateNumber(from, to, duration = 400) {
                     const start = performance.now();
-                    const animate = (time) => {
-                        const p = Math.min((time - start) / duration, 1);
-                        this.animatedPrice = Math.floor(from + (to - from) * p);
-                        if (p < 1) requestAnimationFrame(animate);
+                    const animate = (now) => {
+                        const progress = Math.min((now - start) / duration, 1);
+                        this.animatedPrice = Math.floor(from + (to - from) * progress);
+                        if (progress < 1) requestAnimationFrame(animate);
                     };
                     requestAnimationFrame(animate);
                 },
 
-                closeInvoice() {
-                    this.invoiceOpen = false;
-                    this.packageData = null;
-                    this.selectedPackageInvoice = "";
-                    this.selectedInvoiceItems = null;
-                    this.travelStartDate = '';
-                    this.selectedDiscount = 0;
-                    this.totalPrice = 0;
-                    this.discountedPrice = 0;
-                    this.selectedRoomType = 'standard_price';
-                    this.selectedCar = "";
-                },
-
-                createQuickInvoice() {
-                    if (!this.selectedPackageInvoice) return alert("Please select a package first!");
-
-                    const payload = {
-                        lead_id: this.leadId,
-                        package_id: this.selectedPackageInvoice,
-                        package_items_id: this.selectedInvoiceItems,
-                        package_type: this.selectedRoomType,
-                        adult_count: this.peopleCount,
-                        child_count: this.childCount,
-                        discount_amount: this.selectedDiscount,
-                        price_per_person: this.discountedPrice,
-                        travel_start_date: this.travelStartDate
-                    };
-
-                    fetch('/invoices/create-quick', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                            },
-                            body: JSON.stringify(payload)
-                        })
-                        .then(res => res.json())
-                        .then(data => {
-                            if (data.success && data.data?.id) {
-                                window.location.href = '{{ route('invoices.create') }}?invoice_id=' + data.data.id;
-                            } else {
-                                alert('Failed to create invoice.');
-                            }
-                        })
-                        .catch(err => console.error(err));
-                },
-
+                /* ======================================================
+                   CARS
+                ====================================================== */
                 loadCars() {
                     fetch('/api/cars')
                         .then(res => res.json())
-                        .then(data => this.cars = data.data || []);
+                        .then(res => this.cars = res.data || []);
                 },
 
-
-
-
-                /* ---------------- FOLLOW-UP MODAL ---------------- */
-
-                openFollowModal(id, name) {
-                    this.leadId = id;
-                    this.leadName = name;
-                    this.followOpen = true;
-
-                    fetch(`/leads/${id}/details`)
-                        .then(res => res.json())
-                        .then(data => {
-                            const phone = data.phone || {};
-                            this.phoneNumber = phone.phone_number || '';
-                            this.phoneCode = phone.phone_code || '';
-                            this.fullNumber = phone.full_number || '';
-                            this.followups = data.followups || [];
-                        });
-
-                    this.fetchFollowupReasons();
-                },
-
-                fetchFollowupReasons() {
-                    fetch('/followup-reasons-api', {
-                            method: 'GET',
-                            headers: {
-                                "Content-Type": "application/json",
-                                "X-CSRF-TOKEN": '{{ csrf_token() }}',
-
-                            }
-                        })
-                        .then(res => res.json())
-                        .then(res => {
-                            if (res.success) {
-                                this.reasons = res.data;
-                            }
-                        });
-                },
-
-
-                handleReasonChange(reason) {
-                    const now = new Date();
-                    let followDate = new Date(now);
-
-                    const isSunday = date => date.getDay() === 0;
-
-                    const dateInput = document.querySelector('input[name="next_followup_date"]');
-                    const timeInput = document.querySelector('input[name="next_followup_time"]');
-                    const remarkInput = document.querySelector('textarea[name="remark"]');
-
-                    const dateWrapper = document.getElementById('dateWrapper');
-                    const timeWrapper = document.getElementById('timeWrapper');
-                    const remarkWrapper = document.getElementById('remarkWrapper');
-
-                    /* ================= DATE ================= */
-                    if (reason.date) {
-                        dateWrapper.classList.remove('hidden');
-                        followDate.setDate(followDate.getDate() + 1);
-                        while (isSunday(followDate)) {
-                            followDate.setDate(followDate.getDate() + 1);
-                        }
-                        dateInput.value = followDate.toISOString().split('T')[0];
-                        dateInput.setAttribute('required', 'required');
-                    } else {
-                        dateWrapper.classList.add('hidden');
-                        dateInput.value = '';
-                        dateInput.removeAttribute('required');
-                    }
-
-                    /* ================= TIME ================= */
-                    if (reason.time) {
-                        timeWrapper.classList.remove('hidden');
-                        followDate.setHours(followDate.getHours() + 2);
-                        timeInput.value = followDate.toTimeString().slice(0, 5);
-                        timeInput.setAttribute('required', 'required');
-                    } else {
-                        timeWrapper.classList.add('hidden');
-                        timeInput.value = '';
-                        timeInput.removeAttribute('required');
-                    }
-
-                    /* ================= REMARK ================= */
-                    if (reason.remark) {
-                        remarkWrapper.classList.remove('hidden');
-                        remarkInput.removeAttribute('disabled');
-                        remarkInput.setAttribute('required', 'required');
-                    } else {
-                        remarkWrapper.classList.add('hidden');
-                        remarkInput.value = '';
-                        remarkInput.setAttribute('disabled', 'disabled');
-                        remarkInput.removeAttribute('required');
-                    }
-                },
-
-
-
-
-
-                closeFollow() {
-                    this.followOpen = false;
-                },
-
-
-                /* ---------------- SHARE MODAL ---------------- */
-
-                handleShare(event) {
-                    const button = event.currentTarget;
-
-                    // Read data attributes from button
-                    const lead = {
-                        id: button.dataset.id,
-                        name: button.dataset.name,
-                        email: button.dataset.email,
-                        phone_code: button.dataset.phoneCode,
-                        phone_number: button.dataset.phoneNumber,
-                        package_id: button.dataset.packageId,
-                        people_count: Number(button.dataset.peopleCount) || 1,
-                        child_count: Number(button.dataset.childCount) || 0,
-                    };
-
-                    // Set modal state
-                    this.shareLeadId = lead.id;
-                    this.shareLeadName = lead.name;
-                    this.leadEmail = lead.email;
-                    this.leadPhone = `${lead.phone_code}${lead.phone_number}`;
-                    this.peopleCount = lead.people_count;
-                    this.childCount = lead.child_count;
-
-                    // Default to first package if none selected
-                    this.selectedPackage = lead.package_id || (this.allPackages[0]?.id ?? "");
-
-                    // Show modal
-                    this.showDropdown = true;
-                    this.showSelectedPackage = true;
-                    this.shareOpen = true;
-
-                    // Fetch package docs for the selected package
-                    if (this.selectedPackage) {
-                        this.fetchPackageDocs(this.selectedPackage);
-                    }
-                },
-
-
-
-                fetchPackageDocs(packageId) {
-                    fetch(`/packages/${packageId}/json`)
-                        .then(res => res.json())
-                        .then(data => {
-                            let docs = data.package.package_docs_url;
-                            if (typeof docs === 'string') docs = [docs];
-                            if (!Array.isArray(docs)) docs = [];
-
-                            this.selectedPackageDocs = docs;
-                            this.selectedPackagePdf = docs[0] || null;
-                            this.selectedDocs = [...docs];
-                            this.selectedPackageName = data.package.package_name;
-
-                            // Load template messages if exists
-                            this.whatsappMessage = data.package.messageTemplate?.whatsapp?.text || "";
-                            this.whatsappMedia = data.package.messageTemplate?.whatsapp?.media || "";
-                            this.emailSubject = data.package.messageTemplate?.email?.subject || "";
-                            this.emailBody = data.package.messageTemplate?.email?.body || "";
-                            this.emailMedia = data.package.messageTemplate?.email?.media || "";
-
-                            // Reset checkboxes
-                            this.sendWhatsAppChecked = false;
-                            this.sendEmailChecked = false;
-                            this.selectedMediaType = 'template'; // default media type
-                        });
-                },
-
-                closeShare() {
-                    this.shareOpen = false;
-                    this.selectedPackageDocs = [];
-                    this.selectedDocs = [];
-                    this.selectedPackagePdf = null;
-                    this.whatsappMessage = "";
-                    this.whatsappMedia = "";
-                    this.emailSubject = "";
-                    this.emailBody = "";
-                    this.emailMedia = "";
-                    this.sendWhatsAppChecked = false;
-                    this.sendEmailChecked = false;
-                    this.selectedMediaType = 'template';
-                },
-
-                sendSelected() {
-                    if (this.sendEmailChecked) this.sendEmail();
-                    if (this.sendWhatsAppChecked) this.sendWhatsApp();
-                },
-
-                sendEmail() {
-                    if (!this.leadEmail || !this.selectedPackage) {
-                        alert("Email & Package are required.");
-                        return;
-                    }
-
-                    const payload = {
-                        lead_name: this.shareLeadName,
-                        package_id: this.selectedPackage,
-                        email: this.leadEmail,
-                        subject: this.emailSubject,
-                        body: this.emailBody,
-                        media_type: this.selectedMediaType, // send media type
-                    };
-
-                    this.sending = true;
-
-                    fetch("{{ route('leads.sendPackageEmail') }}", {
-                            method: "POST",
-                            headers: {
-                                "Content-Type": "application/json",
-                                "X-CSRF-TOKEN": '{{ csrf_token() }}'
-                            },
-                            body: JSON.stringify(payload)
-                        })
-                        .then(res => res.json())
-                        .then(response => {
-                            this.sending = false;
-                            if (response.success) {
-                                alert("📧 Package Email Sent Successfully!");
-                                this.closeShare();
-                            } else {
-                                alert("Failed to send email.");
-                            }
-                        })
-                        .catch(err => {
-                            this.sending = false;
-                            console.error(err);
-                            alert("Error sending email.");
-                        });
-                },
-
-                async sendWhatsApp() {
-                    if (!this.leadPhone || !this.selectedPackage) {
-                        alert("Phone number & Package are required.");
-                        return;
-                    }
-
-                    if (!this.whatsappMessage && !this.whatsappMedia && !this.selectedPackagePdf) {
-                        alert("WhatsApp message or media is required.");
-                        return;
-                    }
-
-                    const payload = {
-                        recipient: this.leadPhone,
-                        text: this.whatsappMessage,
-                        package_id: this.selectedPackage,
-                        media_type: this.selectedMediaType // send selected media type
-                    };
-
-                    this.sending = true;
-
-                    try {
-                        const res = await fetch("{{ url('whatsapp/send-media-json') }}", {
-                            method: "POST",
-                            headers: {
-                                "Content-Type": "application/json",
-                                "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content
-                            },
-                            credentials: "same-origin",
-                            body: JSON.stringify(payload),
-                        });
-
-                        let data = await res.json();
-
-                        const successMessage = data.message?.toLowerCase() ?? "";
-                        if (data.success || data.status === "success" || successMessage.includes("sent successfully")) {
-                            alert("📨 WhatsApp sent successfully!");
-                            this.closeShare();
-                            return;
-                        }
-
-                        console.error("WhatsApp API Error:", data);
-                        alert(data.error ?? data.message ?? "Failed to send WhatsApp message.");
-
-                    } catch (err) {
-                        console.error("WhatsApp Error:", err);
-                        alert("Error sending WhatsApp. Please check logs.");
-                    } finally {
-                        this.sending = false;
-                    }
-                },
-
-
-
-
-
-
-                /* ---------------- EDIT MODAL ---------------- */
-
-                openEditModal(id) {
-                    fetch(`/leads/${id}/json`)
-                        .then(res => res.json())
-                        .then(data => {
-                            this.editForm = {
-                                ...data
-                            };
-                            this.editOpen = true;
-                        });
-                },
-
-                closeEditModal() {
-                    this.editOpen = false;
-                },
-                async submitEdit() {
-                    try {
-                        if (!this.editForm.id) {
-                            alert("Lead ID missing—cannot update.");
-                            return;
-                        }
-
-                        const response = await fetch(`/leads/${this.editForm.id}`, {
-                            method: "PATCH",
-                            headers: {
-                                "Content-Type": "application/json",
-                                "X-CSRF-TOKEN": document
-                                    .querySelector('meta[name="csrf-token"]')
-                                    .getAttribute("content"),
-                            },
-                            body: JSON.stringify(this.editForm),
-                        });
-
-                        const result = await response.json();
-
-                        if (!response.ok) {
-                            alert(result.message || "Validation failed");
-                            return;
-                        }
-
-                        alert("Lead Updated Successfully");
-                        this.closeEditModal();
-                        window.location.reload();
-
-                    } catch (error) {
-                        console.error(error);
-                        alert("Something went wrong while updating lead");
-                    }
-                },
-                async updateStatus(id, newStatus) {
-                    try {
-                        const response = await fetch(`/leads/${id}/status`, {
-                            method: "PATCH",
-                            headers: {
-                                "Content-Type": "application/json",
-                                "X-CSRF-TOKEN": document
-                                    .querySelector('meta[name="csrf-token"]')
-                                    .getAttribute("content"),
-                            },
-                            body: JSON.stringify({
-                                status: newStatus
-                            }),
-                        });
-
-                        const result = await response.json();
-
-                        if (!response.ok) {
-                            alert(result.message || "Failed to update status");
-                            return;
-                        }
-                        window.location.reload();
-                        console.log("Status updated:", result.status);
-
-                    } catch (error) {
-                        console.error(error);
-                        alert("Error while updating status");
-                    }
-                },
-
-
-
-                /* ---------------- BULK ASSIGN ---------------- */
-
-                toggleLead(event) {
-                    const id = parseInt(event.target.value);
-                    if (event.target.checked) this.selected.push(id);
-                    else this.selected = this.selected.filter(i => i !== id);
+                /* ======================================================
+                   BULK ASSIGN
+                ====================================================== */
+                toggleLead(e) {
+                    const id = Number(e.target.value);
+                    e.target.checked ?
+                        this.selected.push(id) :
+                        this.selected = this.selected.filter(i => i !== id);
                 },
 
                 assignUser() {
-                    if (!this.bulkUser) return alert('Select a user');
-                    if (!this.selected.length) return alert('Select at least one lead');
+                    if (!this.bulkUser || !this.selected.length) {
+                        alert('Select user and at least one lead');
+                        return;
+                    }
 
                     fetch('{{ route('leads.bulkAssign') }}', {
                             method: 'POST',
@@ -1283,12 +902,10 @@
                             })
                         })
                         .then(res => res.json())
-                        .then(resp => {
-                            if (resp.success) window.location.reload();
-                        });
+                        .then(res => res.success && window.location.reload());
                 }
-
             };
         }
     </script>
+
 </x-app-layout>
