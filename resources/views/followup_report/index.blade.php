@@ -97,4 +97,63 @@
         </div>
 
     </div>
+    <!-- Modal -->
+<div id="leadModal" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+    <div class="bg-white w-full max-w-3xl rounded-xl p-6 relative">
+        <button id="closeModal" class="absolute top-3 right-3">✖</button>
+        <h2 class="text-xl font-bold mb-4" id="modalTitle">Leads</h2>
+        <table id="leadsTable" class="table-auto w-full border">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Lead Name</th>
+                    <th>Contact</th>
+                    <th>Reason</th>
+                    <th>Remark</th>
+                    <th>Next Follow-up</th>
+                    <th>Created At</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+</div>
+
+<script>
+$(document).on('click', '.show-leads', function(e){
+    e.preventDefault();
+    let userId = $(this).data('user-id');
+    let userName = $(this).data('user');
+    $('#modalTitle').text(`Leads for ${userName}`);
+
+    $('#leadModal').removeClass('hidden');
+
+    // Initialize DataTable
+    if ($.fn.DataTable.isDataTable('#leadsTable')) {
+        $('#leadsTable').DataTable().destroy();
+    }
+
+    $('#leadsTable').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: '{{ route("followup_report.leads") }}',
+            data: { user_id: userId }
+        },
+        columns: [
+            { data: 'DT_RowIndex', name: 'DT_RowIndex' },
+            { data: 'lead_name', name: 'lead_name' },
+            { data: 'lead_contact', name: 'lead_contact' },
+            { data: 'reason', name: 'reason' },
+            { data: 'remark', name: 'remark' },
+            { data: 'next_followup', name: 'next_followup' },
+            { data: 'created_at', name: 'created_at' }
+        ]
+    });
+});
+
+$('#closeModal').click(function(){
+    $('#leadModal').addClass('hidden');
+});
+</script>
+
 </x-app-layout>

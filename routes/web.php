@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 
 // Controllers
+use App\Http\Controllers\RoleRouteController;
 use App\Http\Controllers\{CompanyController, FollowupReportController, PaymentMethodController, PickupPointController, FollowupReasonController, LeadStatusController, MessageTemplateController, CarController, DashboardController, UserController, InvoiceController, PackageTypeController, PackageCategoryController, DifficultyTypeController, HotelController, RoleController, PackageController, LeadController, FollowupController, PaymentController, WhatsAppController};
 use Livewire\Volt\Volt;
 
@@ -113,7 +114,7 @@ Route::get('/api/cars', [\App\Http\Controllers\Api\CarController::class, 'index'
 */
 
 Route::get('/packages/partial-item-row', [PackageController::class, 'partialItemRow'])->name('packages.partial-item-row');
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified'])->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', \App\Http\Middleware\CheckRoleRoute::class])->group(function () {
     /*
         |--------------------------------------------------------------------------
         | Lead Management
@@ -174,19 +175,26 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         | WhatsApp Messaging
         |--------------------------------------------------------------------------
         */
-    Route::prefix('whatsapp')->group(function () {
-        Route::post('/send-text', [WhatsAppController::class, 'sendText']);
-        Route::post('/send-media', [WhatsAppController::class, 'sendMedia']);
-        Route::post('/send-media-json', [WhatsAppController::class, 'sendMediaJson']);
-    });
+    Route::prefix('whatsapp')
+        ->name('whatsapp.')
+        ->group(function () {
+            Route::post('/send-text', [WhatsAppController::class, 'sendText'])->name('send-text');
+
+            Route::post('/send-media', [WhatsAppController::class, 'sendMedia'])->name('send-media');
+
+            Route::post('/send-media-json', [WhatsAppController::class, 'sendMediaJson'])->name('send-media-json');
+        });
 
     /*
         |--------------------------------------------------------------------------
         | Payment Management
         |--------------------------------------------------------------------------
         */
+    Route::resource('role_routes', RoleRouteController::class);
+
     Route::resource('payment-methods', PaymentMethodController::class)->except(['show']);
     Route::get('/followup-report', [FollowupReportController::class, 'index'])->name('followup.report');
+    Route::get('followup-report/leads', [FollowupReportController::class, 'getLeads'])->name('followup_report.leads');
     Route::get('/followup-report/data', [FollowupReportController::class, 'getReport'])->name('followup.report.data');
     Route::post('/payment-methods/restore/{id}', [PaymentMethodController::class, 'restore'])->name('payment-methods.restore');
     Route::delete('/payment-methods/force-delete/{id}', [PaymentMethodController::class, 'forceDelete'])->name('payment-methods.forceDelete');

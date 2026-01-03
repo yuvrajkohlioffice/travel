@@ -23,7 +23,7 @@
                         <!-- Name -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-400">Name</label>
-                            <input type="text" name="name" value="{{ old('name') }}" required
+                            <input type="text" name="name" value="{{ old('name', $user->name ?? '') }}" required
                                    class="mt-1 block w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-800 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
                             @error('name') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                         </div>
@@ -31,7 +31,7 @@
                         <!-- Email -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-400">Email</label>
-                            <input type="email" name="email" value="{{ old('email') }}" required
+                            <input type="email" name="email" value="{{ old('email', $user->email ?? '') }}" required
                                    class="mt-1 block w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-800 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
                             @error('email') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                         </div>
@@ -39,8 +39,11 @@
                         <!-- Password -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-400">Password</label>
-                            <input type="password" name="password" required
+                            <input type="password" name="password" {{ isset($user) ? '' : 'required' }}
                                    class="mt-1 block w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-800 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
+                            @if(isset($user))
+                                <span class="text-gray-500 text-sm">Leave blank to keep current password</span>
+                            @endif
                             @error('password') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                         </div>
 
@@ -51,7 +54,9 @@
                                     class="mt-1 block w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-800 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
                                 <option value="">Select Role</option>
                                 @foreach ($roles as $role)
-                                    <option value="{{ $role->id }}" {{ old('role_id') == $role->id ? 'selected' : '' }}>{{ $role->name }}</option>
+                                    <option value="{{ $role->id }}" {{ old('role_id', $user->role_id ?? '') == $role->id ? 'selected' : '' }}>
+                                        {{ $role->name }}
+                                    </option>
                                 @endforeach
                             </select>
                             @error('role_id') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
@@ -64,12 +69,31 @@
                                     class="mt-1 block w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-800 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
                                 <option value="">Select Company</option>
                                 @foreach (\App\Models\Company::all() as $company)
-                                    <option value="{{ $company->id }}" {{ old('company_id') == $company->id ? 'selected' : '' }}>
+                                    <option value="{{ $company->id }}" {{ old('company_id', $user->company_id ?? '') == $company->id ? 'selected' : '' }}>
                                         {{ $company->company_name }}
                                     </option>
                                 @endforeach
                             </select>
                             @error('company_id') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                        </div>
+
+                        <!-- WhatsApp API Key -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-400">WhatsApp API Key</label>
+                            <input type="text" name="whatsapp_api_key" value="{{ old('whatsapp_api_key', $user->whatsapp_api_key ?? '') }}"
+                                   class="mt-1 block w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-800 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
+                            @error('whatsapp_api_key') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                        </div>
+
+                        <!-- Status -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-400">Status</label>
+                            <select name="status" required
+                                class="mt-1 block w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-800 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
+                                <option value="1" {{ old('status', $user->status ?? '') == 1 ? 'selected' : '' }}>Active</option>
+                                <option value="0" {{ old('status', $user->status ?? '') == 0 ? 'selected' : '' }}>Inactive</option>
+                            </select>
+                            @error('status') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                         </div>
 
                         <!-- Submit -->
@@ -79,6 +103,7 @@
                                 Save
                             </button>
                         </div>
+
                     </form>
                 </div>
 

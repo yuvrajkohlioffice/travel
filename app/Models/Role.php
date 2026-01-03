@@ -20,4 +20,8 @@ class Role extends Model
     {
         return $this->hasMany(User::class);
     }
+    public function routes()
+    {
+        return $this->hasMany(RoleRoute::class, 'role_id');
+    }
 }

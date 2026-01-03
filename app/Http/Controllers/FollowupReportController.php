@@ -97,4 +97,39 @@ class FollowupReportController extends Controller
 
         return DataTables::of($data)->make(true);
     }
+    public function getLeads(Request $request)
+{
+    $userId = $request->input('user_id');
+    $reason = $request->input('reason'); // optional, to filter by reason
+    $startDate = $request->input('start_date');
+    $endDate = $request->input('end_date');
+
+    $query = Followup::with('lead') // eager load leads
+        ->where('user_id', $userId);
+
+    if ($reason) {
+        $query->where('reason', $reason);
+    }
+
+    if ($startDate && $endDate) {
+        $query->whereBetween('created_at', [Carbon::parse($startDate)->startOfDay(), Carbon::parse($endDate)->endOfDay()]);
+    }
+
+    $followups = $query->get();
+
+    $data = $followups->map(function ($f, $key) {
+        return [
+            'DT_RowIndex' => $key + 1,
+            'lead_name' => $f->lead->name ?? 'Unknown',
+            'lead_contact' => $f->lead->contact ?? '',
+            'reason' => $f->reason,
+            'remark' => $f->remark,
+            'next_followup' => $f->next_followup_date?->format('Y-m-d'),
+            'created_at' => $f->created_at->format('Y-m-d H:i'),
+        ];
+    });
+
+    return DataTables::of($data)->make(true);
+}
+
 }

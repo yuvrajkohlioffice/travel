@@ -90,6 +90,7 @@ class UserController extends Controller
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
             'role_id' => $validated['role_id'],
+            'whatsapp_api_key' =>$validated['whatsapp_api_key'],
             'company_id' => $validated['company_id'] ?? null,
         ]);
 
@@ -118,6 +119,7 @@ class UserController extends Controller
             'email' => $validated['email'],
             'role_id' => $validated['role_id'],
             'company_id' => $validated['company_id'] ?? null,
+            'whatsapp_api_key' =>$validated['whatsapp_api_key'],
             'status' =>$validated['status']
         ];
 
@@ -151,6 +153,7 @@ class UserController extends Controller
             'password' => $userId ? 'nullable|min:6' : 'required|min:6',
             'role_id' => 'required|exists:roles,id',
             'status' => 'required',
+            'whatsapp_api_key'=> 'nullable',
             'company_id' => 'nullable|exists:companies,id',
         ]);
     }

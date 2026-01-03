@@ -41,7 +41,8 @@
             "Database\\Seeders\\": "database/seeders/"
         },
          "files": [
-        "app/DynamicMailConfig.php"
+        "app/DynamicMailConfig.php",
+        "app/helper.php"
     ]
     },
     "autoload-dev": {
