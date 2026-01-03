@@ -6,33 +6,32 @@ use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Models\RoleRoute;
+use Illuminate\Support\Str;
 
 class CheckRoleRoute
 {
-    public function handle(Request $request, Closure $next): mixed
+    public function handle(Request $request, Closure $next)
     {
         $user = $request->user();
 
-        // ❌ Guest or invalid user
+        // ❌ Guest or user without role
         if (!$user || !$user->role_id) {
-            \Log::warning('403: Guest or user without role tried to access ' . Route::currentRouteName());
-            abort(403, 'Access Denied');
+            return $this->deny($request);
         }
 
-        // ✅ role_id = 1 (Super Admin) → allow everything
+        // ✅ Super Admin (role_id = 1) → allow all
         if ((int) $user->role_id === 1) {
-            \Log::info("✅ Super Admin {$user->id} accessed " . Route::currentRouteName());
             return $next($request);
         }
 
         $currentRouteName = Route::currentRouteName();
 
-        // Routes without names are allowed
+        // ✅ Routes without name → allow
         if (!$currentRouteName) {
-            \Log::info("ℹ️ Route without name accessed by user {$user->id}");
             return $next($request);
         }
 
+        // Cache allowed routes per role
         $allowedRoutes = cache()->remember(
             "role_routes_{$user->role_id}",
             now()->addMinutes(10),
@@ -43,17 +42,30 @@ class CheckRoleRoute
 
         // 🔒 Permission check (supports wildcards)
         foreach ($allowedRoutes as $allowed) {
-            if (\Illuminate\Support\Str::is($allowed, $currentRouteName)) {
-                \Log::info("✅ User {$user->id} accessed {$currentRouteName}");
-                return $next($request);
+            if (Str::is($allowed, $currentRouteName)) {
+                return $next($request); // ✅ allowed → NO LOG
             }
         }
 
-        \Log::warning(
-            "403: User {$user->id} (role_id: {$user->role_id}) tried {$currentRouteName}. " .
-            "Allowed: " . implode(', ', $allowedRoutes)
-        );
+        // ❌ Not allowed → redirect back with error
+        return $this->deny($request);
+    }
 
-        abort(403, 'Access Denied! Ask Admin For Permission.');
+    /**
+     * Handle denied access
+     */
+    protected function deny(Request $request)
+    {
+        // For API / AJAX requests
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => 'Access Denied! Ask Admin for permission.'
+            ], 403);
+        }
+
+        // For web requests
+        return redirect()
+            ->back()
+            ->with('error', 'Access Denied! Ask Admin for permission.');
     }
 }
