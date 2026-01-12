@@ -1,10 +1,23 @@
 <div class="p-6 md:p-8 lg:p-10 border-b border-blue-100">
 
     @php
-        // 1. Get Scanner Data
-        $scanner = $company->scanner_details ?? [];
+        // --- 1. SAFE DATA PREPARATION ---
+        $scanner = [];
+        $bank = [];
 
-        // 2. Calculate Totals
+        // Check if company exists before accessing properties
+        if (isset($company) && $company) {
+            
+            // Handle Scanner (Decode if string, otherwise use as array)
+            $scannerRaw = $company->scanner_details;
+            $scanner = is_string($scannerRaw) ? json_decode($scannerRaw, true) : ($scannerRaw ?? []);
+
+            // Handle Bank (Decode if string, otherwise use as array)
+            $bankRaw = $company->bank_details;
+            $bank = is_string($bankRaw) ? json_decode($bankRaw, true) : ($bankRaw ?? []);
+        }
+
+        // --- 2. CALCULATE TOTALS ---
         $totalAmount = $invoice->final_price ?? 0;
         $totalPaid = $invoice->payments->sum('paid_amount');
         $balanceDue = $totalAmount - $totalPaid;
@@ -13,22 +26,13 @@
     <div class="flex flex-col lg:flex-row print:flex-row gap-8"
         style="width: 100%; max-width: 100%; display: flex; justify-content: space-between;">
 
+        {{-- LEFT COLUMN: PAYMENT DETAILS --}}
         <div class="page-break-inside-avoid" style="width: 50%; padding-right: 20px; box-sizing: border-box;">
 
             <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
                 <i class="fas fa-credit-card mr-3 text-blue-500 bg-blue-100 p-2 rounded-full"></i>
                 Payment Information
             </h3>
-
-            @php
-                // Ensure data is in array format (if your model doesn't use 'casts' => 'array')
-                $scanner = is_string($company->scanner_details)
-                    ? json_decode($company->scanner_details, true)
-                    : $company->scanner_details;
-                $bank = is_string($company->bank_details)
-                    ? json_decode($company->bank_details, true)
-                    : $company->bank_details;
-            @endphp
 
             <div style="display: flex; gap: 20px;">
 
@@ -53,7 +57,7 @@
                         </div>
                     </div>
 
-                    {{-- PRIORITY 2: Fallback to Bank Details if Scanner is missing --}}
+                {{-- PRIORITY 2: Fallback to Bank Details if Scanner is missing --}}
                 @elseif (isset($bank['account_number']) && !empty($bank['account_number']))
                     <div class="bg-gradient-to-br from-green-50 to-white rounded-2xl p-6 border border-green-100 shadow-sm"
                         style="width: 100%;">
@@ -72,16 +76,14 @@
                             @if (!empty($bank['account_name']))
                                 <div class="flex justify-between items-center border-b border-gray-100 pb-2">
                                     <span class="text-xs text-gray-500 uppercase font-semibold">Account Name</span>
-                                    <span
-                                        class="text-sm font-medium text-gray-800 text-right">{{ $bank['account_name'] }}</span>
+                                    <span class="text-sm font-medium text-gray-800 text-right">{{ $bank['account_name'] }}</span>
                                 </div>
                             @endif
 
                             {{-- Account Number --}}
                             <div class="flex justify-between items-center border-b border-gray-100 pb-2">
                                 <span class="text-xs text-gray-500 uppercase font-semibold">Account No.</span>
-                                <span
-                                    class="text-sm font-mono font-bold text-blue-700">{{ $bank['account_number'] }}</span>
+                                <span class="text-sm font-mono font-bold text-blue-700">{{ $bank['account_number'] }}</span>
                             </div>
 
                             {{-- IFSC Code --}}
@@ -98,7 +100,7 @@
                         </div>
                     </div>
 
-                    {{-- PRIORITY 3: Nothing found --}}
+                {{-- PRIORITY 3: Nothing found --}}
                 @else
                     <div class="bg-gray-50 rounded-2xl p-6 border border-gray-200 text-center w-full">
                         <p class="text-gray-400 text-sm">No Payment Details Available</p>
@@ -108,11 +110,10 @@
             </div>
         </div>
 
+        {{-- RIGHT COLUMN: INVOICE SUMMARY --}}
         <div class="page-break-inside-avoid" style="width: 50%; padding-left: 20px; box-sizing: border-box;">
 
-            <div
-                class="bg-gradient-to-br from-blue-900 to-blue-800 rounded-2xl mt-[65px] p-8 text-white shadow-2xl 
-                        print:shadow-none print:p-6 print:bg-blue-900">
+            <div class="bg-gradient-to-br from-blue-900 to-blue-800 rounded-2xl mt-[65px] p-8 text-white shadow-2xl print:shadow-none print:p-6 print:bg-blue-900">
 
                 <h3 class="text-2xl font-bold mb-6 text-center border-b border-blue-700 pb-4">
                     Invoice Summary
@@ -121,8 +122,7 @@
                 <div class="space-y-3 mb-6">
                     <div class="flex justify-between items-center text-blue-200 text-sm">
                         <span>Package Subtotal</span>
-                        <span class="font-medium text-white">₹
-                            {{ number_format($invoice->subtotal_price ?? 0, 2) }}</span>
+                        <span class="font-medium text-white">₹ {{ number_format($invoice->subtotal_price ?? 0, 2) }}</span>
                     </div>
 
                     <div class="flex justify-between items-center text-blue-200 text-sm">
@@ -149,8 +149,7 @@
                         <span>(-) ₹ {{ number_format($totalPaid, 2) }}</span>
                     </div>
 
-                    <div
-                        class="flex justify-between items-center text-xl font-bold pt-2 mt-2 border-t border-dashed border-blue-600">
+                    <div class="flex justify-between items-center text-xl font-bold pt-2 mt-2 border-t border-dashed border-blue-600">
                         <span class="{{ $balanceDue > 0 ? 'text-red-200' : 'text-green-200' }}">Balance Due</span>
                         <span class="{{ $balanceDue > 0 ? 'text-red-200' : 'text-green-200' }}">
                             ₹ {{ number_format($balanceDue, 2) }}
@@ -158,19 +157,19 @@
                     </div>
                 </div>
 
-
-
             </div>
         </div>
 
     </div>
 </div>
+
+{{-- BOTTOM ROW: PAYMENT HISTORY --}}
 <div class="flex flex-col lg:flex-row print:flex-row gap-8 mt-5"
     style="width: 100%; max-width: 100%; display: flex; justify-content: space-between;">
 
     <div class="page-break-inside-avoid" style="width: 100%; padding-right: 20px; box-sizing: border-box;">
 
-        @if ($invoice->payments->count() > 0)
+        @if (isset($invoice->payments) && $invoice->payments->count() > 0)
             <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
                 <i class="fas fa-history mr-3 text-blue-500 bg-blue-100 p-2 rounded-full"></i>
                 Payment History
@@ -209,9 +208,7 @@
                     </tbody>
                 </table>
             </div>
-        @else
         @endif
 
     </div>
-
 </div>

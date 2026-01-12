@@ -1,4 +1,10 @@
 <x-app-layout>
+    @php
+    // Extract related data safely
+    $lead = $invoice->lead;
+    $agent = $lead->createdBy ?? null;
+    $company = $agent->company ?? null;
+@endphp
     <div class="max-w-6xl mx-auto p-4 md:p-6 lg:p-8">
 
         <!-- Print Button -->
@@ -48,7 +54,7 @@
 
             {{-- Summary --}}
             <div class="border-t border-blue-100 p-6 bg-gray-50">
-                <x-invoice.summary :invoice="$invoice" />
+                <x-invoice.summary :invoice="$invoice" :company="$company" />
             </div>
 
             {{-- Footer --}}
