@@ -135,7 +135,7 @@
             </div>
 
             <div class="mt-6 text-center text-sm text-gray-500">
-                &copy; {{ date('Y') }} Tourism Company. All rights reserved.
+                &copy; {{ date('Y') }} Trekos. All rights reserved.
             </div>
         </div>
     </div>

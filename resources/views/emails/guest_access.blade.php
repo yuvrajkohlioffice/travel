@@ -40,7 +40,7 @@
     </p>
 
     <div class="footer">
-        &copy; {{ date('Y') }} Tourism Company. All rights reserved.<br>
+        &copy; {{ date('Y') }} Trekos. All rights reserved.<br>
         <span style="color: #cccccc;">Automated System Notification</span>
     </div>
 </div>
