@@ -15,90 +15,114 @@ use Yajra\DataTables\Facades\DataTables;
 class InvoiceController extends Controller
 {
     public function index(Request $request)
-    {
-        if ($request->ajax()) {
-            $query = Invoice::with(['lead', 'package'])
-                ->withSum('payments as total_paid', 'paid_amount')
-                ->latest();
+{
+    if ($request->ajax()) {
+        // Eager load relationships and sum payments in one go
+        $query = Invoice::with(['lead', 'package'])
+            ->withSum('payments as total_paid', 'paid_amount')
+            ->latest();
 
-            return DataTables::of($query)
+        return DataTables::of($query)
+            ->addIndexColumn() // Optional: Adds DT_RowIndex
+            
+            ->editColumn('invoice_no', function($row) {
+                return '<span class="font-mono text-gray-700">#' . $row->invoice_no . '</span>';
+            })
 
-                ->editColumn('invoice_no', fn($row) => '#' . $row->invoice_no)
+            ->addColumn('user', function ($row) {
+                $name = $row->lead->name ?? 'N/A';
+                $email = $row->lead->email ?? '—';
+                return '
+                    <div class="flex items-center gap-2">
+                        <div class="p-2 bg-gray-100 rounded-full text-gray-400">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div>
+                            <div class="font-semibold text-gray-800">'. $name .'</div>
+                            <div class="text-xs text-gray-500">'. $email .'</div>
+                        </div>
+                    </div>';
+            })
 
-                ->addColumn('user', function ($row) {
-                    return '
-            <div class="flex items-center gap-2">
-                <i class="fas fa-user text-gray-400"></i>
-                <div>
-                    <div class="font-semibold">' .
-                        ($row->lead->name ?? 'N/A') .
-                        '</div>
-                    <div class="text-xs text-gray-500">' .
-                        ($row->lead->email ?? '—') .
-                        '</div>
-                </div>
-            </div>
-        ';
-                })
+            ->addColumn('package_name', function ($row) {
+                $pkgName = $row->package->package_name ?? ($row->package_name ?? 'N/A');
+                return '<span class="flex items-center gap-2"><i class="fas fa-box text-blue-400"></i> ' . $pkgName . '</span>';
+            })
 
-                ->addColumn('package_name', function ($row) {
-                    return '<i class="fas fa-box text-gray-400"></i> ' . ($row->package->package_name ?? ($row->package_name ?? 'N/A'));
-                })
+            // FIX: Added this column because your View requests it
+            ->addColumn('package_type', function ($row) {
+                // Assuming 'package_type' exists on the package model, or is a static string
+                return '<span class="px-2 py-1 text-xs bg-gray-100 rounded">' . ($row->package->package_type ?? 'Standard') . '</span>';
+            })
 
-                ->addColumn('travelers', function ($row) {
-                    return "Adults: <strong>{$row->adult_count}</strong><br>
-                Children: <strong>{$row->child_count}</strong><br>
-                Total: <strong>{$row->total_travelers}</strong>";
-                })
+            ->addColumn('travelers', function ($row) {
+                return '
+                    <div class="text-sm">
+                        <div class="flex justify-between w-24"><span>Adults:</span> <strong>'. $row->adult_count .'</strong></div>
+                        <div class="flex justify-between w-24"><span>Child:</span> <strong>'. $row->child_count .'</strong></div>
+                        <div class="border-t mt-1 pt-1 flex justify-between w-24 text-xs text-gray-500"><span>Total:</span> <strong>'. $row->total_travelers .'</strong></div>
+                    </div>';
+            })
 
-                ->addColumn('dates', function ($row) {
-                    return "
-            Issued: <strong>{$row->issued_date}</strong><br>
-            Travel: <strong>{$row->travel_start_date}</strong>
-        ";
-                })
+            ->addColumn('dates', function ($row) {
+                return '
+                    <div class="text-xs">
+                        <div class="mb-1"><span class="text-gray-500">Issued:</span> <br><strong>'. $row->issued_date .'</strong></div>
+                        <div><span class="text-gray-500">Travel:</span> <br><strong>'. $row->travel_start_date .'</strong></div>
+                    </div>';
+            })
 
-                ->addColumn('amount', function ($row) {
-                    $paid = $row->total_paid ?? 0;
-                    return "
-            Final: <strong>₹" .
-                        number_format($row->final_price, 2) .
-                        "</strong><br>
-            Paid: <span class='text-green-600'>₹" .
-                        number_format($paid, 2) .
-                        "</span><br>
-            Due: <span class='text-red-600'>₹" .
-                        number_format($row->final_price - $paid, 2) .
-                        "</span>
-        ";
-                })
+            ->addColumn('amount', function ($row) {
+                $paid = $row->total_paid ?? 0;
+                $due = $row->final_price - $paid;
+                
+                return '
+                    <div class="text-sm min-w-[100px]">
+                        <div class="flex justify-between"><span>Final:</span> <strong>₹'. number_format($row->final_price, 2) .'</strong></div>
+                        <div class="flex justify-between text-green-600"><span>Paid:</span> <span>₹'. number_format($paid, 2) .'</span></div>
+                        <div class="flex justify-between text-red-600 border-t mt-1 pt-1"><span>Due:</span> <strong>₹'. number_format($due, 2) .'</strong></div>
+                    </div>';
+            })
 
-                ->addColumn('status', function ($row) {
-                    $paid = $row->total_paid ?? 0;
-                    $final = $row->final_price;
+            ->addColumn('status', function ($row) {
+                $paid = $row->total_paid ?? 0;
+                $final = $row->final_price;
 
-                    if ($paid >= $final && $final > 0) {
-                        return '<span class="px-3 py-1 text-xs rounded-full bg-green-100 text-green-700 font-semibold">Paid</span>';
-                    }
+                if ($paid >= $final && $final > 0) {
+                    return '<span class="px-3 py-1 text-xs rounded-full bg-green-100 text-green-700 font-semibold border border-green-200">Paid</span>';
+                }
+                if ($paid > 0) {
+                    return '<span class="px-3 py-1 text-xs rounded-full bg-yellow-100 text-yellow-700 font-semibold border border-yellow-200">Partial</span>';
+                }
+                return '<span class="px-3 py-1 text-xs rounded-full bg-red-100 text-red-700 font-semibold border border-red-200">Pending</span>';
+            })
 
-                    if ($paid > 0) {
-                        return '<span class="px-3 py-1 text-xs rounded-full bg-yellow-100 text-yellow-700 font-semibold">Partial</span>';
-                    }
+            ->addColumn('action', function ($row) {
+                return '
+                    <a href="' . route('invoices.show', $row->id) . '" class="inline-flex items-center px-3 py-1 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-md transition text-sm">
+                        <i class="fas fa-eye mr-1"></i> View
+                    </a>';
+            })
 
-                    return '<span class="px-3 py-1 text-xs rounded-full bg-red-100 text-red-700 font-semibold">Pending</span>';
-                })
+            // OPTIMIZATION: Allow searching on related columns
+            ->filterColumn('user', function($query, $keyword) {
+                $query->whereHas('lead', function($q) use ($keyword) {
+                    $q->where('name', 'like', "%{$keyword}%")
+                      ->orWhere('email', 'like', "%{$keyword}%");
+                });
+            })
+            ->filterColumn('package_name', function($query, $keyword) {
+                $query->whereHas('package', function($q) use ($keyword) {
+                    $q->where('package_name', 'like', "%{$keyword}%");
+                });
+            })
 
-                ->addColumn('action', function ($row) {
-                    return '<a href="' . route('invoices.show', $row->id) . '" class="text-blue-600 hover:underline">View</a>';
-                })
-
-                ->rawColumns(['user', 'package_name', 'travelers', 'dates', 'amount', 'status', 'action'])
-
-                ->make(true);
-        }
-
-        return view('invoices.index');
+            ->rawColumns(['invoice_no', 'user', 'package_name', 'package_type', 'travelers', 'dates', 'amount', 'status', 'action'])
+            ->make(true);
     }
+
+    return view('invoices.index');
+}
 
     /**
      * Generate invoice number e.g. TRAV-2023-0876
