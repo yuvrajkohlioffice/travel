@@ -157,10 +157,7 @@
                 </table>
             </div>
         @else
-            <div class="mt-6 p-4 bg-gray-50 rounded-lg text-center border border-dashed border-gray-300 text-gray-400 text-sm">
-                <i class="fas fa-info-circle mb-1"></i><br>
-                No payment records found.
-            </div>
+            
         @endif
 
     </div>
