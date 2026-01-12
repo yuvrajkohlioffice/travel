@@ -6,12 +6,70 @@ use Illuminate\Http\Request;
 use App\Models\Lead;
 use App\Models\Invoice;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Mail; // Add this at top
+use App\Mail\GuestAccessMail;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class GuestInvoiceController extends Controller
 {
     /**
      * 1. Show the Password/Login Screen
      */
+public function sendAccessLink(Request $request, $lead_id)
+    {
+        // 1. ✅ Get Logged-in User & Configure SMTP
+        $user = auth()->user();
+
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'You must be logged in.'], 401);
+        }
+
+        // ✅ Apply user SMTP credentials (DB based)
+        setUserMailConfig($user);
+
+        // 2. Fetch Lead
+        $lead = Lead::find($lead_id);
+
+        if (!$lead) {
+            return response()->json(['success' => false, 'message' => 'Lead not found.'], 404);
+        }
+
+        // 3. Validation (Email & Phone check)
+        if (empty($lead->email)) {
+            return response()->json(['success' => false, 'message' => 'This Lead does not have an email address.'], 400);
+        }
+
+        if (empty($lead->phone_number)) {
+            return response()->json(['success' => false, 'message' => 'This Lead needs a phone number to use as a password.'], 400);
+        }
+
+        // 4. Generate URL
+        $url = route('guest.login', ['lead_id' => $lead->id]);
+
+        // 5. Attempt to Send Email (User SMTP)
+        try {
+            Mail::to($lead->email)->send(new GuestAccessMail($lead, $url));
+            
+            // Log success for debugging
+            Log::info("Guest Access Link sent to {$lead->email} by User ID: {$user->id}");
+
+            return response()->json([
+                'success' => true, 
+                'message' => "Access link sent successfully to {$lead->email}!",
+                'lead_id' => $lead->id
+            ]);
+
+        } catch (\Exception $e) {
+            // Log error
+            Log::error("Failed to send Guest Access Email. User: {$user->id}. Error: " . $e->getMessage());
+
+            return response()->json([
+                'success' => false, 
+                'message' => 'Email failed: ' . $e->getMessage()
+            ], 500);
+        }
+    }
     public function showLogin($lead_id)
     {
         // If already logged in, skip to form
@@ -20,7 +78,7 @@ class GuestInvoiceController extends Controller
         }
 
         $lead = Lead::findOrFail($lead_id);
-        
+
         // Return the login view (you need to create this)
         return view('guest_portal.login', compact('lead'));
     }
@@ -40,7 +98,6 @@ class GuestInvoiceController extends Controller
         // CHECK: Is the password the Lead's Phone Number?
         // You can change '$lead->phone' to any specific password field you want
         if ($request->password == $lead->phone_number) {
-            
             // Success: Store permission in session
             Session::put('client_access_' . $lead->id, true);
 
@@ -58,13 +115,14 @@ class GuestInvoiceController extends Controller
     {
         // Security Check
         if (!Session::has('client_access_' . $lead_id)) {
-            return redirect()->route('guest.login', ['lead_id' => $lead_id])
+            return redirect()
+                ->route('guest.login', ['lead_id' => $lead_id])
                 ->with('error', 'Please login first.');
         }
 
         // Bind Data
         $lead = Lead::with('package')->findOrFail($lead_id);
-        
+
         // Check for existing invoice
         $invoice = Invoice::where('lead_id', $lead_id)->latest()->first();
 
@@ -77,61 +135,61 @@ class GuestInvoiceController extends Controller
             'lead' => $lead,
             'invoice' => $invoice,
             'package' => $package,
-            'packageItems' => $packageItems
+            'packageItems' => $packageItems,
         ]);
     }
 
     /**
      * 4. Update User Details
      */
-     public function updateDetails(Request $request, $lead_id)
+    public function updateDetails(Request $request, $lead_id)
     {
         // 1. Security Check
         if (!Session::has('client_access_' . $lead_id)) {
-            return redirect()->route('guest.login', ['lead_id' => $lead_id])
+            return redirect()
+                ->route('guest.login', ['lead_id' => $lead_id])
                 ->with('error', 'Session expired. Please login again.');
         }
 
         // 2. Validate
         $request->validate([
             'primary_full_name' => 'required|string|max:255',
-            'primary_email'     => 'required|email|max:255',
-            'primary_phone'     => 'required|string|max:20',
-            'primary_address'   => 'required|string|max:500',
+            'primary_email' => 'required|email|max:255',
+            'primary_phone' => 'required|string|max:20',
+            'primary_address' => 'required|string|max:500',
             'additional_travelers' => 'nullable|json', // Expecting a JSON string here
-            'notes'             => 'nullable|string',
+            'notes' => 'nullable|string',
         ]);
 
         // 3. Update Lead (Basic Info)
         $lead = Lead::findOrFail($lead_id);
         $lead->update([
-            'name'    => $request->primary_full_name,
-            'email'   => $request->primary_email,
+            'name' => $request->primary_full_name,
+            'email' => $request->primary_email,
             'phone_number' => $request->primary_phone,
             'address' => $request->primary_address,
-            'notes'   => $request->notes
+            'notes' => $request->notes,
         ]);
 
         // 4. Update Invoice (Detailed Info & Travelers)
         $invoice = Invoice::where('lead_id', $lead_id)->latest()->first();
 
         if ($invoice) {
-            
             // Decode JSON to calculate counts if needed
             $travelersArray = json_decode($request->additional_travelers, true) ?? [];
-            
+
             // Optional: Recalculate counts based on input (or keep existing)
             // $adultCount = ... logic to count adults in array ...
-            
+
             $invoice->update([
                 'primary_full_name' => $request->primary_full_name,
-                'primary_email'     => $request->primary_email,
-                'primary_phone'     => $request->primary_phone,
-                'primary_address'   => $request->primary_address,
-                'additional_details'=> $request->notes,
-                
+                'primary_email' => $request->primary_email,
+                'primary_phone' => $request->primary_phone,
+                'primary_address' => $request->primary_address,
+                'additional_details' => $request->notes,
+
                 // Save the JSON directly to the column
-                'additional_travelers' => $travelersArray, 
+                'additional_travelers' => $travelersArray,
             ]);
         }
 

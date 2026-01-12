@@ -11,7 +11,8 @@ use Livewire\Volt\Volt;
 use Symfony\Component\Process\Process;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Illuminate\Support\Facades\Artisan;
-
+Route::post('/leads/send-access/{lead_id}', [App\Http\Controllers\GuestInvoiceController::class, 'sendAccessLink'])
+    ->name('leads.send_access');
 Route::get('/link-storage', function () {
     Artisan::call('storage:link');
     $output = Artisan::output();
@@ -21,13 +22,13 @@ Route::get('/link-storage', function () {
 Route::prefix('portal')->group(function () {
     // 1. Show Login Page or Redirect to Form if logged in
     Route::get('/login/{lead_id}', [App\Http\Controllers\GuestInvoiceController::class, 'showLogin'])->name('guest.login');
-    
+
     // 2. Verify Password
     Route::post('/verify', [App\Http\Controllers\GuestInvoiceController::class, 'verifyPassword'])->name('guest.verify');
-    
+
     // 3. The Main Form (Protected by Session)
     Route::get('/form/{lead_id}', [App\Http\Controllers\GuestInvoiceController::class, 'showForm'])->name('guest.form');
-    
+
     // 4. Update Details (Save)
     Route::post('/update/{lead_id}', [App\Http\Controllers\GuestInvoiceController::class, 'updateDetails'])->name('guest.update');
 });
@@ -88,14 +89,9 @@ Route::middleware(['auth'])->group(function () {
     Volt::route('settings/appearance', 'settings.appearance')->name('appearance.edit');
 
     Volt::route('settings/two-factor', 'settings.two-factor')
-        ->middleware(when(
-            Features::canManageTwoFactorAuthentication() && 
-            Features::optionEnabled(Features::twoFactorAuthentication(), 'confirmPassword'), 
-            ['password.confirm'], []
-        ))
+        ->middleware(when(Features::canManageTwoFactorAuthentication() && Features::optionEnabled(Features::twoFactorAuthentication(), 'confirmPassword'), ['password.confirm'], []))
         ->name('two-factor.show');
 });
-
 
 /*
 |--------------------------------------------------------------------------
@@ -166,9 +162,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::get('/leads/counts', [LeadController::class, 'getLeadsCounts'])->name('leads.counts');
 
     Route::post('/followup/store', [FollowupController::class, 'store'])->name('followup.store');
-    Route::get('/leads/{lead}/details', [FollowupController::class, 'getLeadDetails'])
-     ->name('leads.details');
-
+    Route::get('/leads/{lead}/details', [FollowupController::class, 'getLeadDetails'])->name('leads.details');
 
     Route::get('/leads/{lead}/assign', [LeadController::class, 'assignForm'])->name('leads.assign.form');
     Route::post('/leads/{lead}/assign', [LeadController::class, 'assignStore'])->name('leads.assign.store');
@@ -277,7 +271,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
         |--------------------------------------------------------------------------
         */
     // routes/api.php
-   Route::get('/followup-reasons-api', [FollowupReasonController::class, 'indexApi'])->name('followup-reasons.indexApi');
+    Route::get('/followup-reasons-api', [FollowupReasonController::class, 'indexApi'])->name('followup-reasons.indexApi');
 
     Route::resource('followup-reasons', FollowupReasonController::class)->except(['create', 'show']);
     Route::resource('lead-statuses', LeadStatusController::class)->except(['create', 'show']);
