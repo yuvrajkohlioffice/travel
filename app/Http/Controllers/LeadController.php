@@ -313,23 +313,50 @@ public function getLeadsCounts(Request $request)
         return view('leads.create', compact('packages'));
     }
 
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'name' => 'required|max:255',
-            'email' => 'nullable|email',
-            'phone_number' => 'nullable|max:15',
-        ]);
-        $lead = Lead::create($validated + $request->only(['company_name', 'people_count', 'district', 'country', 'phone_code', 'city', 'client_category', 'lead_status', 'lead_source', 'website', 'package_id', 'inquiry_text']) + ['user_id' => auth()->id()]);
-
-        LeadUser::create([
-            'lead_id' => $lead->id,
-            'user_id' => auth()->id(),
-            'assigned_by' => auth()->id(),
-        ]);
-
-        return redirect()->route('leads.index')->with('success', 'Lead created successfully.');
+public function store(Request $request)
+{
+    // 1. Pre-Sanitize inputs before Validation
+    // This removes spaces, icons, symbols, and alphabets from both fields
+    if ($request->filled('phone_number')) {
+        $request->merge(['phone_number' => preg_replace('/[^0-9]/', '', $request->phone_number)]);
     }
+    
+    if ($request->filled('phone_code')) {
+        // Remove symbols like '+' or ' ' and keep only digits
+        $request->merge(['phone_code' => preg_replace('/[^0-9]/', '', $request->phone_code)]);
+    }
+
+    // 2. Validate sanitized data
+    $validated = $request->validate([
+        'name'         => 'required|max:255',
+        'email'        => 'nullable|email',
+        'phone_number' => 'nullable|numeric|digits_between:7,15', // Ensuring it's only digits
+        'phone_code'   => 'nullable|numeric',  // Max 3 digits, no symbols
+    ]);
+
+    // 3. Create the Lead
+    // We merge the $validated (clean) with other allowed fields
+    $leadData = array_merge(
+        $validated,
+        $request->only([
+            'company_name', 'people_count', 'district', 'country', 
+            'city', 'client_category', 'lead_status', 'lead_source', 
+            'website', 'package_id', 'inquiry_text'
+        ]),
+        ['user_id' => auth()->id()]
+    );
+
+    $lead = Lead::create($leadData);
+
+    // 4. Assign Lead to User
+    LeadUser::create([
+        'lead_id'     => $lead->id,
+        'user_id'     => auth()->id(),
+        'assigned_by' => auth()->id(),
+    ]);
+
+    return redirect()->route('leads.index')->with('success', 'Lead created successfully.');
+}
 
     public function show(Lead $lead)
     {
