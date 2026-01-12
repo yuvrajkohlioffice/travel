@@ -21,81 +21,91 @@
             </h3>
 
             @php
-    // Ensure data is in array format (if your model doesn't use 'casts' => 'array')
-    $scanner = is_string($company->scanner_details) ? json_decode($company->scanner_details, true) : $company->scanner_details;
-    $bank = is_string($company->bank_details) ? json_decode($company->bank_details, true) : $company->bank_details;
-@endphp
+                // Ensure data is in array format (if your model doesn't use 'casts' => 'array')
+                $scanner = is_string($company->scanner_details)
+                    ? json_decode($company->scanner_details, true)
+                    : $company->scanner_details;
+                $bank = is_string($company->bank_details)
+                    ? json_decode($company->bank_details, true)
+                    : $company->bank_details;
+            @endphp
 
-<div style="display: flex; gap: 20px;">
+            <div style="display: flex; gap: 20px;">
 
-    {{-- PRIORITY 1: Check if Scanner Image exists --}}
-    @if (isset($scanner['image']) && !empty($scanner['image']))
-        <div class="bg-gradient-to-br from-blue-50 to-white rounded-2xl p-6 border border-blue-100 shadow-sm" style="width: 100%;">
-            <h4 class="font-bold text-gray-900 mb-4 text-center">Scan to Pay</h4>
-            <div class="flex flex-col items-center">
-                <div class="h-48 w-48 border-2 border-dashed border-blue-300 rounded-2xl flex items-center justify-center bg-white mb-4 overflow-hidden relative">
-                    <img src="{{ asset($scanner['image']) }}" class="w-full h-full object-contain" alt="UPI QR Code" />
-                </div>
+                {{-- PRIORITY 1: Check if Scanner Image exists --}}
+                @if (isset($scanner['image']) && !empty($scanner['image']))
+                    <div class="bg-gradient-to-br from-blue-50 to-white rounded-2xl p-6 border border-blue-100 shadow-sm"
+                        style="width: 100%;">
+                        <h4 class="font-bold text-gray-900 mb-4 text-center">Scan to Pay</h4>
+                        <div class="flex flex-col items-center">
+                            <div
+                                class="h-48 w-48 border-2 border-dashed border-blue-300 rounded-2xl flex items-center justify-center bg-white mb-4 overflow-hidden relative">
+                                <img src="{{ asset($scanner['image']) }}" class="w-full h-full object-contain"
+                                    alt="UPI QR Code" />
+                            </div>
 
-                @if (isset($scanner['upi_id']) && $scanner['upi_id'])
-                    <div class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-mono mb-2">
-                        {{ $scanner['upi_id'] }}
+                            @if (isset($scanner['upi_id']) && $scanner['upi_id'])
+                                <div class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-mono mb-2">
+                                    {{ $scanner['upi_id'] }}
+                                </div>
+                            @endif
+                            <p class="text-sm text-gray-600 text-center">Use any mobile banking app to scan and pay</p>
+                        </div>
+                    </div>
+
+                    {{-- PRIORITY 2: Fallback to Bank Details if Scanner is missing --}}
+                @elseif (isset($bank['account_number']) && !empty($bank['account_number']))
+                    <div class="bg-gradient-to-br from-green-50 to-white rounded-2xl p-6 border border-green-100 shadow-sm"
+                        style="width: 100%;">
+                        <h4 class="font-bold text-gray-900 mb-4 text-center">Bank Transfer Details</h4>
+
+                        <div class="space-y-3">
+                            {{-- Bank Name --}}
+                            @if (!empty($bank['bank_name']))
+                                <div class="flex justify-between items-center border-b border-gray-100 pb-2">
+                                    <span class="text-xs text-gray-500 uppercase font-semibold">Bank Name</span>
+                                    <span class="text-sm font-bold text-gray-800">{{ $bank['bank_name'] }}</span>
+                                </div>
+                            @endif
+
+                            {{-- Account Name --}}
+                            @if (!empty($bank['account_name']))
+                                <div class="flex justify-between items-center border-b border-gray-100 pb-2">
+                                    <span class="text-xs text-gray-500 uppercase font-semibold">Account Name</span>
+                                    <span
+                                        class="text-sm font-medium text-gray-800 text-right">{{ $bank['account_name'] }}</span>
+                                </div>
+                            @endif
+
+                            {{-- Account Number --}}
+                            <div class="flex justify-between items-center border-b border-gray-100 pb-2">
+                                <span class="text-xs text-gray-500 uppercase font-semibold">Account No.</span>
+                                <span
+                                    class="text-sm font-mono font-bold text-blue-700">{{ $bank['account_number'] }}</span>
+                            </div>
+
+                            {{-- IFSC Code --}}
+                            @if (!empty($bank['ifsc']))
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs text-gray-500 uppercase font-semibold">IFSC Code</span>
+                                    <span class="text-sm font-mono font-bold text-gray-800">{{ $bank['ifsc'] }}</span>
+                                </div>
+                            @endif
+                        </div>
+
+                        <div class="mt-4 text-center">
+                            <p class="text-xs text-gray-400">Please share receipt after transfer</p>
+                        </div>
+                    </div>
+
+                    {{-- PRIORITY 3: Nothing found --}}
+                @else
+                    <div class="bg-gray-50 rounded-2xl p-6 border border-gray-200 text-center w-full">
+                        <p class="text-gray-400 text-sm">No Payment Details Available</p>
                     </div>
                 @endif
-                <p class="text-sm text-gray-600 text-center">Use any mobile banking app to scan and pay</p>
+
             </div>
-        </div>
-
-    {{-- PRIORITY 2: Fallback to Bank Details if Scanner is missing --}}
-    @elseif (isset($bank['account_number']) && !empty($bank['account_number']))
-        <div class="bg-gradient-to-br from-green-50 to-white rounded-2xl p-6 border border-green-100 shadow-sm" style="width: 100%;">
-            <h4 class="font-bold text-gray-900 mb-4 text-center">Bank Transfer Details</h4>
-            
-            <div class="space-y-3">
-                {{-- Bank Name --}}
-                @if(!empty($bank['bank_name']))
-                <div class="flex justify-between items-center border-b border-gray-100 pb-2">
-                    <span class="text-xs text-gray-500 uppercase font-semibold">Bank Name</span>
-                    <span class="text-sm font-bold text-gray-800">{{ $bank['bank_name'] }}</span>
-                </div>
-                @endif
-
-                {{-- Account Name --}}
-                @if(!empty($bank['account_name']))
-                <div class="flex justify-between items-center border-b border-gray-100 pb-2">
-                    <span class="text-xs text-gray-500 uppercase font-semibold">Account Name</span>
-                    <span class="text-sm font-medium text-gray-800 text-right">{{ $bank['account_name'] }}</span>
-                </div>
-                @endif
-
-                {{-- Account Number --}}
-                <div class="flex justify-between items-center border-b border-gray-100 pb-2">
-                    <span class="text-xs text-gray-500 uppercase font-semibold">Account No.</span>
-                    <span class="text-sm font-mono font-bold text-blue-700">{{ $bank['account_number'] }}</span>
-                </div>
-
-                {{-- IFSC Code --}}
-                @if(!empty($bank['ifsc']))
-                <div class="flex justify-between items-center">
-                    <span class="text-xs text-gray-500 uppercase font-semibold">IFSC Code</span>
-                    <span class="text-sm font-mono font-bold text-gray-800">{{ $bank['ifsc'] }}</span>
-                </div>
-                @endif
-            </div>
-
-            <div class="mt-4 text-center">
-                 <p class="text-xs text-gray-400">Please share receipt after transfer</p>
-            </div>
-        </div>
-
-    {{-- PRIORITY 3: Nothing found --}}
-    @else
-        <div class="bg-gray-50 rounded-2xl p-6 border border-gray-200 text-center w-full">
-            <p class="text-gray-400 text-sm">No Payment Details Available</p>
-        </div>
-    @endif
-
-</div>
         </div>
 
         <div class="page-break-inside-avoid" style="width: 50%; padding-left: 20px; box-sizing: border-box;">
@@ -159,7 +169,7 @@
     style="width: 100%; max-width: 100%; display: flex; justify-content: space-between;">
 
     <div class="page-break-inside-avoid" style="width: 100%; padding-right: 20px; box-sizing: border-box;">
-        
+
         @if ($invoice->payments->count() > 0)
             <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
                 <i class="fas fa-history mr-3 text-blue-500 bg-blue-100 p-2 rounded-full"></i>
@@ -175,7 +185,7 @@
                             <th class="px-4 py-3 text-right">Amount</th>
                         </tr>
                     </thead>
-                    
+
                     <tbody class="divide-y divide-blue-50 bg-white">
                         @foreach ($invoice->payments as $payment)
                             <tr class="hover:bg-gray-50 transition">
@@ -185,7 +195,8 @@
                                 <td class="px-4 py-3 text-gray-600">
                                     <span class="font-semibold">{{ $payment->payment_method ?? 'Online' }}</span>
                                     @if ($payment->transaction_id)
-                                        <div class="text-[10px] text-gray-400 font-mono mt-0.5" title="{{ $payment->transaction_id }}">
+                                        <div class="text-[10px] text-gray-400 font-mono mt-0.5"
+                                            title="{{ $payment->transaction_id }}">
                                             #{{ Str::limit($payment->transaction_id, 12) }}
                                         </div>
                                     @endif
@@ -199,7 +210,6 @@
                 </table>
             </div>
         @else
-            
         @endif
 
     </div>
