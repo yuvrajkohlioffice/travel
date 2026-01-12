@@ -1,136 +1,187 @@
 <x-guest-layout>
-    <div class="min-h-screen bg-gray-100 flex flex-col justify-center items-center py-12 sm:px-6 lg:px-8">
-        
-        {{-- Header Section --}}
-        <div class="sm:mx-auto sm:w-full sm:max-w-3xl text-center mb-6">
-            <h2 class="text-3xl font-extrabold text-gray-900">
-                Welcome, {{ $lead->name }}
-            </h2>
-            <p class="mt-2 text-sm text-gray-600">
-                Please review and complete your travel details below.
-            </p>
-        </div>
+    <script src="//unpkg.com/alpinejs" defer></script>
 
-        <div class="w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
+        
+        <div class="max-w-4xl mx-auto">
             
+            {{-- Header --}}
+            <div class="text-center mb-8">
+                <h2 class="text-3xl font-extrabold text-gray-900">Traveler Details</h2>
+                <p class="mt-2 text-gray-600">Please fill in the details for the primary contact and all accompanying travelers.</p>
+            </div>
+
             {{-- Success Message --}}
             @if (session('success'))
-                <div class="mb-4 rounded-md bg-green-50 p-4 border border-green-200 shadow-sm">
+                <div class="mb-6 bg-green-50 border-l-4 border-green-400 p-4">
                     <div class="flex">
-                        <div class="flex-shrink-0">
-                            <svg class="h-5 w-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                            </svg>
-                        </div>
                         <div class="ml-3">
-                            <p class="text-sm font-medium text-green-800">
-                                {{ session('success') }}
-                            </p>
+                            <p class="text-sm text-green-700">{{ session('success') }}</p>
                         </div>
                     </div>
                 </div>
             @endif
 
-            <div class="bg-white py-8 px-6 shadow-lg rounded-xl sm:px-10 border border-gray-100">
+            <div class="bg-white shadow-xl rounded-2xl overflow-hidden">
                 
-                {{-- 1. Package Info Box (Read Only) --}}
-                <div class="bg-blue-50 border-l-4 border-blue-500 p-5 mb-8 rounded-r-md">
-                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
-                        <div>
-                            <h3 class="text-lg font-bold text-blue-900">
-                                Selected Package: {{ $package->name ?? 'Custom Package' }}
-                            </h3>
-                            <div class="mt-2 text-sm text-blue-800 space-y-1">
-                                <p>
-                                    <span class="font-semibold">Travelers:</span> 
-                                    {{ $invoice->adult_count ?? $lead->adults ?? 0 }} Adults, 
-                                    {{ $invoice->child_count ?? $lead->children ?? 0 }} Children
-                                </p>
-                            </div>
-                        </div>
-                        <div class="mt-4 md:mt-0 md:text-right">
-                             <p class="text-sm font-semibold text-blue-900 bg-blue-100 px-3 py-1 rounded-full inline-block">
-                                Travel Date: {{ $invoice->travel_start_date ? \Carbon\Carbon::parse($invoice->travel_start_date)->format('d M, Y') : 'Not scheduled' }}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- 2. The Form --}}
-                <form action="{{ route('guest.update', $lead->id) }}" method="POST" class="space-y-6">
+                {{-- Form Start --}}
+                <form action="{{ route('guest.update', $lead->id) }}" method="POST" 
+                      x-data="guestForm()" 
+                      x-init="initData()"
+                      @submit="prepareSubmit">
+                    
                     @csrf
 
-                    <div class="border-b border-gray-200 pb-2 mb-4">
-                        <h3 class="text-lg font-medium leading-6 text-gray-900">Personal Information</h3>
-                    </div>
-
-                    <div class="grid grid-cols-1 gap-y-6 gap-x-6 sm:grid-cols-2">
+                    <div class="p-6 md:p-8 border-b border-gray-200">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">Primary Traveler</h3>
                         
-                        {{-- Name --}}
-                        <div>
-                            <label for="name" class="block text-sm font-medium text-gray-700">Full Name <span class="text-red-500">*</span></label>
-                            <div class="mt-1">
-                                <input type="text" name="name" id="name" value="{{ old('name', $lead->name) }}" required
-                                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2.5">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-1">Full Name *</label>
+                                <input type="text" name="primary_full_name" x-model="primaryName" required
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
                             </div>
+
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-1">Email Address *</label>
+                                <input type="email" name="primary_email" x-model="primaryEmail" required
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-1">Phone Number *</label>
+                                <input type="text" name="primary_phone" x-model="primaryPhone" required
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-1">Address *</label>
+                                <input type="text" name="primary_address" x-model="primaryAddress" required
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div class="p-6 md:p-8 bg-gray-50">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-xl font-bold text-gray-800">Additional Travelers</h3>
+                            
+                            <button type="button" @click="addTraveler()" 
+                                class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 active:bg-blue-900 focus:outline-none focus:border-blue-900 focus:ring ring-blue-300 disabled:opacity-25 transition ease-in-out duration-150">
+                                + Add Traveler
+                            </button>
                         </div>
 
-                        {{-- Email --}}
-                        <div>
-                            <label for="email" class="block text-sm font-medium text-gray-700">Email Address <span class="text-red-500">*</span></label>
-                            <div class="mt-1">
-                                <input type="email" name="email" id="email" value="{{ old('email', $lead->email) }}" required
-                                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2.5">
-                            </div>
-                        </div>
+                        <input type="hidden" name="additional_travelers" :value="jsonTravelers">
 
-                        {{-- Phone (Read Only - Locked) --}}
-                        <div>
-                            <label for="phone" class="block text-sm font-medium text-gray-700">Phone Number (Login ID)</label>
-                            <div class="mt-1 relative rounded-md shadow-sm">
-                                <input type="text" value="{{ $lead->phone }}" readonly
-                                    class="block w-full rounded-md border-gray-300 bg-gray-100 text-gray-500 cursor-not-allowed shadow-sm focus:border-gray-300 focus:ring-0 sm:text-sm py-2.5">
-                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                                    <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                                    </svg>
+                        <template x-if="additionalTravelers.length === 0">
+                            <div class="text-center py-6 text-gray-500 italic">
+                                No additional travelers added. Click the button above to add family or friends.
+                            </div>
+                        </template>
+
+                        <div class="space-y-4">
+                            <template x-for="(t, index) in additionalTravelers" :key="index">
+                                <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm relative">
+                                    
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div>
+                                            <label class="block text-xs font-bold text-gray-500 uppercase">Name</label>
+                                            <input type="text" x-model="t.name" placeholder="Full Name" required
+                                                class="mt-1 w-full p-2 border border-gray-300 rounded-md text-sm">
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-xs font-bold text-gray-500 uppercase">Relation</label>
+                                            <select x-model="t.relation" class="mt-1 w-full p-2 border border-gray-300 rounded-md text-sm">
+                                                <option value="">Select Relation</option>
+                                                <option value="Spouse">Spouse</option>
+                                                <option value="Child">Child</option>
+                                                <option value="Parent">Parent</option>
+                                                <option value="Friend">Friend</option>
+                                                <option value="Other">Other</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="flex items-center gap-2">
+                                            <div class="flex-grow">
+                                                <label class="block text-xs font-bold text-gray-500 uppercase">Age</label>
+                                                <input type="number" x-model="t.age" min="0" placeholder="Age"
+                                                    class="mt-1 w-full p-2 border border-gray-300 rounded-md text-sm">
+                                            </div>
+                                            
+                                            
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
-
-                        {{-- Address --}}
-                        <div>
-                            <label for="address" class="block text-sm font-medium text-gray-700">Address / Location <span class="text-red-500">*</span></label>
-                            <div class="mt-1">
-                                <input type="text" name="address" id="address" value="{{ old('address', $lead->address) }}" required
-                                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2.5">
-                            </div>
-                        </div>
-
-                    </div>
-
-                    {{-- Notes --}}
-                    <div>
-                        <label for="notes" class="block text-sm font-medium text-gray-700">Additional Notes / Special Requests</label>
-                        <div class="mt-1">
-                            <textarea id="notes" name="notes" rows="4" 
-                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">{{ $lead->notes }}</textarea>
+                            </template>
                         </div>
                     </div>
 
-                    {{-- Submit Button --}}
-                    <div class="pt-4">
-                        <button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150 ease-in-out">
-                            Save & Update My Details
+                    <div class="p-6 md:p-8 border-t border-gray-200">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Special Requests / Notes</label>
+                        <textarea name="notes" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500">{{ $invoice->additional_details ?? $lead->notes }}</textarea>
+                    </div>
+
+                    <div class="px-6 py-4 bg-gray-50 text-right sm:px-8 border-t border-gray-200">
+                        <button type="submit" class="inline-flex justify-center py-3 px-6 border border-transparent shadow-sm text-sm font-medium rounded-xl text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 w-full sm:w-auto">
+                            Save & Update Details
                         </button>
                     </div>
 
                 </form>
             </div>
-            
-            <div class="mt-8 text-center">
-                <p class="text-sm text-gray-400">&copy; {{ date('Y') }} Tourism Company. All rights reserved.</p>
+
+            <div class="mt-6 text-center text-sm text-gray-500">
+                &copy; {{ date('Y') }} Tourism Company. All rights reserved.
             </div>
         </div>
     </div>
+
+    <script>
+        function guestForm() {
+            return {
+                // Initialize with PHP Data
+                primaryName: @json($invoice->primary_full_name ?? $lead->name),
+                primaryEmail: @json($invoice->primary_email ?? $lead->email),
+                primaryPhone: @json($invoice->primary_phone ?? $lead->phone_number),
+                primaryAddress: @json($invoice->primary_address ?? $lead->address),
+                
+                // Load existing additional travelers or empty array
+                additionalTravelers: @json($invoice->additional_travelers ?? []),
+
+                // Computed property for JSON string to send to backend
+                get jsonTravelers() {
+                    return JSON.stringify(this.additionalTravelers);
+                },
+
+                // Functions
+                initData() {
+                    // Ensure it is an array if null came from DB
+                    if (!this.additionalTravelers) {
+                        this.additionalTravelers = [];
+                    }
+                },
+
+                addTraveler() {
+                    this.additionalTravelers.push({
+                        name: '',
+                        relation: 'Adult',
+                        age: ''
+                    });
+                },
+
+                removeTraveler(index) {
+                    this.additionalTravelers.splice(index, 1);
+                },
+
+                prepareSubmit() {
+                    // Optional: Clean up data before submit if needed
+                    // console.log('Submitting:', this.jsonTravelers);
+                }
+            }
+        }
+    </script>
 </x-guest-layout>

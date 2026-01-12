@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Lead;
 use App\Models\Invoice;
-use App\Models\Package;
 use Illuminate\Support\Facades\Session;
 
 class GuestInvoiceController extends Controller
@@ -85,29 +84,56 @@ class GuestInvoiceController extends Controller
     /**
      * 4. Update User Details
      */
-    public function updateDetails(Request $request, $lead_id)
+     public function updateDetails(Request $request, $lead_id)
     {
-        // Security Check
+        // 1. Security Check
         if (!Session::has('client_access_' . $lead_id)) {
-            return redirect()->route('guest.login', ['lead_id' => $lead_id]);
+            return redirect()->route('guest.login', ['lead_id' => $lead_id])
+                ->with('error', 'Session expired. Please login again.');
         }
 
+        // 2. Validate
         $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email',
-            'address' => 'required|string',
-            // Add other fields you want them to fill (e.g., passport)
+            'primary_full_name' => 'required|string|max:255',
+            'primary_email'     => 'required|email|max:255',
+            'primary_phone'     => 'required|string|max:20',
+            'primary_address'   => 'required|string|max:500',
+            'additional_travelers' => 'nullable|json', // Expecting a JSON string here
+            'notes'             => 'nullable|string',
         ]);
 
+        // 3. Update Lead (Basic Info)
         $lead = Lead::findOrFail($lead_id);
-
-        // Update Lead Info
         $lead->update([
-            'name' => $request->name,
-            'email' => $request->email,
-            'address' => $request->address,
-            // Add other fields here
+            'name'    => $request->primary_full_name,
+            'email'   => $request->primary_email,
+            'phone_number' => $request->primary_phone,
+            'address' => $request->primary_address,
+            'notes'   => $request->notes
         ]);
+
+        // 4. Update Invoice (Detailed Info & Travelers)
+        $invoice = Invoice::where('lead_id', $lead_id)->latest()->first();
+
+        if ($invoice) {
+            
+            // Decode JSON to calculate counts if needed
+            $travelersArray = json_decode($request->additional_travelers, true) ?? [];
+            
+            // Optional: Recalculate counts based on input (or keep existing)
+            // $adultCount = ... logic to count adults in array ...
+            
+            $invoice->update([
+                'primary_full_name' => $request->primary_full_name,
+                'primary_email'     => $request->primary_email,
+                'primary_phone'     => $request->primary_phone,
+                'primary_address'   => $request->primary_address,
+                'additional_details'=> $request->notes,
+                
+                // Save the JSON directly to the column
+                'additional_travelers' => $travelersArray, 
+            ]);
+        }
 
         return back()->with('success', 'Details updated successfully!');
     }
