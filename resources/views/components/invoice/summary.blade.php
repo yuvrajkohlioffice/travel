@@ -1,15 +1,19 @@
 <div class="p-6 md:p-8 lg:p-10 border-b border-blue-100">
 
     @php
-        // Ensure we have the scanner details
+        // 1. Get Scanner Data
         $scanner = $company->scanner_details ?? [];
+
+        // 2. Calculate Totals
+        $totalAmount = $invoice->final_price ?? 0;
+        $totalPaid = $invoice->payments->sum('paid_amount');
+        $balanceDue = $totalAmount - $totalPaid;
     @endphp
 
     <div class="flex flex-col lg:flex-row print:flex-row gap-8"
-         style="width: 100%; max-width: 100%; display: flex; justify-content: space-between;">
+        style="width: 100%; max-width: 100%; display: flex; justify-content: space-between;">
 
-        <div class="page-break-inside-avoid"
-             style="width: 50%; padding-right: 20px; box-sizing: border-box;">
+        <div class="page-break-inside-avoid" style="width: 50%; padding-right: 20px; box-sizing: border-box;">
 
             <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
                 <i class="fas fa-credit-card mr-3 text-blue-500 bg-blue-100 p-2 rounded-full"></i>
@@ -18,16 +22,18 @@
 
             <div style="display: flex; gap: 20px;">
                 <div class="bg-gradient-to-br from-blue-50 to-white rounded-2xl p-6 border border-blue-100 shadow-sm"
-                     style="width: 100%;">
+                    style="width: 100%;">
 
                     <h4 class="font-bold text-gray-900 mb-4 text-center">Scan to Pay</h4>
 
                     <div class="flex flex-col items-center">
-                        <div class="h-48 w-48 border-2 border-dashed border-blue-300 rounded-2xl 
+                        <div
+                            class="h-48 w-48 border-2 border-dashed border-blue-300 rounded-2xl 
                                     flex items-center justify-center bg-white mb-4 overflow-hidden relative">
-                            
-                            @if(isset($scanner['image']) && $scanner['image'])
-                                <img src="{{ $scanner['image'] }}" class="w-full h-full object-contain" alt="UPI QR Code" />
+
+                            @if (isset($scanner['image']) && $scanner['image'])
+                                <img src="{{ $scanner['image'] }}" class="w-full h-full object-contain"
+                                    alt="UPI QR Code" />
                             @else
                                 <div class="text-center p-4">
                                     <i class="fas fa-qrcode text-4xl text-gray-300 mb-2"></i>
@@ -36,7 +42,7 @@
                             @endif
                         </div>
 
-                        @if(isset($scanner['upi_id']) && $scanner['upi_id'])
+                        @if (isset($scanner['upi_id']) && $scanner['upi_id'])
                             <div class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-mono mb-2">
                                 {{ $scanner['upi_id'] }}
                             </div>
@@ -46,53 +52,117 @@
                             Use any mobile banking app to scan and pay
                         </p>
                     </div>
-
                 </div>
             </div>
-
         </div>
 
-        <div class="page-break-inside-avoid"
-             style="width: 50%; padding-left: 20px; box-sizing: border-box;">
+        <div class="page-break-inside-avoid" style="width: 50%; padding-left: 20px; box-sizing: border-box;">
 
-            <div class="bg-gradient-to-br from-blue-900 to-blue-800 rounded-2xl mt-[65px] p-8 text-white shadow-2xl 
-                        print:shadow-none print:p-4">
+            <div
+                class="bg-gradient-to-br from-blue-900 to-blue-800 rounded-2xl mt-[65px] p-8 text-white shadow-2xl 
+                        print:shadow-none print:p-6 print:bg-blue-900">
 
-                <h3 class="text-2xl font-bold mb-8 text-center border-b border-blue-700 pb-4">
+                <h3 class="text-2xl font-bold mb-6 text-center border-b border-blue-700 pb-4">
                     Invoice Summary
                 </h3>
 
-                <div class="space-y-4 mb-8">
-
-                    <div class="flex justify-between items-center">
-                        <span class="text-blue-100">Package Subtotal</span>
-                        <span class="font-bold">₹ {{ number_format($invoice->subtotal_price ?? 0, 2) }}</span>
+                <div class="space-y-3 mb-6">
+                    <div class="flex justify-between items-center text-blue-200 text-sm">
+                        <span>Package Subtotal</span>
+                        <span class="font-medium text-white">₹
+                            {{ number_format($invoice->subtotal_price ?? 0, 2) }}</span>
                     </div>
 
-                    <div class="flex justify-between items-center">
-                        <span class="text-blue-100">Discount</span>
-                        <span class="font-bold text-green-300">
+                    <div class="flex justify-between items-center text-blue-200 text-sm">
+                        <span>Discount</span>
+                        <span class="font-medium text-green-300">
                             -₹ {{ number_format($invoice->discount_amount ?? 0, 2) }}
                         </span>
                     </div>
 
-                    <div class="flex justify-between items-center">
-                        <span class="text-blue-100">Taxes & Fees</span>
-                        <span class="font-bold">₹ {{ number_format($invoice->tax_amount ?? 0, 2) }}</span>
+                    <div class="flex justify-between items-center text-blue-200 text-sm">
+                        <span>Taxes & Fees</span>
+                        <span class="font-medium text-white">₹ {{ number_format($invoice->tax_amount ?? 0, 2) }}</span>
                     </div>
 
-                    <div style="height: 1px; background: #1e40af; margin: 12px 0;"></div>
+                    <div class="border-t border-blue-700 my-2"></div>
 
-                    <div class="flex justify-between items-center pt-4"
-                         style="border-top: 1px solid #1e3a8a;">
-                        <span class="text-xl font-bold text-blue-100">Total Amount</span>
-                        <span class="text-2xl font-bold">₹ {{ number_format($invoice->final_price ?? 0, 2) }}</span>
+                    <div class="flex justify-between items-center text-lg font-bold">
+                        <span>Total Amount</span>
+                        <span>₹ {{ number_format($totalAmount, 2) }}</span>
                     </div>
 
+                    <div class="flex justify-between items-center text-green-300 font-medium">
+                        <span>Total Paid</span>
+                        <span>(-) ₹ {{ number_format($totalPaid, 2) }}</span>
+                    </div>
+
+                    <div
+                        class="flex justify-between items-center text-xl font-bold pt-2 mt-2 border-t border-dashed border-blue-600">
+                        <span class="{{ $balanceDue > 0 ? 'text-red-200' : 'text-green-200' }}">Balance Due</span>
+                        <span class="{{ $balanceDue > 0 ? 'text-red-200' : 'text-green-200' }}">
+                            ₹ {{ number_format($balanceDue, 2) }}
+                        </span>
+                    </div>
                 </div>
+
+
 
             </div>
         </div>
 
     </div>
+</div>
+<div class="flex flex-col lg:flex-row print:flex-row gap-8 mt-5"
+    style="width: 100%; max-width: 100%; display: flex; justify-content: space-between;">
+
+    <div class="page-break-inside-avoid" style="width: 100%; padding-right: 20px; box-sizing: border-box;">
+        
+        @if ($invoice->payments->count() > 0)
+            <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                <i class="fas fa-history mr-3 text-blue-500 bg-blue-100 p-2 rounded-full"></i>
+                Payment History
+            </h3>
+
+            <div class="mt-4 rounded-xl border border-blue-100 overflow-hidden shadow-sm">
+                <table class="w-full text-sm text-left">
+                    <thead class="bg-blue-50 text-blue-700 font-bold text-xs uppercase border-b border-blue-100">
+                        <tr>
+                            <th class="px-4 py-3">Date</th>
+                            <th class="px-4 py-3">Mode</th>
+                            <th class="px-4 py-3 text-right">Amount</th>
+                        </tr>
+                    </thead>
+                    
+                    <tbody class="divide-y divide-blue-50 bg-white">
+                        @foreach ($invoice->payments as $payment)
+                            <tr class="hover:bg-gray-50 transition">
+                                <td class="px-4 py-3 text-gray-700 font-medium">
+                                    {{ \Carbon\Carbon::parse($payment->created_at)->format('d M, Y') }}
+                                </td>
+                                <td class="px-4 py-3 text-gray-600">
+                                    <span class="font-semibold">{{ $payment->payment_method ?? 'Online' }}</span>
+                                    @if ($payment->transaction_id)
+                                        <div class="text-[10px] text-gray-400 font-mono mt-0.5" title="{{ $payment->transaction_id }}">
+                                            #{{ Str::limit($payment->transaction_id, 12) }}
+                                        </div>
+                                    @endif
+                                </td>
+                                <td class="px-4 py-3 text-right font-bold text-green-600">
+                                    ₹{{ number_format($payment->paid_amount, 2) }}
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @else
+            <div class="mt-6 p-4 bg-gray-50 rounded-lg text-center border border-dashed border-gray-300 text-gray-400 text-sm">
+                <i class="fas fa-info-circle mb-1"></i><br>
+                No payment records found.
+            </div>
+        @endif
+
+    </div>
+
 </div>
