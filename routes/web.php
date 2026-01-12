@@ -5,7 +5,7 @@ use Laravel\Fortify\Features;
 
 // Controllers
 use App\Http\Controllers\RoleRouteController;
-use App\Http\Controllers\{CompanyController, FollowupReportController, PaymentMethodController, PickupPointController, FollowupReasonController, LeadStatusController, MessageTemplateController, CarController, DashboardController, UserController, InvoiceController, PackageTypeController, PackageCategoryController, DifficultyTypeController, HotelController, RoleController, PackageController, LeadController, FollowupController, PaymentController, WhatsAppController};
+use App\Http\Controllers\{CompanyController, SystemCommandController, FollowupReportController, PaymentMethodController, PickupPointController, FollowupReasonController, LeadStatusController, MessageTemplateController, CarController, DashboardController, UserController, InvoiceController, PackageTypeController, PackageCategoryController, DifficultyTypeController, HotelController, RoleController, PackageController, LeadController, FollowupController, PaymentController, WhatsAppController};
 use Livewire\Volt\Volt;
 
 use Symfony\Component\Process\Process;
@@ -45,14 +45,6 @@ Route::get('/deploy', function () {
     return back()->with('success', implode(' | ', $messages));
 })->middleware('auth');
 
-Route::get('/optimize-app', function () {
-    Artisan::call('optimize');
-    $output = Artisan::output();
-    return back()->with('success', "App optimized successfully! \n$output");
-});
-
-
-
 /*
 |--------------------------------------------------------------------------
 | Public Routes
@@ -83,9 +75,14 @@ Route::middleware(['auth'])->group(function () {
     Volt::route('settings/appearance', 'settings.appearance')->name('appearance.edit');
 
     Volt::route('settings/two-factor', 'settings.two-factor')
-        ->middleware(when(Features::canManageTwoFactorAuthentication() && Features::optionEnabled(Features::twoFactorAuthentication(), 'confirmPassword'), ['password.confirm'], []))
+        ->middleware(when(
+            Features::canManageTwoFactorAuthentication() && 
+            Features::optionEnabled(Features::twoFactorAuthentication(), 'confirmPassword'), 
+            ['password.confirm'], []
+        ))
         ->name('two-factor.show');
 });
+
 
 /*
 |--------------------------------------------------------------------------
@@ -111,6 +108,15 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
         | Lead Management
         |--------------------------------------------------------------------------
         */
+    Route::prefix('system')
+        ->name('system.')
+        ->group(function () {
+            Route::get('/deploy', [SystemCommandController::class, 'deploy'])->name('deploy');
+
+            Route::get('/optimize', [SystemCommandController::class, 'clearAndOptimize'])->name('optimize');
+
+            Route::get('/storage-link', [SystemCommandController::class, 'storageLink'])->name('storage.link');
+        });
     Route::get('/composer-dump', function () {
         // 🔒 Only allow admin
         abort_unless(auth()->user()->role_id === 1, 403);
@@ -147,14 +153,16 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::get('/leads/counts', [LeadController::class, 'getLeadsCounts'])->name('leads.counts');
 
     Route::post('/followup/store', [FollowupController::class, 'store'])->name('followup.store');
-    Route::get('/leads/{lead}/details', [FollowupController::class, 'getLeadDetails']);
+    Route::get('/leads/{lead}/details', [FollowupController::class, 'getLeadDetails'])
+     ->name('leads.details');
+
 
     Route::get('/leads/{lead}/assign', [LeadController::class, 'assignForm'])->name('leads.assign.form');
     Route::post('/leads/{lead}/assign', [LeadController::class, 'assignStore'])->name('leads.assign.store');
     Route::delete('/leads/assignment/{id}/delete', [LeadController::class, 'deleteAssignment'])->name('leads.assign.delete');
 
     Route::post('/leads/import', [LeadController::class, 'importLeads'])->name('leads.import');
-    Route::get('/leads/{lead}/json', [LeadController::class, 'showJson']);
+    Route::get('/leads/{lead}/json', [LeadController::class, 'showJson'])->name('lead.json.show');
     Route::post('/leads/bulk-assign', [LeadController::class, 'bulkAssign'])->name('leads.bulkAssign');
 
     Route::resource('leads', LeadController::class);
@@ -256,7 +264,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
         |--------------------------------------------------------------------------
         */
     // routes/api.php
-    Route::get('/followup-reasons-api', [FollowupReasonController::class, 'indexApi']);
+   Route::get('/followup-reasons-api', [FollowupReasonController::class, 'indexApi'])->name('followup-reasons.indexApi');
 
     Route::resource('followup-reasons', FollowupReasonController::class)->except(['create', 'show']);
     Route::resource('lead-statuses', LeadStatusController::class)->except(['create', 'show']);

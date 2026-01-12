@@ -51,9 +51,30 @@ class LeadController extends Controller
 
         // Base query
         $baseQuery = Lead::query()
-            ->select(['id', 'name', 'company_name', 'email', 'phone_number', 'status', 'lead_status', 'package_id', 'created_at'])
-            ->when($user->role_id != 1, fn($q) => $q->where(fn($q2) => $q2->where('user_id', $user->id)->orWhereHas('assignedUsers', fn($uq) => $uq->where('user_id', $user->id))));
+    ->select([
+        'id', 'name', 'company_name', 'email', 'phone_number',
+        'status', 'lead_status', 'package_id', 'created_at'
+    ])
+    ->when($user->role_id != 1, function ($query) use ($user) {
+        // Check if user is company owner
+        $isOwner = $user->company_id
+            && $user->id === optional($user->company)->owner_id;
 
+        if ($isOwner) {
+            // If owner, show all leads from this company
+            $query->whereHas('createdBy', function ($q) use ($user) {
+                $q->where('company_id', $user->company_id);
+            });
+        } else {
+            // Otherwise, show only leads created by user OR assigned to user
+            $query->where(function ($q) use ($user) {
+                $q->where('user_id', $user->id)
+                  ->orWhereHas('assignedUsers', function ($uq) use ($user) {
+                      $uq->where('user_id', $user->id);
+                  });
+            });
+        }
+    });
         if ($user->role_id == 1) {
             $baseQuery->withTrashed();
         }
@@ -126,187 +147,165 @@ class LeadController extends Controller
         return view('leads.index', compact('leads', 'packages', 'users', 'filters', 'statusOthersCounts', 'timeCounts'));
     }
 
-    public function getLeadsData(Request $request)
-    {
-        $user = auth()->user();
-        $companyId = auth()->user()->company_id;
+   public function getLeadsData(Request $request)
+{
+    $user = auth()->user();
+    $companyId = $user->company_id;
 
-        $leadStatuses = LeadStatus::where('is_active', true)
-            ->where(function ($q) use ($companyId) {
-                $q->where('company_id', $companyId)->orWhereNull('company_id'); // include global
-            })
-            ->orderByRaw('company_id IS NULL') // company first, global next
-            ->orderBy('order_by', 'asc') // then by order_by
-            ->get()
-            ->unique('name') // avoid duplicate names
-            ->values();
+    $leadStatuses = LeadStatus::where('is_active', true)
+        ->where(fn ($q) => $q->where('company_id', $companyId)->orWhereNull('company_id'))
+        ->orderByRaw('company_id IS NULL')
+        ->orderBy('order_by', 'asc')
+        ->get()
+        ->unique('name')
+        ->values();
 
-        $query = Lead::with(['package:id,package_name', 'latestAssignedUser.user:id,name', 'latestAssignedUser.assignedBy:id,name', 'createdBy:id,name', 'lastFollowup.user:id,name'])->orderByDesc('created_at');
+    $query = Lead::with([
+        'package:id,package_name',
+        'latestAssignedUser.user:id,name',
+        'latestAssignedUser.assignedBy:id,name',
+        'createdBy:id,name',
+        'lastFollowup.user:id,name'
+    ])->orderByDesc('created_at');
 
-        // ---------- Role based access ----------
-        if ($user->role_id == 1) {
-            $query->withTrashed();
-        } else {
-            $query->where(function ($q) use ($user) {
-                $q->where('user_id', $user->id)->orWhereHas('assignedUsers', fn($uq) => $uq->where('user_id', $user->id));
-            });
-        }
+    // ---------- Role based access ----------
+    if ($user->role_id == 1) {
+        $query->withTrashed();
+    } else {
+        $isOwner = $companyId && $user->id === optional($user->company)->owner_id;
 
-        // ---------- ID filter ----------
-        if ($request->filled('id')) {
-            $query->where('id', $request->id);
-        }
+        $query->where(function ($q) use ($user, $isOwner, $companyId) {
+            if ($isOwner) {
+                // Owner sees all leads from the company
+                $q->whereHas('createdBy', fn($q2) => $q2->where('company_id', $companyId));
+            } else {
+                // Regular user sees only their own or assigned leads
+                $q->where('user_id', $user->id)
+                  ->orWhereHas('assignedUsers', fn($uq) => $uq->where('user_id', $user->id));
+            }
+        });
+    }
 
-        // ---------- Normal lead status (converted / approved / rejected) ----------
-        if ($request->filled('status') && $request->status !== 'followup_taken') {
-            $query->where('status', $request->status);
-        }
+    // ---------- Remaining filters ----------
+    if ($request->filled('id')) {
+        $query->where('id', $request->id);
+    }
 
-        // ---------- Client search ----------
-        if ($request->filled('client_name')) {
-            $query->where(function ($q) use ($request) {
-                $q->where('name', 'like', "%{$request->client_name}%")
-                    ->orWhere('email', 'like', "%{$request->client_name}%")
-                    ->orWhere('phone_number', 'like', "%{$request->client_name}%");
-            });
-        }
+    if ($request->filled('status') && $request->status !== 'followup_taken') {
+        $query->where('status', $request->status);
+    }
 
-        // ---------- Location search ----------
-        if ($request->filled('location')) {
-            $query->where(function ($q) use ($request) {
-                $q->where('country', 'like', "%{$request->location}%")
-                    ->orWhere('district', 'like', "%{$request->location}%")
-                    ->orWhere('city', 'like', "%{$request->location}%");
-            });
-        }
+    if ($request->filled('client_name')) {
+        $query->where(fn($q) => $q
+            ->where('name', 'like', "%{$request->client_name}%")
+            ->orWhere('email', 'like', "%{$request->client_name}%")
+            ->orWhere('phone_number', 'like', "%{$request->client_name}%")
+        );
+    }
 
-        // ---------- FOLLOW-UP TAKEN (MAIN LOGIC) ----------
-        if ($request->lead_status === 'followup_taken') {
-            $query->whereHas('lastFollowup', function ($q) use ($request) {
-                match ($request->date_range) {
-                    'today' => $q->whereDate('next_followup_date', today()),
+    if ($request->filled('location')) {
+        $query->where(fn($q) => $q
+            ->where('country', 'like', "%{$request->location}%")
+            ->orWhere('district', 'like', "%{$request->location}%")
+            ->orWhere('city', 'like', "%{$request->location}%")
+        );
+    }
 
-                    'yesterday' => $q->whereDate('next_followup_date', today()->subDay()),
-
-                    'week' => $q->whereBetween('next_followup_date', [now()->startOfWeek(), now()->endOfWeek()]),
-
-                    'month' => $q->whereMonth('next_followup_date', now()->month)->whereYear('next_followup_date', now()->year),
-
-                    default => null,
-                };
-            });
-        }
-        // ---------- NORMAL DATE FILTER (created_at) ----------
-        elseif ($request->filled('date_range')) {
+    if ($request->lead_status === 'followup_taken') {
+        $query->whereHas('lastFollowup', function ($q) use ($request) {
             match ($request->date_range) {
-                'today' => $query->whereDate('created_at', today()),
-                'yesterday' => $query->whereDate('created_at', today()->subDay()),
-                'week' => $query->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]),
-                'month' => $query->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year),
+                'today' => $q->whereDate('next_followup_date', today()),
+                'yesterday' => $q->whereDate('next_followup_date', today()->subDay()),
+                'week' => $q->whereBetween('next_followup_date', [now()->startOfWeek(), now()->endOfWeek()]),
+                'month' => $q->whereMonth('next_followup_date', now()->month)->whereYear('next_followup_date', now()->year),
+                default => null,
+            };
+        });
+    } elseif ($request->filled('date_range')) {
+        match ($request->date_range) {
+            'today' => $query->whereDate('created_at', today()),
+            'yesterday' => $query->whereDate('created_at', today()->subDay()),
+            'week' => $query->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]),
+            'month' => $query->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year),
+            default => null,
+        };
+    }
+
+    if ($request->filled('assigned')) {
+        $query->whereHas('latestAssignedUser.user', fn($q) => $q->where('name', $request->assigned));
+    }
+
+    return DataTables::of($query)
+        ->addIndexColumn()
+        ->addColumn('checkbox', fn($lead) => '<input type="checkbox" class="row-checkbox h-4 w-4" data-id="' . $lead->id . '">')
+        ->addColumn('client_info', fn($lead) => view('leads.partials.client_info', compact('lead'))->render())
+        ->addColumn('location', fn($lead) => "{$lead->country}<br>{$lead->district}<br>{$lead->city}")
+        ->addColumn('reminder', fn($lead) => view('leads.partials.reminder', compact('lead'))->render())
+        ->addColumn('inquiry', fn($lead) => $lead->package->package_name ?? Str::limit($lead->inquiry_text, 20))
+        ->addColumn('proposal', fn($lead) => view('leads.partials.proposal', compact('lead'))->render())
+        ->addColumn('status', fn($lead) => view('leads.partials.status_dropdown', ['lead' => $lead, 'leadStatuses' => $leadStatuses])->render())
+        ->addColumn('assigned', fn($lead) => view('leads.partials.assigned', compact('lead'))->render())
+        ->addColumn('action', fn($lead) => view('leads.partials.actions', compact('lead'))->render())
+        ->rawColumns(['checkbox', 'client_info', 'location', 'reminder', 'inquiry', 'proposal', 'status', 'assigned', 'action'])
+        ->make(true);
+}
+public function getLeadsCounts(Request $request)
+{
+    $user = auth()->user();
+    $companyId = $user->company_id;
+    $isOwner = $companyId && $user->id === optional($user->company)->owner_id;
+
+    $baseQuery = Lead::query()
+        ->when($user->role_id != 1, fn($q) => $q->where(function ($q2) use ($user, $isOwner, $companyId) {
+            if ($isOwner) {
+                $q2->whereHas('createdBy', fn($q3) => $q3->where('company_id', $companyId));
+            } else {
+                $q2->where('user_id', $user->id)
+                   ->orWhereHas('assignedUsers', fn($uq) => $uq->where('user_id', $user->id));
+            }
+        }))
+        ->when($request->id, fn($q) => $q->where('id', $request->id))
+        ->when($request->client_name, fn($q) => $q->where('name', 'like', "%{$request->client_name}%"))
+        ->when($request->location, fn($q) => $q->where(fn($q2) => $q2
+            ->where('country', 'like', "%{$request->location}%")
+            ->orWhere('district', 'like', "%{$request->location}%")
+            ->orWhere('city', 'like', "%{$request->location}%")
+        ))
+        ->when($request->status, fn($q) => $q->where('status', $request->status))
+        ->when($request->assigned, fn($q) => $q->whereHas('latestAssignedUser.user', fn($uq) => $uq->where('name', $request->assigned)));
+
+    $periods = ['today', 'yesterday', 'week', 'month'];
+    $counts = [];
+
+    foreach ($periods as $period) {
+        $q = clone $baseQuery;
+
+        if ($request->lead_status === 'followup_taken') {
+            $q->whereHas('lastFollowup', fn($fq) => match ($period) {
+                'today' => $fq->whereDate('next_followup_date', today()),
+                'yesterday' => $fq->whereDate('next_followup_date', today()->subDay()),
+                'week' => $fq->whereBetween('next_followup_date', [now()->startOfWeek(), now()->endOfWeek()]),
+                'month' => $fq->whereMonth('next_followup_date', now()->month)->whereYear('next_followup_date', now()->year),
+                default => null,
+            });
+        } else {
+            match ($period) {
+                'today' => $q->whereDate('created_at', today()),
+                'yesterday' => $q->whereDate('created_at', today()->subDay()),
+                'week' => $q->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]),
+                'month' => $q->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year),
                 default => null,
             };
         }
 
-        // ---------- Assigned user ----------
-        if ($request->filled('assigned')) {
-            $query->whereHas('latestAssignedUser.user', fn($q) => $q->where('name', $request->assigned));
-        }
-
-        // ---------- DataTables ----------
-        return DataTables::of($query)
-            ->addIndexColumn()
-            ->addColumn('checkbox', fn($lead) => '<input type="checkbox" class="row-checkbox h-4 w-4" data-id="' . $lead->id . '">')
-            ->addColumn('client_info', fn($lead) => view('leads.partials.client_info', compact('lead'))->render())
-            ->addColumn('location', fn($lead) => "{$lead->country}<br>{$lead->district}<br>{$lead->city}")
-            ->addColumn('reminder', fn($lead) => view('leads.partials.reminder', compact('lead'))->render())
-            ->addColumn('inquiry', fn($lead) => $lead->package->package_name ?? Str::limit($lead->inquiry_text, 20))
-            ->addColumn('proposal', fn($lead) => view('leads.partials.proposal', compact('lead'))->render())
-            ->addColumn('status', function ($lead) use ($leadStatuses) {
-                return view('leads.partials.status_dropdown', [
-                    'lead' => $lead,
-                    'leadStatuses' => $leadStatuses,
-                ])->render();
-            })
-
-            ->addColumn('assigned', fn($lead) => view('leads.partials.assigned', compact('lead'))->render())
-            ->addColumn('action', fn($lead) => view('leads.partials.actions', compact('lead'))->render())
-            ->rawColumns(['checkbox', 'client_info', 'location', 'reminder', 'inquiry', 'proposal', 'status', 'assigned', 'action'])
-            ->make(true);
+        $counts[$period] = $q->count();
     }
 
-    public function getLeadsCounts(Request $request)
-    {
-        $user = auth()->user();
+    $counts['all'] = $baseQuery->count();
 
-        // ---------- BASE QUERY ----------
-        $baseQuery = Lead::query()
-            ->when($user->role_id != 1, fn($q) => $q->where(fn($q2) => $q2->where('user_id', $user->id)->orWhereHas('assignedUsers', fn($uq) => $uq->where('user_id', $user->id))))
-            ->when($request->id, fn($q) => $q->where('id', $request->id))
-            ->when($request->client_name, fn($q) => $q->where('name', 'like', "%{$request->client_name}%"))
-            ->when(
-                $request->location,
-                fn($q) => $q->where(
-                    fn($q2) => $q2
-                        ->where('country', 'like', "%{$request->location}%")
-                        ->orWhere('district', 'like', "%{$request->location}%")
-                        ->orWhere('city', 'like', "%{$request->location}%"),
-                ),
-            )
-            ->when($request->status, fn($q) => $q->where('status', $request->status))
-            ->when($request->assigned, fn($q) => $q->whereHas('latestAssignedUser.user', fn($uq) => $uq->where('name', $request->assigned)));
+    return response()->json($counts);
+}
 
-        // ---------- DATE PERIODS ----------
-        $periods = [
-            'today' => 'today',
-            'yesterday' => 'yesterday',
-            'week' => 'week',
-            'month' => 'month',
-        ];
-
-        $counts = [];
-
-        foreach ($periods as $key => $period) {
-            $q = clone $baseQuery;
-
-            // ===== FOLLOW-UP TAKEN COUNTS =====
-            if ($request->lead_status === 'followup_taken') {
-                $q->whereHas('lastFollowup', function ($fq) use ($period) {
-                    match ($period) {
-                        'today' => $fq->whereDate('next_followup_date', today()),
-
-                        'yesterday' => $fq->whereDate('next_followup_date', today()->subDay()),
-
-                        'week' => $fq->whereBetween('next_followup_date', [now()->startOfWeek(), now()->endOfWeek()]),
-
-                        'month' => $fq->whereMonth('next_followup_date', now()->month)->whereYear('next_followup_date', now()->year),
-
-                        default => null,
-                    };
-                });
-            }
-            // ===== NORMAL LEADS COUNTS =====
-            else {
-                match ($period) {
-                    'today' => $q->whereDate('created_at', today()),
-
-                    'yesterday' => $q->whereDate('created_at', today()->subDay()),
-
-                    'week' => $q->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]),
-
-                    'month' => $q->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year),
-
-                    default => null,
-                };
-            }
-
-            $counts[$key] = $q->count();
-        }
-
-        // ---------- ALL ----------
-        $counts['all'] = $baseQuery->count();
-
-        return response()->json($counts);
-    }
 
     public function create()
     {

@@ -27,6 +27,6 @@ Route::middleware('auth:sanctum')->group(function () {
         return $request->user();
     });
 
-    Route::get('/followup-reasons', [FollowupReasonController::class, 'indexApi']);
+   Route::get('/followup-reasons', [FollowupReasonController::class, 'indexApi'])->name('api.followup-reasons.indexApi');
 
 });
