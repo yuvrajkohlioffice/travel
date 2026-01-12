@@ -17,7 +17,20 @@ Route::get('/link-storage', function () {
     $output = Artisan::output();
     return back()->with('success', "Storage linked successfully! \n$output");
 });
-
+// Guest / Client Portal Routes
+Route::prefix('portal')->group(function () {
+    // 1. Show Login Page or Redirect to Form if logged in
+    Route::get('/login/{lead_id}', [App\Http\Controllers\GuestInvoiceController::class, 'showLogin'])->name('guest.login');
+    
+    // 2. Verify Password
+    Route::post('/verify', [App\Http\Controllers\GuestInvoiceController::class, 'verifyPassword'])->name('guest.verify');
+    
+    // 3. The Main Form (Protected by Session)
+    Route::get('/form/{lead_id}', [App\Http\Controllers\GuestInvoiceController::class, 'showForm'])->name('guest.form');
+    
+    // 4. Update Details (Save)
+    Route::post('/update/{lead_id}', [App\Http\Controllers\GuestInvoiceController::class, 'updateDetails'])->name('guest.update');
+});
 Route::get('/deploy', function () {
     $messages = [];
 

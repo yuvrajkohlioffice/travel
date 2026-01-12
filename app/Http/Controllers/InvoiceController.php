@@ -286,17 +286,44 @@ class InvoiceController extends Controller
             'travel_start_date' => 'nullable|date',
         ]);
 
-        $userId = Auth::id() ?? 1; // fallback to 1 if not logged in
+        $userId = Auth::id() ?? 1;
 
-        // Fetch lead to get name
-        $lead = Lead::find($request->lead_id);
-
-        // Current date in India
-        $issuedDate = Carbon::now('Asia/Kolkata')->toDateString();
-
+        // 1. Calculate the New Totals
         $totalTravelers = $request->adult_count + $request->child_count;
         $subtotalPrice = $request->price_per_person * $totalTravelers;
         $finalPrice = $subtotalPrice - $request->discount_amount;
+
+        // 2. Find Existing Invoice for this Lead + Package
+        $existingInvoice = Invoice::where('lead_id', $request->lead_id)
+            ->where('package_id', $request->package_id)
+            ->where('package_type', $request->package_type)
+            ->latest() // Get the most recent one if duplicates exist
+            ->first();
+
+        // 3. Compare & Decide
+        if ($existingInvoice) {
+            // Format database date to string for comparison (handling nulls)
+            $dbTravelDate = $existingInvoice->travel_start_date ? $existingInvoice->travel_start_date->format('Y-m-d') : null;
+
+            // Check if EVERYTHING is exactly the same
+            $isSame = $existingInvoice->final_price == $finalPrice && $existingInvoice->adult_count == $request->adult_count && $existingInvoice->child_count == $request->child_count && $existingInvoice->discount_amount == $request->discount_amount && $existingInvoice->package_items_id == $request->package_items_id && $dbTravelDate == $request->travel_start_date;
+
+            if ($isSame) {
+                // SCENARIO A: No changes -> Return the old one
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Invoice retrieved successfully (No changes detected)',
+                    'data' => $existingInvoice,
+                ]);
+            } else {
+                // SCENARIO B: Changes detected -> Delete old, Create new
+                $existingInvoice->delete();
+            }
+        }
+
+        // 4. Create New Invoice (Only runs if no match or if old one was deleted)
+        $lead = Lead::find($request->lead_id);
+        $issuedDate = Carbon::now('Asia/Kolkata')->toDateString();
 
         $invoice = Invoice::create([
             'invoice_no' => $this->generateInvoiceNo(),
@@ -304,7 +331,7 @@ class InvoiceController extends Controller
             'lead_id' => $request->lead_id,
             'primary_full_name' => $lead->name ?? 'Unknown',
             'package_id' => $request->package_id,
-            'package_items_id' => $request->package_items_id ?? null, // ✅ save selected item
+            'package_items_id' => $request->package_items_id ?? null,
             'package_type' => $request->package_type,
             'adult_count' => $request->adult_count,
             'child_count' => $request->child_count,
@@ -319,7 +346,7 @@ class InvoiceController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Invoice created successfully',
+            'message' => 'Invoice updated and created successfully',
             'data' => $invoice,
         ]);
     }
