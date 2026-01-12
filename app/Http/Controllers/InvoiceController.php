@@ -277,11 +277,15 @@ class InvoiceController extends Controller
      */
     public function show($id)
     {
-        $invoice = Invoice::with(['lead', 'package', 'user'])->findOrFail($id);
+        // deeply load lead -> createdBy -> company to get logo, bank, scanner, etc.
+        $invoice = Invoice::with([
+            'lead.createdBy.company', 
+            'package', 
+            'payments'
+        ])->findOrFail($id);
 
         return view('invoices.show', compact('invoice'));
     }
-
     /**
      * Display All Invoices
      */

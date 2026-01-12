@@ -1,10 +1,13 @@
 <div class="p-6 md:p-8 lg:p-10 border-b border-blue-100">
 
-    <!-- A4 Fixed Width Layout -->
+    @php
+        // Ensure we have the scanner details
+        $scanner = $company->scanner_details ?? [];
+    @endphp
+
     <div class="flex flex-col lg:flex-row print:flex-row gap-8"
          style="width: 100%; max-width: 100%; display: flex; justify-content: space-between;">
 
-        <!-- LEFT: 50% Payment Info -->
         <div class="page-break-inside-avoid"
              style="width: 50%; padding-right: 20px; box-sizing: border-box;">
 
@@ -21,9 +24,24 @@
 
                     <div class="flex flex-col items-center">
                         <div class="h-48 w-48 border-2 border-dashed border-blue-300 rounded-2xl 
-                                    flex items-center justify-center bg-white mb-4">
-                            <img src="{{ asset('QRCode.png') }}" class="w-32 h-32" alt="QR Code" />
+                                    flex items-center justify-center bg-white mb-4 overflow-hidden relative">
+                            
+                            @if(isset($scanner['image']) && $scanner['image'])
+                                <img src="{{ $scanner['image'] }}" class="w-full h-full object-contain" alt="UPI QR Code" />
+                            @else
+                                <div class="text-center p-4">
+                                    <i class="fas fa-qrcode text-4xl text-gray-300 mb-2"></i>
+                                    <p class="text-xs text-gray-400">No QR Code Available</p>
+                                </div>
+                            @endif
                         </div>
+
+                        @if(isset($scanner['upi_id']) && $scanner['upi_id'])
+                            <div class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-mono mb-2">
+                                {{ $scanner['upi_id'] }}
+                            </div>
+                        @endif
+
                         <p class="text-sm text-gray-600 text-center">
                             Use any mobile banking app to scan and pay
                         </p>
@@ -34,7 +52,6 @@
 
         </div>
 
-        <!-- RIGHT: 50% Invoice Summary -->
         <div class="page-break-inside-avoid"
              style="width: 50%; padding-left: 20px; box-sizing: border-box;">
 
