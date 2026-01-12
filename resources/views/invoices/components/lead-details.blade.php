@@ -7,7 +7,7 @@
     
     <div class="mt-3">
         <button type="button" onclick="sendPortalLink(this, {{ $lead->id }}, '{{ $lead->email }}')" 
-        class="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-md active:scale-95">
+        class="flex items-center gap-2 bg-green-500 hover:bg-green-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-md active:scale-95">
     
     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 icon-default" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
