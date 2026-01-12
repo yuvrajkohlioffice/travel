@@ -6,7 +6,6 @@
 
         <div class="ml-64 min-h-screen p-6 bg-gray-100 dark:bg-gray-900">
             <div class="w-full">
-
                 <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
                     <div class="flex items-center gap-3">
                         <div class="bg-white dark:bg-gray-800 p-3 rounded-2xl shadow-sm">
@@ -17,7 +16,6 @@
                             <p class="text-sm text-gray-500">Manage invoice payments</p>
                         </div>
                     </div>
-
                     <button @click="openModal()"
                         class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2 shadow-lg transition">
                         <i class="fas fa-plus"></i> Add Payment
@@ -33,7 +31,7 @@
                                 <th class="text-left p-3">Paid</th>
                                 <th class="text-left p-3">Remaining</th>
                                 <th class="text-left p-3">Method</th>
-                                <th class="text-left p-3">Status</th>
+                                <th class="text-left p-3">Proof</th> <th class="text-left p-3">Status</th>
                                 <th class="text-left p-3">Action</th>
                             </tr>
                         </thead>
@@ -52,8 +50,7 @@
                         <i class="fas fa-times text-xl"></i>
                     </button>
 
-                    <h2 class="text-2xl font-bold text-gray-800 dark:text-white mb-2 text-center" x-text="modalTitle">
-                    </h2>
+                    <h2 class="text-2xl font-bold text-gray-800 dark:text-white mb-2 text-center" x-text="modalTitle"></h2>
 
                     <div x-show="selectedInvoice"
                         class="text-center mb-6 p-3 bg-blue-50 dark:bg-gray-700 rounded-lg border border-blue-100 dark:border-gray-600">
@@ -74,15 +71,13 @@
                     </div>
 
                     <form @submit.prevent="savePayment()" class="space-y-4" enctype="multipart/form-data">
-
                         <div>
                             <label class="text-sm font-semibold text-gray-600 dark:text-gray-300">Invoice</label>
                             <select x-model="payment.invoice_id" @change="handleInvoiceChange()"
                                 class="mt-1 w-full p-3 rounded-xl border bg-gray-50 dark:bg-gray-700 dark:text-white dark:border-gray-600">
                                 <option value="">Select Invoice</option>
                                 <template x-for="inv in invoices" :key="inv.id">
-                                    <option :value="inv.id"
-                                        x-text="`#${inv.invoice_no} (Pending: ₹${inv.pending_amount})`"></option>
+                                    <option :value="inv.id" x-text="`#${inv.invoice_no} (Pending: ₹${inv.pending_amount})`"></option>
                                 </template>
                             </select>
                         </div>
@@ -111,7 +106,6 @@
                                             x-text="selectedMethodDetails?.ifsc_code"></span></span>
                                 </p>
                             </div>
-
                             <div x-show="selectedMethodDetails?.is_tax_applicable"
                                 class="p-3 bg-yellow-50 dark:bg-gray-700 rounded-lg border border-yellow-100 dark:border-gray-600 text-sm">
                                 <p class="font-bold text-gray-700 dark:text-gray-200">Tax Information:</p>
@@ -124,20 +118,16 @@
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label class="text-sm font-semibold text-gray-600 dark:text-gray-300">Paid Amount
-                                    (₹)</label>
+                                <label class="text-sm font-semibold text-gray-600 dark:text-gray-300">Paid Amount (₹)</label>
                                 <input type="number" step="0.01" x-model.number="payment.paid_amount"
                                     class="mt-1 w-full p-3 rounded-xl border bg-gray-50 dark:bg-gray-700 dark:text-white dark:border-gray-600"
                                     placeholder="0.00">
-                                <p class="text-xs mt-1"
-                                    :class="remainingAfterPayment < 0 ? 'text-red-500' : 'text-green-600'">
+                                <p class="text-xs mt-1" :class="remainingAfterPayment < 0 ? 'text-red-500' : 'text-green-600'">
                                     Remaining after this: <span x-text="formatCurrency(remainingAfterPayment)"></span>
                                 </p>
                             </div>
-
                             <div>
-                                <label class="text-sm font-semibold text-gray-600 dark:text-gray-300">Transaction
-                                    ID</label>
+                                <label class="text-sm font-semibold text-gray-600 dark:text-gray-300">Transaction ID</label>
                                 <input type="text" x-model="payment.transaction_id"
                                     class="mt-1 w-full p-3 rounded-xl border bg-gray-50 dark:bg-gray-700 dark:text-white dark:border-gray-600"
                                     placeholder="e.g. UPI Ref / Cheque No">
@@ -155,11 +145,16 @@
 
                             <div x-show="selectedMethodDetails?.image_proof_required || true">
                                 <label class="text-sm font-semibold text-gray-600 dark:text-gray-300">
-                                    Proof/Screenshot <span x-show="selectedMethodDetails?.image_proof_required"
-                                        class="text-red-500">*</span>
+                                    Proof/Screenshot <span x-show="selectedMethodDetails?.image_proof_required" class="text-red-500">*</span>
                                 </label>
                                 <input type="file" @change="handleFileChange" accept="image/*"
                                     class="mt-1 w-full p-2 block text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600">
+                                
+                                <div x-show="currentImageUrl" class="mt-2 text-xs">
+                                    <a :href="currentImageUrl" target="_blank" class="text-blue-600 hover:underline flex items-center gap-1">
+                                        <i class="fas fa-external-link-alt"></i> View Current Proof
+                                    </a>
+                                </div>
                             </div>
                         </div>
 
@@ -185,7 +180,6 @@
                     </form>
                 </div>
             </div>
-
         </div>
 
         <script>
@@ -199,6 +193,7 @@
                     modalTitle: 'Add Payment',
                     table: null,
                     imageFile: null,
+                    currentImageUrl: null, // New variable to store existing image URL
 
                     selectedInvoice: null,
                     selectedMethodDetails: null,
@@ -213,70 +208,36 @@
                         notes: ''
                     },
 
-                    // --- Updated Logic uses pending_amount from Controller ---
-
-                    get invoiceTotal() {
-                        return this.selectedInvoice ? parseFloat(this.selectedInvoice.final_price) : 0;
-                    },
-
-                    get invoiceDue() {
-                        // Uses the pre-calculated 'pending_amount' from the controller
-                        return this.selectedInvoice ? parseFloat(this.selectedInvoice.pending_amount) : 0;
-                    },
-
+                    get invoiceTotal() { return this.selectedInvoice ? parseFloat(this.selectedInvoice.final_price) : 0; },
+                    get invoiceDue() { return this.selectedInvoice ? parseFloat(this.selectedInvoice.pending_amount) : 0; },
                     get remainingAfterPayment() {
                         const paid = parseFloat(this.payment.paid_amount) || 0;
-                        // Math: Current Due - New Payment Input
                         return Math.max(this.invoiceDue - paid, 0);
                     },
-
                     get isPartialPayment() {
-                        // Logic: If there is still money remaining AND user has typed a paid amount
                         return this.remainingAfterPayment > 0 && (parseFloat(this.payment.paid_amount) > 0);
                     },
-
                     formatCurrency(value) {
-                        return new Intl.NumberFormat('en-IN', {
-                            style: 'currency',
-                            currency: 'INR'
-                        }).format(value);
+                        return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(value);
                     },
 
                     init() {
                         const self = this;
-                        $.ajaxSetup({
-                            headers: {
-                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                            }
-                        });
+                        $.ajaxSetup({ headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' } });
 
                         this.table = $('#paymentTable').DataTable({
                             processing: true,
                             serverSide: true,
                             ajax: "{{ route('payments.index') }}",
-                            columns: [{
-                                    data: 'id'
-                                },
-                                {
-                                    data: 'invoice_no'
-                                },
-                                {
-                                    data: 'paid_amount'
-                                },
-                                {
-                                    data: 'remaining_amount'
-                                },
-                                {
-                                    data: 'payment_method'
-                                },
-                                {
-                                    data: 'status'
-                                },
-                                {
-                                    data: 'action',
-                                    orderable: false,
-                                    searchable: false
-                                }
+                            columns: [
+                                { data: 'id' },
+                                { data: 'invoice_no' },
+                                { data: 'paid_amount' },
+                                { data: 'remaining_amount' },
+                                { data: 'payment_method' },
+                                { data: 'proof', orderable: false, searchable: false }, // ✅ Added Proof Column
+                                { data: 'status' },
+                                { data: 'action', orderable: false, searchable: false }
                             ]
                         });
 
@@ -307,6 +268,7 @@
                     openModal(data = null) {
                         this.modalTitle = data ? 'Edit Payment' : 'Add Payment';
                         this.imageFile = null;
+                        this.currentImageUrl = null; // Reset image URL
 
                         const fileInput = document.querySelector('input[type="file"]');
                         if (fileInput) fileInput.value = '';
@@ -322,12 +284,12 @@
                                 next_payment_date: data.next_payment_date,
                                 notes: data.notes
                             };
+                            
+                            // Set Current Image URL from Controller Data
+                            this.currentImageUrl = data.image_url || null;
 
-                            // For edit mode, we might not have the invoice in the dropdown if it's fully paid now.
-                            // We attempt to find it, or fallback to the data passed in 'data.invoice' if you send it.
                             this.selectedInvoice = this.invoices.find(i => i.id == data.invoice_id) || null;
                             this.selectedMethodDetails = this.methods.find(m => m.id == data.payment_method_id);
-
                         } else {
                             // Add Mode
                             this.payment = {
@@ -373,13 +335,13 @@
                     },
 
                     savePayment() {
-                        // Validations
                         if (this.isPartialPayment && !this.payment.next_payment_date) {
                             this.toast('Next payment date is required for partial payments', 'warning');
                             return;
                         }
-
-                        if (this.selectedMethodDetails?.image_proof_required && !this.imageFile && !this.payment.id) {
+                        
+                        // Check validation only for new payments or if file is mandatory and no existing image
+                        if (this.selectedMethodDetails?.image_proof_required && !this.imageFile && !this.payment.id && !this.currentImageUrl) {
                             this.toast('Proof image is required for this method', 'warning');
                             return;
                         }
