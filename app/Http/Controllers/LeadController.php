@@ -190,7 +190,10 @@ class LeadController extends Controller
     if ($request->filled('id')) {
         $query->where('id', $request->id);
     }
-
+if (!empty($request->lead_status)) {
+    // This handles Hot, Cold, Warm
+    $query->where('lead_status', $request->lead_status);
+}
     if ($request->filled('status') && $request->status !== 'followup_taken') {
         $query->where('status', $request->status);
     }

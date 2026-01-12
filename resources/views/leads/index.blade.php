@@ -106,31 +106,34 @@
                         </select>
                     </div>
                     <div class="flex flex-wrap gap-2 mb-4">
-                        <button data-value=""
-                            class="status-btn px-4 py-2 rounded-lg border border-gray-300 text-sm hover:bg-blue-300 transition">
-                            All
-                        </button>
-                        @foreach ([
+    <button data-value="" class="status-btn px-4 py-2 rounded-lg border border-gray-300 text-sm hover:bg-blue-300 transition bg-blue-500 text-white">
+        All Status
+    </button>
+    @foreach ([
         'pending' => 'Pending',
         'followup_taken' => 'Follow-up Taken',
         'converted' => 'Converted',
         'approved' => 'Approved',
         'rejected' => 'Rejected',
     ] as $value => $label)
-                            <button data-value="{{ $value }}"
-                                class="status-btn px-4 py-2 rounded-lg border border-gray-300 text-sm hover:bg-blue-300 transition">
-                                {{ $label }}
-                            </button>
-                        @endforeach
-                    </div>
-                    <div class="flex flex-wrap gap-2 mb-4">
-                        <button data-value=""
-                            class="status-btn-lead px-4 py-2 rounded-lg border border-gray-300 text-sm hover:bg-blue-300 transition">All</button>
-                        @foreach (['Hot', 'Cold', 'Warm'] as $s)
-                            <button data-value="{{ $s }}"
-                                class="status-btn-lead px-4 py-2 rounded-lg border border-gray-300 text-sm hover:bg-blue-300 transition">{{ $s }}</button>
-                        @endforeach
-                    </div>
+        <button data-value="{{ $value }}"
+            class="status-btn px-4 py-2 rounded-lg border border-gray-300 text-sm hover:bg-blue-300 transition">
+            {{ $label }}
+        </button>
+    @endforeach
+</div>
+
+<div class="flex flex-wrap gap-2 mb-4">
+    <button data-value="" class="category-btn px-4 py-2 rounded-lg border border-gray-300 text-sm hover:bg-blue-300 transition bg-blue-500 text-white">
+        All Categories
+    </button>
+    @foreach (['Hot', 'Cold', 'Warm'] as $s)
+        <button data-value="{{ $s }}"
+            class="category-btn px-4 py-2 rounded-lg border border-gray-300 text-sm hover:bg-blue-300 transition">
+            {{ $s }}
+        </button>
+    @endforeach
+</div>
                     <div class="flex flex-wrap gap-2 mb-4">
                         <button data-value="all"
                             class="date-range-btn px-4 py-2 rounded-lg border border-gray-300 text-sm hover:bg-blue-300 transition">All
@@ -404,7 +407,45 @@
                     datatable.page(0).draw(false);
                 });
             });
+document.querySelectorAll('.status-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        // UI: Reset all status buttons and highlight current
+        document.querySelectorAll('.status-btn').forEach(b => b.classList.remove('bg-blue-500', 'text-white'));
+        this.classList.add('bg-blue-500', 'text-white');
 
+        const value = this.dataset.value || '';
+
+        // Special Logic: Follow-up Taken
+        if (value === 'followup_taken') {
+            selectedStatus = 'followup_taken';
+            selectedDateRange = 'today'; // Assuming this is global
+
+            // Sync with Date Range UI if it exists
+            document.querySelectorAll('.date-range-btn').forEach(b => b.classList.remove('bg-blue-500', 'text-white'));
+            document.querySelector('.date-range-btn[data-value="today"]')?.classList.add('bg-blue-500', 'text-white');
+        } else {
+            selectedStatus = value;
+        }
+
+        // Refresh Table
+        datatable.page(0).draw(false);
+    });
+});
+
+// 2. Handling Lead Category Buttons (Hot/Cold/Warm)
+document.querySelectorAll('.category-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        // UI: Reset all category buttons and highlight current
+        document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('bg-blue-500', 'text-white'));
+        this.classList.add('bg-blue-500', 'text-white');
+
+        // Update variable
+        selectedLeadStatus = this.dataset.value || '';
+
+        // Refresh Table
+        datatable.page(0).draw(false);
+    });
+});
 
 
             document.querySelectorAll('.date-range-btn').forEach(btn => {

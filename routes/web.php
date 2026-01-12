@@ -11,8 +11,7 @@ use Livewire\Volt\Volt;
 use Symfony\Component\Process\Process;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Illuminate\Support\Facades\Artisan;
-Route::post('/leads/send-access/{lead_id}', [App\Http\Controllers\GuestInvoiceController::class, 'sendAccessLink'])
-    ->name('leads.send_access');
+
 Route::get('/link-storage', function () {
     Artisan::call('storage:link');
     $output = Artisan::output();
@@ -117,6 +116,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
         | Lead Management
         |--------------------------------------------------------------------------
         */
+    Route::post('/leads/send-access/{lead_id}', [App\Http\Controllers\GuestInvoiceController::class, 'sendAccessLink'])->name('leads.send_access');
     Route::prefix('system')
         ->name('system.')
         ->group(function () {
