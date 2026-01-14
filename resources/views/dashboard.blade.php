@@ -86,7 +86,8 @@
                     color="text-green-500 dark:text-green-300" link="{{ route('invoices.index') }}"
                     subtitle="All-time" />
                 <x-dashboard-card title="Total Revenue" value="₹{{ number_format($totalRevenue, 2) }}"
-                    icon="fa fa-rupee-sign" link="{{ route('payments.index') }}" color="text-green-600 dark:text-green-400" subtitle="All-time" />
+                    icon="fa fa-rupee-sign" link="{{ route('payments.index') }}"
+                    color="text-green-600 dark:text-green-400" subtitle="All-time" />
                 <x-dashboard-card title="Packages" value="{{ $packageCount }}" icon="fa fa-box"
                     color="text-purple-500 dark:text-purple-300" link="{{ route('packages.index') }}"
                     subtitle="Active packages" />
@@ -222,65 +223,151 @@
                     </div>
 
                     <div class="overflow-x-auto mb-8">
-    <table id="usersTable" class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-        <thead class="bg-gray-50 dark:bg-gray-900/40">
-            <tr>
-                <th>User</th>
-                <th>Leads Created</th>
-            </tr>
-        </thead>
-    </table>
-</div>
+                        <table id="usersTable" class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                            <thead class="bg-gray-50 dark:bg-gray-900/40">
+                                <tr>
+                                    <th>User</th>
+                                    <th>Leads Created</th>
+                                </tr>
+                            </thead>
+                        </table>
+                    </div>
                 </div>
             </section>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
 
+                <div class="bg-white p-4 rounded shadow">
+                    <h3 class="font-bold text-lg mb-4 text-blue-600">🚀 Today's Departures</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left">
+                            <thead class="bg-gray-100">
+                                <tr>
+                                    <th class="p-2">Client</th>
+                                    <th class="p-2">Package</th>
+                                    <th class="p-2">Phone</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($todayDepartures as $trip)
+                                    <tr class="border-b">
+                                        <td class="p-2">{{ $trip->primary_full_name }}</td>
+                                        <td class="p-2">{{ $trip->package->package_name ?? 'N/A' }}</td>
+                                        <td class="p-2">{{ $trip->lead->phone_number }}</td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="3" class="p-2 text-center text-gray-500">No departures today
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
 
-           <script>
-$(document).ready(function() {
+                <div class="bg-white p-4 rounded shadow">
+                    <h3 class="font-bold text-lg mb-4 text-green-600">🛬 Today's Returns</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left">
+                            <thead class="bg-gray-100">
+                                <tr>
+                                    <th class="p-2">Client</th>
+                                    <th class="p-2">Started On</th>
+                                    <th class="p-2">Duration</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($todayReturns as $trip)
+                                    <tr class="border-b">
+                                        <td class="p-2">{{ $trip->primary_full_name }}</td>
+                                        <td class="p-2">{{ $trip->travel_start_date }}</td>
+                                        <td class="p-2">
+                                            {{ $trip->package->package_days ?? 0 }}D /
+                                            {{ $trip->package->package_nights ?? 0 }}N
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="3" class="p-2 text-center text-gray-500">No returns today</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
 
-    // --------------------------
-    // Followups DataTable
-    // --------------------------
-    $('#followupsTable').DataTable({
-        processing: true,
-        serverSide: true,
-        ajax: {
-            url: '{{ route("dashboard") }}',
-            data: {
-                datatable: 'followups',
-                month: '{{ request("month") }}',
-                year: '{{ request("year") }}',
-                from: '{{ request("from") }}',
-                to: '{{ request("to") }}'
-            }
-        },
-        columns: [
-            { data: 'lead_name', name: 'lead_name' },
-            { data: 'assigned', name: 'assigned' },
-            { data: 'next_followup', name: 'next_followup' },
-            { data: 'remark', name: 'remark' },
-            { data: 'actions', name: 'actions', orderable: false, searchable: false }
-        ]
-    });
+            </div>
 
-    // --------------------------
-    // Users DataTable
-    // --------------------------
-    $('#usersTable').DataTable({
-        processing: true,
-        serverSide: true,
-        ajax: {
-            url: '{{ route("dashboard") }}',
-            data: { datatable: 'users' }
-        },
-        columns: [
-            { data: 'user', name: 'user' },
-            { data: 'leads_created', name: 'leads_created', className: 'text-right' }
-        ]
-    });
+            <script>
+                $(document).ready(function() {
 
-});
-</script>
+                    // --------------------------
+                    // Followups DataTable
+                    // --------------------------
+                    $('#followupsTable').DataTable({
+                        processing: true,
+                        serverSide: true,
+                        ajax: {
+                            url: '{{ route('dashboard') }}',
+                            data: {
+                                datatable: 'followups',
+                                month: '{{ request('month') }}',
+                                year: '{{ request('year') }}',
+                                from: '{{ request('from') }}',
+                                to: '{{ request('to') }}'
+                            }
+                        },
+                        columns: [{
+                                data: 'lead_name',
+                                name: 'lead_name'
+                            },
+                            {
+                                data: 'assigned',
+                                name: 'assigned'
+                            },
+                            {
+                                data: 'next_followup',
+                                name: 'next_followup'
+                            },
+                            {
+                                data: 'remark',
+                                name: 'remark'
+                            },
+                            {
+                                data: 'actions',
+                                name: 'actions',
+                                orderable: false,
+                                searchable: false
+                            }
+                        ]
+                    });
+
+                    // --------------------------
+                    // Users DataTable
+                    // --------------------------
+                    $('#usersTable').DataTable({
+                        processing: true,
+                        serverSide: true,
+                        ajax: {
+                            url: '{{ route('dashboard') }}',
+                            data: {
+                                datatable: 'users'
+                            }
+                        },
+                        columns: [{
+                                data: 'user',
+                                name: 'user'
+                            },
+                            {
+                                data: 'leads_created',
+                                name: 'leads_created',
+                                className: 'text-right'
+                            }
+                        ]
+                    });
+
+                });
+            </script>
 
 
             {{-- Footer note / small actions --}}
@@ -452,8 +539,8 @@ $(document).ready(function() {
 
                     // Simple client-side validation
                     if (!lead_id || !note) {
-                        
-                        toast('Please enter a note.','error');
+
+                        toast('Please enter a note.', 'error');
                         return;
                     }
 

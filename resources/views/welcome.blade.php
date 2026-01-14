@@ -7,9 +7,9 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16 items-center">
                 <div class="flex-shrink-0 flex items-center gap-2">
-                    <div class="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center text-white">
-                        <i data-lucide="plane" class="w-5 h-5"></i>
-                    </div>
+                       
+                        <img src="{{ asset('favicon_io/android-chrome-512x512.png') }}" alt="TrekosCRM - LOGO" class="w-8 h-8">
+                   
                     <span class="font-bold text-xl tracking-tight text-slate-800">Trekos<span class="text-brand-600">CRM</span></span>
                 </div>
 
@@ -116,7 +116,7 @@
             </div>
 
             <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <div class="p-6 rounded-2xl bg-slate-50 hover:bg-white hover:shadow-xl hover:shadow-slate-200/50 transition border border-slate-100 group">
+                <div class="card p-6 rounded-2xl bg-slate-50 hover:bg-white hover:shadow-xl hover:shadow-slate-200/50 transition border border-slate-100 group">
                     <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600 mb-4 group-hover:bg-blue-600 group-hover:text-white transition">
                         <i data-lucide="users" class="w-6 h-6"></i>
                     </div>
@@ -124,7 +124,7 @@
                     <p class="text-slate-600">Track inquiries, assign status (New, Contacted, Converted), and assign leads to staff members effortlessly.</p>
                 </div>
 
-                <div class="p-6 rounded-2xl bg-slate-50 hover:bg-white hover:shadow-xl hover:shadow-slate-200/50 transition border border-slate-100 group">
+                <div class="card p-6 rounded-2xl bg-slate-50 hover:bg-white hover:shadow-xl hover:shadow-slate-200/50 transition border border-slate-100 group">
                     <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center text-purple-600 mb-4 group-hover:bg-purple-600 group-hover:text-white transition">
                         <i data-lucide="map" class="w-6 h-6"></i>
                     </div>
@@ -132,7 +132,7 @@
                     <p class="text-slate-600">Create complex packages combining Hotels, Cars, and Pickup points. Manage inventory and difficulty types.</p>
                 </div>
 
-                <div class="p-6 rounded-2xl bg-slate-50 hover:bg-white hover:shadow-xl hover:shadow-slate-200/50 transition border border-slate-100 group">
+                <div class="card p-6 rounded-2xl bg-slate-50 hover:bg-white hover:shadow-xl hover:shadow-slate-200/50 transition border border-slate-100 group">
                     <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center text-green-600 mb-4 group-hover:bg-green-600 group-hover:text-white transition">
                         <i data-lucide="message-circle" class="w-6 h-6"></i>
                     </div>
@@ -140,7 +140,7 @@
                     <p class="text-slate-600">Send PDF itineraries, invoices, and follow-up messages directly to your client's WhatsApp.</p>
                 </div>
 
-                <div class="p-6 rounded-2xl bg-slate-50 hover:bg-white hover:shadow-xl hover:shadow-slate-200/50 transition border border-slate-100 group">
+                <div class="card p-6 rounded-2xl bg-slate-50 hover:bg-white hover:shadow-xl hover:shadow-slate-200/50 transition border border-slate-100 group">
                     <div class="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center text-emerald-600 mb-4 group-hover:bg-emerald-600 group-hover:text-white transition">
                         <i data-lucide="banknote" class="w-6 h-6"></i>
                     </div>
@@ -148,7 +148,7 @@
                     <p class="text-slate-600">Generate professional invoices, track partial payments, and manage multiple payment methods.</p>
                 </div>
 
-                <div class="p-6 rounded-2xl bg-slate-50 hover:bg-white hover:shadow-xl hover:shadow-slate-200/50 transition border border-slate-100 group">
+                <div class="card p-6 rounded-2xl bg-slate-50 hover:bg-white hover:shadow-xl hover:shadow-slate-200/50 transition border border-slate-100 group">
                     <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center text-orange-600 mb-4 group-hover:bg-orange-600 group-hover:text-white transition">
                         <i data-lucide="bell" class="w-6 h-6"></i>
                     </div>
@@ -156,7 +156,7 @@
                     <p class="text-slate-600">Daily reminders for follow-ups and payments ensure no opportunity slips through the cracks.</p>
                 </div>
 
-                <div class="p-6 rounded-2xl bg-slate-50 hover:bg-white hover:shadow-xl hover:shadow-slate-200/50 transition border border-slate-100 group">
+                <div class="card p-6 rounded-2xl bg-slate-50 hover:bg-white hover:shadow-xl hover:shadow-slate-200/50 transition border border-slate-100 group">
                     <div class="w-12 h-12 bg-slate-200 rounded-lg flex items-center justify-center text-slate-700 mb-4 group-hover:bg-slate-700 group-hover:text-white transition">
                         <i data-lucide="shield-check" class="w-6 h-6"></i>
                     </div>
@@ -255,9 +255,9 @@
             <div class="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
                 <div class="col-span-1 md:col-span-1">
                     <div class="flex items-center gap-2 mb-4">
-                        <div class="w-6 h-6 bg-brand-600 rounded flex items-center justify-center text-white">
-                            <i data-lucide="plane" class="w-3 h-3"></i>
-                        </div>
+                       
+                            <img src="{{ asset('favicon_io/android-chrome-512x512.png') }}" alt="TrekosCRM - LOGO" class="w-6 h-6">
+                        
                         <span class="font-bold text-lg text-slate-800">TrekosCRM</span>
                     </div>
                     <p class="text-slate-500 text-sm">
