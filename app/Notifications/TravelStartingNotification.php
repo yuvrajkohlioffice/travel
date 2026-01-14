@@ -76,7 +76,7 @@ class TravelStartingNotification extends Notification implements ShouldQueue
         $message .=  "\n\n";
 
         // Optional: Link to the PDF or Invoice View
-        $message .=  url('/portal/invoices/' . $this->invoice->id);
+        $message .=  url('/portal/invoice/' . $this->invoice->id);
 
         // Optional: Link to the PDF or Invoice View
         // $url = url('/storage/invoices/' . $this->invoice->invoice_no . '.pdf');

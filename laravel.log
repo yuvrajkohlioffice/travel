@@ -1,0 +1,30 @@
+[2026-01-14 16:34:49] local.ERROR: Travel Reminder Failed for Invoice #17: Expected response code "250" but got code "451", with message "451 4.7.1 Ratelimit "hostinger_out_ratelimit" exceeded".  
+[2026-01-14 16:34:50] local.ERROR: Travel Reminder Failed for Invoice #18: Expected response code "250" but got code "451", with message "451 4.7.1 Ratelimit "hostinger_out_ratelimit" exceeded".  
+[2026-01-14 16:42:57] local.ERROR: WhatsApp API Error for 917895733414. {"sent_text":"Hello soni Priyanka, your trip starts today! 🌍✈️
+
+Invoice: #TRAV-2026-0017
+Have a wonderful journey!
+
+https://crm.trekos.in/portal/invoices/17","response":{"message":"API key is required"}} 
+[2026-01-14 16:42:58] local.ERROR: Email Failed for Invoice #17: Expected response code "250" but got code "451", with message "451 4.7.1 Ratelimit "hostinger_out_ratelimit" exceeded".  
+[2026-01-14 16:42:58] local.ERROR: WhatsApp API Error for 919258360243. {"sent_text":"Hello YUVRAJ KOHLI, your trip starts today! 🌍✈️
+
+Invoice: #TRAV-2026-0018
+Have a wonderful journey!
+
+https://crm.trekos.in/portal/invoices/18","response":{"message":"API key is required"}} 
+[2026-01-14 16:42:59] local.ERROR: Email Failed for Invoice #18: Expected response code "250" but got code "451", with message "451 4.7.1 Ratelimit "hostinger_out_ratelimit" exceeded".  
+[2026-01-14 16:45:12] local.ERROR: WhatsApp API Error for 917895733414. {"sent_text":"Hello soni Priyanka, your trip starts today! 🌍✈️
+
+Invoice: #TRAV-2026-0017
+Have a wonderful journey!
+
+https://crm.trekos.in/portal/invoice/17","response":{"message":"API key is required"}} 
+[2026-01-14 16:45:13] local.ERROR: Email Failed for Invoice #17: Expected response code "250" but got code "451", with message "451 4.7.1 Ratelimit "hostinger_out_ratelimit" exceeded".  
+[2026-01-14 16:45:14] local.ERROR: WhatsApp API Error for 919258360243. {"sent_text":"Hello YUVRAJ KOHLI, your trip starts today! 🌍✈️
+
+Invoice: #TRAV-2026-0018
+Have a wonderful journey!
+
+https://crm.trekos.in/portal/invoice/18","response":{"message":"API key is required"}} 
+[2026-01-14 16:45:15] local.ERROR: Email Failed for Invoice #18: Expected response code "250" but got code "451", with message "451 4.7.1 Ratelimit "hostinger_out_ratelimit" exceeded".  
