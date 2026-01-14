@@ -69,7 +69,9 @@ class SendTravelReminders extends Command
         // We start an empty route chain
         $notifiable = null;
 
-        
+        if ($clientEmail) {
+            $notifiable = Notification::route('mail', $clientEmail);
+        }
 
         if ($clientPhone) {
             if ($notifiable) {
