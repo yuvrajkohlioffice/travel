@@ -192,7 +192,7 @@
                         class="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition">
                         <div class="flex items-center justify-between gap-4">
                             <div>
-                                <p class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">{{ ucfirst($status) }}</p>
+                                <p class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">{{ ucfirst($status) ?? 'N/A' }}</p>
                                 <p class="text-2xl font-bold text-gray-900 dark:text-white mt-1">{{ $count }}</p>
                             </div>
                             <div class="text-2xl text-gray-300 dark:text-gray-600">
