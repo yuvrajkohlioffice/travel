@@ -272,6 +272,7 @@
                             <thead class="bg-gray-100">
                                 <tr>
                                     <th class="p-2">Client</th>
+                                    <th class="p-2">Phone</th>
                                     <th class="p-2">Started On</th>
                                     <th class="p-2">Duration</th>
                                 </tr>
@@ -280,6 +281,7 @@
                                 @forelse($todayReturns as $trip)
                                     <tr class="border-b">
                                         <td class="p-2">{{ $trip->primary_full_name }}</td>
+                                         <td class="p-2">{{ $trip->lead->phone_number }}</td>
                                         <td class="p-2">{{ $trip->travel_start_date }}</td>
                                         <td class="p-2">
                                             {{ $trip->package->package_days ?? 0 }}D /
