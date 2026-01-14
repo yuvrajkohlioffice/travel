@@ -16,7 +16,7 @@ class WhatsAppChannel
         }
 
         // 2. Get Recipient Phone
-        // Tries to get it from the "route" method first, then falls back to model attributes
+        // Tries to get it from the "route" method first (On-Demand), then falls back to model attributes
         $recipient = $notifiable->routes[WhatsAppChannel::class] ?? null;
         
         if (!$recipient) {
@@ -28,25 +28,21 @@ class WhatsAppChannel
             return;
         }
 
-        // 3. Determine API Key
-        // Priority: 1. The Agent/User passed in the notification -> 2. System Fallback
+        // 3. Get API Key (Strictly from .env as requested)
         $apiKey = env('SYSTEM_WHATSAPP_KEY'); 
 
-        if (isset($notification->senderUser) && $notification->senderUser->whatsapp_api_key) {
-            $apiKey = $notification->senderUser->whatsapp_api_key;
-        }
-
         if (!$apiKey) {
-            Log::error("WhatsApp Channel: No API Key available for recipient $recipient");
+            Log::error("WhatsApp Channel: SYSTEM_WHATSAPP_KEY is missing in .env file.");
             return;
         }
 
         // 4. Get the Message Content
+        // We pass $notifiable just in case the notification needs to access the user data
         $message = $notification->toWhatsapp($notifiable);
         
-        // 5. Send Request (Using your confirmed working API Endpoint)
+        // 5. Send Request
         try {
-            $response = Http::timeout(15)->get('https://wabot.adxventure.com/api/user/send-message', [
+            $response = Http::timeout(20)->get('https://wabot.adxventure.com/api/user/send-message', [
                 'recipient' => $recipient,
                 'apikey'    => $apiKey,
                 'text'      => $message,
@@ -56,10 +52,8 @@ class WhatsAppChannel
 
             // Log Success or Failure
             if (isset($body['success']) && $body['success'] == true) {
-                // Success logic
-                Log::info("WhatsApp sent to $recipient. ID: " . ($body['data']['id'] ?? 'unknown'));
+                Log::info("WhatsApp sent to $recipient using System Key. ID: " . ($body['data']['id'] ?? 'unknown'));
             } else {
-                // API returned an error
                 Log::error("WhatsApp API Error for $recipient: " . json_encode($body));
             }
 
