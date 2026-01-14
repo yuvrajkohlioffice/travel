@@ -48,7 +48,7 @@ class WhatsAppChannel
         }
 
         // 3. Configuration
-        $apiKey = 'wb_4mBjE3IfwFs_bot'; 
+        $apiKey = env('SYSTEM_WHATSAPP_KEY'); 
         $baseUrl = 'https://wabot.adxventure.com/api/user/send-media-message';
 
         if (!$apiKey) {
@@ -63,7 +63,7 @@ class WhatsAppChannel
 
         // 5. Prepare Query Parameters
         $queryParams = [
-            'apikey' => env('SYSTEM_WHATSAPP_KEY'),
+            'apikey' => $apiKey,
             'recipient' => $recipient,
             'text' => $text,
         ];
