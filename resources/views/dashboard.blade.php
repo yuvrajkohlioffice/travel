@@ -281,7 +281,7 @@
                                 @forelse($todayReturns as $trip)
                                     <tr class="border-b">
                                         <td class="p-2">{{ $trip->primary_full_name }}</td>
-                                         <td class="p-2">{{ $trip->lead->phone_number }}</td>
+                                        <td class="p-2">{{ $trip->lead->phone_number }}</td>
                                         <td class="p-2">{{ $trip->travel_start_date }}</td>
                                         <td class="p-2">
                                             {{ $trip->package->package_days ?? 0 }}D /
@@ -300,76 +300,7 @@
 
             </div>
 
-            <script>
-                $(document).ready(function() {
 
-                    // --------------------------
-                    // Followups DataTable
-                    // --------------------------
-                    $('#followupsTable').DataTable({
-                        processing: true,
-                        serverSide: true,
-                        ajax: {
-                            url: '{{ route('dashboard') }}',
-                            data: {
-                                datatable: 'followups',
-                                month: '{{ request('month') }}',
-                                year: '{{ request('year') }}',
-                                from: '{{ request('from') }}',
-                                to: '{{ request('to') }}'
-                            }
-                        },
-                        columns: [{
-                                data: 'lead_name',
-                                name: 'lead_name'
-                            },
-                            {
-                                data: 'assigned',
-                                name: 'assigned'
-                            },
-                            {
-                                data: 'next_followup',
-                                name: 'next_followup'
-                            },
-                            {
-                                data: 'remark',
-                                name: 'remark'
-                            },
-                            {
-                                data: 'actions',
-                                name: 'actions',
-                                orderable: false,
-                                searchable: false
-                            }
-                        ]
-                    });
-
-                    // --------------------------
-                    // Users DataTable
-                    // --------------------------
-                    $('#usersTable').DataTable({
-                        processing: true,
-                        serverSide: true,
-                        ajax: {
-                            url: '{{ route('dashboard') }}',
-                            data: {
-                                datatable: 'users'
-                            }
-                        },
-                        columns: [{
-                                data: 'user',
-                                name: 'user'
-                            },
-                            {
-                                data: 'leads_created',
-                                name: 'leads_created',
-                                className: 'text-right'
-                            }
-                        ]
-                    });
-
-                });
-            </script>
 
 
             {{-- Footer note / small actions --}}
@@ -427,6 +358,76 @@
 
     {{-- Icons (FontAwesome) - ensure your layout includes the FontAwesome script or CSS --}}
     {{-- Chart & small JS behaviors --}}
+    <script>
+        $(document).ready(function() {
+
+            // --------------------------
+            // Followups DataTable
+            // --------------------------
+            $('#followupsTable').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: {
+                    url: '{{ route('dashboard') }}',
+                    data: {
+                        datatable: 'followups',
+                        month: '{{ request('month') }}',
+                        year: '{{ request('year') }}',
+                        from: '{{ request('from') }}',
+                        to: '{{ request('to') }}'
+                    }
+                },
+                columns: [{
+                        data: 'lead_name',
+                        name: 'lead_name'
+                    },
+                    {
+                        data: 'assigned',
+                        name: 'assigned'
+                    },
+                    {
+                        data: 'next_followup',
+                        name: 'next_followup'
+                    },
+                    {
+                        data: 'remark',
+                        name: 'remark'
+                    },
+                    {
+                        data: 'actions',
+                        name: 'actions',
+                        orderable: false,
+                        searchable: false
+                    }
+                ]
+            });
+
+            // --------------------------
+            // Users DataTable
+            // --------------------------
+            $('#usersTable').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: {
+                    url: '{{ route('dashboard') }}',
+                    data: {
+                        datatable: 'users'
+                    }
+                },
+                columns: [{
+                        data: 'user',
+                        name: 'user'
+                    },
+                    {
+                        data: 'leads_created',
+                        name: 'leads_created',
+                        className: 'text-right'
+                    }
+                ]
+            });
+
+        });
+    </script>
     <script>
         // Make backend data available to the chart
         window.chartData = @json($last30Days);
