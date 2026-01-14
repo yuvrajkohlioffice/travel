@@ -12,6 +12,32 @@ use Symfony\Component\Process\Process;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Illuminate\Support\Facades\Artisan;
 
+Route::get('/deploy', function () {
+    $messages = [];
+
+    $npm = new Process(['npm', 'run', 'build']);
+    $npm->run();
+
+    if (!$npm->isSuccessful()) {
+        throw new ProcessFailedException($npm);
+    }
+    $messages[] = 'NPM build completed successfully.';
+
+    // 2. Run optimize
+    Artisan::call('optimize');
+    $messages[] = 'Artisan optimize executed successfully.';
+
+    // 3. Run migrate
+    Artisan::call('migrate', ['--force' => true]);
+    $messages[] = 'Database migrations executed successfully.';
+
+    // 4. Run storage link
+    Artisan::call('storage:link');
+    $messages[] = 'Storage linked successfully.';
+
+    // Join all messages into one flash message
+    return back()->with('success', implode(' | ', $messages));
+})->middleware('auth');
 // Guest / Client Portal Routes
 Route::prefix('portal')->group(function () {
     // 1. Show Login Page or Redirect to Form if logged in
