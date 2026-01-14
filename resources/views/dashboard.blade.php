@@ -13,10 +13,8 @@
                 </div>
 
                 <div class="flex items-center gap-3">
-
-
                     <a href="{{ route('leads.create') }}"
-                        class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700 transition">
+                        class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 transition shadow-sm hover:shadow-md">
                         <i class="fa fa-plus" aria-hidden="true"></i>
                         New Lead
                     </a>
@@ -99,25 +97,41 @@
 
             {{-- Small summary blocks: Today / Week --}}
             <section class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-                <div
-                    class="rounded-xl p-4 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-sm">
-                    <p class="text-xs text-gray-500 dark:text-gray-400">Leads Today</p>
-                    <p class="text-xl font-semibold text-indigo-600 mt-2">{{ $todayLeads }}</p>
+                <div class="rounded-2xl p-5 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-sm flex items-center justify-between hover:shadow-md transition">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Leads Today</p>
+                        <p class="text-2xl font-bold text-indigo-600 dark:text-indigo-400 mt-1">{{ $todayLeads }}</p>
+                    </div>
+                    <div class="p-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl text-indigo-600 dark:text-indigo-400">
+                        <i class="fa fa-user-plus text-lg"></i>
+                    </div>
                 </div>
-                <div
-                    class="rounded-xl p-4 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-sm">
-                    <p class="text-xs text-gray-500 dark:text-gray-400">Leads This Week</p>
-                    <p class="text-xl font-semibold text-indigo-600 mt-2">{{ $weekLeads }}</p>
+                <div class="rounded-2xl p-5 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-sm flex items-center justify-between hover:shadow-md transition">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Leads This Week</p>
+                        <p class="text-2xl font-bold text-indigo-600 dark:text-indigo-400 mt-1">{{ $weekLeads }}</p>
+                    </div>
+                    <div class="p-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl text-indigo-600 dark:text-indigo-400">
+                        <i class="fa fa-calendar-week text-lg"></i>
+                    </div>
                 </div>
-                <div
-                    class="rounded-xl p-4 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-sm">
-                    <p class="text-xs text-gray-500 dark:text-gray-400">Invoices Today</p>
-                    <p class="text-xl font-semibold text-green-600 mt-2">{{ $todayInvoices }}</p>
+                <div class="rounded-2xl p-5 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-sm flex items-center justify-between hover:shadow-md transition">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Invoices Today</p>
+                        <p class="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">{{ $todayInvoices }}</p>
+                    </div>
+                    <div class="p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl text-emerald-600 dark:text-emerald-400">
+                        <i class="fa fa-file-invoice text-lg"></i>
+                    </div>
                 </div>
-                <div
-                    class="rounded-xl p-4 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-sm">
-                    <p class="text-xs text-gray-500 dark:text-gray-400">Invoices This Week</p>
-                    <p class="text-xl font-semibold text-green-600 mt-2">{{ $weekInvoices }}</p>
+                <div class="rounded-2xl p-5 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-sm flex items-center justify-between hover:shadow-md transition">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Invoices This Week</p>
+                        <p class="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">{{ $weekInvoices }}</p>
+                    </div>
+                    <div class="p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl text-emerald-600 dark:text-emerald-400">
+                        <i class="fa fa-file-invoice-dollar text-lg"></i>
+                    </div>
                 </div>
             </section>
 
@@ -176,12 +190,12 @@
                 @foreach ($leadStatusCounts as $status => $count)
                     <article
                         class="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition">
-                        <div class="flex items-center justify-between">
+                        <div class="flex items-center justify-between gap-4">
                             <div>
-                                <p class="text-xs text-gray-500 dark:text-gray-400">{{ ucfirst($status) }}</p>
-                                <p class="text-2xl font-semibold mt-1">{{ $count }}</p>
+                                <p class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">{{ ucfirst($status) }}</p>
+                                <p class="text-2xl font-bold text-gray-900 dark:text-white mt-1">{{ $count }}</p>
                             </div>
-                            <div class="text-2xl text-gray-400">
+                            <div class="text-2xl text-gray-300 dark:text-gray-600">
                                 <i class="fa fa-flag" aria-hidden="true"></i>
                             </div>
                         </div>
@@ -194,14 +208,16 @@
 
                 {{-- Upcoming Followups --}}
                 <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm hover:shadow-md transition">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-semibold">Upcoming Followups</h3>
-
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg text-indigo-600 dark:text-indigo-400">
+                            <i class="fa fa-phone-alt text-lg"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-gray-900 dark:text-white">Upcoming Followups</h3>
                     </div>
 
                     <div class="overflow-x-auto -mx-2">
                         <table id="followupsTable" class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                            <thead class="bg-gray-50 dark:bg-gray-900/40">
+                            <thead class="bg-gray-50 dark:bg-gray-700/50 text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">
                                 <tr>
                                     <th>Lead</th>
                                     <th>Assigned</th>
@@ -217,14 +233,19 @@
 
                 {{-- User Performance --}}
                 <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm hover:shadow-md transition">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-semibold">User Performance</h3>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Leads Created</p>
+                    <div class="flex items-center justify-between mb-6">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2 bg-yellow-50 dark:bg-yellow-900/30 rounded-lg text-yellow-600 dark:text-yellow-400">
+                                <i class="fa fa-trophy text-lg"></i>
+                            </div>
+                            <h3 class="text-lg font-bold text-gray-900 dark:text-white">User Performance</h3>
+                        </div>
+                        <span class="text-xs font-medium px-2.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">Leads Created</span>
                     </div>
 
                     <div class="overflow-x-auto mb-8">
                         <table id="usersTable" class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                            <thead class="bg-gray-50 dark:bg-gray-900/40">
+                            <thead class="bg-gray-50 dark:bg-gray-700/50 text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">
                                 <tr>
                                     <th>User</th>
                                     <th>Leads Created</th>
@@ -236,27 +257,32 @@
             </section>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
 
-                <div class="bg-white p-4 rounded shadow">
-                    <h3 class="font-bold text-lg mb-4 text-blue-600">🚀 Today's Departures</h3>
+                <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400">
+                            <i class="fa fa-plane-departure text-lg"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-gray-900 dark:text-white">Today's Departures</h3>
+                    </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-sm text-left">
-                            <thead class="bg-gray-100">
+                            <thead class="bg-gray-50 dark:bg-gray-700/50 text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">
                                 <tr>
-                                    <th class="p-2">Client</th>
-                                    <th class="p-2">Package</th>
-                                    <th class="p-2">Phone</th>
+                                    <th class="px-4 py-3 font-medium">Client</th>
+                                    <th class="px-4 py-3 font-medium">Package</th>
+                                    <th class="px-4 py-3 font-medium">Phone</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
                                 @forelse($todayDepartures as $trip)
-                                    <tr class="border-b">
-                                        <td class="p-2">{{ $trip->primary_full_name }}</td>
-                                        <td class="p-2">{{ $trip->package->package_name ?? 'N/A' }}</td>
-                                        <td class="p-2">{{ $trip->lead->phone_number }}</td>
+                                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                        <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">{{ $trip->primary_full_name }}</td>
+                                        <td class="px-4 py-3 text-gray-600 dark:text-gray-300">{{ $trip->package->package_name ?? 'N/A' }}</td>
+                                        <td class="px-4 py-3 text-gray-500 dark:text-gray-400">{{ $trip->lead->phone_number }}</td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="3" class="p-2 text-center text-gray-500">No departures today
+                                        <td colspan="3" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">No departures today
                                         </td>
                                     </tr>
                                 @endforelse
@@ -265,32 +291,37 @@
                     </div>
                 </div>
 
-                <div class="bg-white p-4 rounded shadow">
-                    <h3 class="font-bold text-lg mb-4 text-green-600">🛬 Today's Returns</h3>
+                <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="p-2 bg-green-50 dark:bg-green-900/30 rounded-lg text-green-600 dark:text-green-400">
+                            <i class="fa fa-plane-arrival text-lg"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-gray-900 dark:text-white">Today's Returns</h3>
+                    </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-sm text-left">
-                            <thead class="bg-gray-100">
+                            <thead class="bg-gray-50 dark:bg-gray-700/50 text-gray-500 dark:text-gray-400 uppercase text-xs tracking-wider">
                                 <tr>
-                                    <th class="p-2">Client</th>
-                                    <th class="p-2">Phone</th>
-                                    <th class="p-2">Started On</th>
-                                    <th class="p-2">Duration</th>
+                                    <th class="px-4 py-3 font-medium">Client</th>
+                                    <th class="px-4 py-3 font-medium">Phone</th>
+                                    <th class="px-4 py-3 font-medium">Started On</th>
+                                    <th class="px-4 py-3 font-medium">Duration</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
                                 @forelse($todayReturns as $trip)
-                                    <tr class="border-b">
-                                        <td class="p-2">{{ $trip->primary_full_name }}</td>
-                                        <td class="p-2">{{ $trip->lead->phone_number }}</td>
-                                        <td class="p-2">{{ $trip->travel_start_date }}</td>
-                                        <td class="p-2">
+                                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                        <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">{{ $trip->primary_full_name }}</td>
+                                        <td class="px-4 py-3 text-gray-500 dark:text-gray-400">{{ $trip->lead->phone_number }}</td>
+                                        <td class="px-4 py-3 text-gray-600 dark:text-gray-300">{{ $trip->travel_start_date }}</td>
+                                        <td class="px-4 py-3 text-gray-600 dark:text-gray-300">
                                             {{ $trip->package->package_days ?? 0 }}D /
                                             {{ $trip->package->package_nights ?? 0 }}N
                                         </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="3" class="p-2 text-center text-gray-500">No returns today</td>
+                                        <td colspan="4" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">No returns today</td>
                                     </tr>
                                 @endforelse
                             </tbody>
