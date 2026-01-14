@@ -14,17 +14,29 @@ export default {
     theme: {
         extend: {
             fontFamily: {
-                sans: ['Figtree', ...defaultTheme.fontFamily.sans],
+                // Added 'Inter' for the landing page, kept 'Figtree' for dashboard consistency
+                sans: ['Inter', 'Figtree', ...defaultTheme.fontFamily.sans],
             },
+            // Added the custom brand colors from the landing page design
+            colors: {
+                brand: {
+                    50: '#eff6ff',
+                    100: '#dbeafe',
+                    500: '#3b82f6',
+                    600: '#2563eb',
+                    700: '#1d4ed8',
+                    900: '#1e3a8a',
+                }
+            }
         },
     },
 
     plugins: [forms, typography],
 
-    // Safelist dynamic classes to prevent purge from removing them
+    // Your existing safelist
     safelist: [
         'bg-lime-500', 'bg-green-500', 'bg-indigo-500', 'bg-purple-500',
         'bg-teal-500', 'bg-gray-500', 'bg-amber-500', 'bg-red-500',
-        'bg-gray-300', 'text-white','bg-fuchsia-500','bg-purple-600','bg-purple-700'
+        'bg-gray-300', 'text-white', 'bg-fuchsia-500', 'bg-purple-600', 'bg-purple-700'
     ],
 };

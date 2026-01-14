@@ -10,7 +10,7 @@
                     <div class="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center text-white">
                         <i data-lucide="plane" class="w-5 h-5"></i>
                     </div>
-                    <span class="font-bold text-xl tracking-tight text-slate-800">Travel<span class="text-brand-600">CRM</span></span>
+                    <span class="font-bold text-xl tracking-tight text-slate-800">Trekos<span class="text-brand-600">CRM</span></span>
                 </div>
 
                 <div class="hidden md:flex space-x-8">
@@ -21,12 +21,10 @@
 
                 <div class="flex items-center space-x-4">
                     @auth
-                        <a href="{{ route('dashboard') }}" class="text-sm font-semibold text-slate-700 hover:text-brand-600">Dashboard</a>
+                        <a href="{{ route('dashboard') }}" class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-full font-medium transition shadow-lg shadow-green-500/30">Dashboard</a>
                     @else
-                        <a href="{{ route('login') }}" class="text-slate-600 hover:text-brand-600 font-medium px-3 py-2">Log in</a>
-                        <a href="{{ route('register') }}" class="bg-brand-600 hover:bg-brand-700 text-white px-5 py-2 rounded-full font-medium transition shadow-lg shadow-brand-500/30">
-                            Get Started
-                        </a>
+                        <a href="{{ route('login') }}" class="bg-brand-600 hover:bg-brand-700 text-white px-5 py-2 rounded-full font-medium transition shadow-lg shadow-brand-500/30">Log in</a>
+                        
                     @endauth
                 </div>
             </div>
