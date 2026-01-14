@@ -222,6 +222,14 @@
                 <i class="fas fa-link w-5"></i>
                 <span>Storage Link</span>
             </a>
+            <a href="{{ route('system.run.daily') }}"
+                class="flex items-center space-x-3 px-3 py-2 rounded-lg transition-all
+              text-gray-700 dark:text-gray-200 hover:bg-green-50 hover:text-green-600
+              dark:hover:bg-green-900 dark:hover:text-green-400"
+                onclick="return confirm('Are you sure you want to send all daily reminders now?');">
+                <i class="fa fa-paper-plane w-5"></i>
+                <span> Run Daily Reminders </span>
+            </a>
 
         </div>
 

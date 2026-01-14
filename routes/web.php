@@ -86,6 +86,8 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
         | Lead Management
         |--------------------------------------------------------------------------
         */
+        Route::get('/system/run-daily-reminders', [SystemCommandController::class, 'runDailyReminders'])
+    ->name('system.run.daily');
     Route::post('/leads/send-access/{lead_id}', [App\Http\Controllers\GuestInvoiceController::class, 'sendAccessLink'])->name('leads.send_access');
     Route::prefix('system')
         ->name('system.')

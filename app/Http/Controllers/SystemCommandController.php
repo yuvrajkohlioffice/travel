@@ -139,5 +139,29 @@ class SystemCommandController extends Controller
         return redirect()->back()->with('error', 'Deploy failed!');
     }
 }
+public function runDailyReminders()
+{
+    try {
+        $outputMessages = [];
+
+        // 1. Run Follow-up Reminders
+        Artisan::call('followups:remind');
+        $outputMessages[] = "<strong>Follow-ups:</strong><br>" . nl2br(Artisan::output());
+
+        // 2. Run Travel Reminders
+        Artisan::call('travel:send-reminders');
+        $outputMessages[] = "<strong>Travel Reminders:</strong><br>" . nl2br(Artisan::output());
+
+        // Combine outputs
+        $finalOutput = implode('<br><hr><br>', $outputMessages);
+
+        return redirect()->back()->with('success', 'Daily commands executed!<br><br>' . $finalOutput);
+
+    } catch (\Exception $e) {
+        \Log::error('Manual command run failed: ' . $e->getMessage());
+        return redirect()->back()->with('error', 'Failed to run commands: ' . $e->getMessage());
+    }
+}
+
 
 }
