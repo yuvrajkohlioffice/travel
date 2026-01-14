@@ -60,4 +60,16 @@ class Invoice extends Model
     {
         return $this->belongsTo(PackageItem::class, 'package_items_id');
     }
+    public function routeNotificationForWhatsapp($notification)
+    {
+        // 1. Clean the phone number (remove spaces, dashes)
+        $number = preg_replace('/[^0-9]/', '', $this->phone_number);
+        
+        // 2. Clean the phone code (remove + sign)
+        $code = preg_replace('/[^0-9]/', '', $this->phone_code);
+
+        // 3. Return combined format: CountryCode + PhoneNumber
+        // Example: 91 + 9876543210 = 919876543210
+        return $code . $number;
+    }
 }

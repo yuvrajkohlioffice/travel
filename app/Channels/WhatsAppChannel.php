@@ -8,64 +8,86 @@ use Illuminate\Support\Facades\Log;
 
 class WhatsAppChannel
 {
+    /**
+     * Send the given notification.
+     *
+     * @param  mixed  $notifiable
+     * @param  \Illuminate\Notifications\Notification  $notification
+     * @return void
+     */
     public function send($notifiable, Notification $notification)
     {
-        // 1. Check if the notification has the WhatsApp message method
+        // 1. Check if the notification has the required method
         if (!method_exists($notification, 'toWhatsapp')) {
+            Log::warning("WhatsApp Channel: 'toWhatsapp' method missing in notification class " . get_class($notification));
             return;
         }
 
-        // 2. Get Recipient Phone
-        $recipient = $notifiable->routes[WhatsAppChannel::class] ?? null;
-        
-        if (!$recipient) {
-             $recipient = $notifiable->phone_number ?? $notifiable->primary_phone ?? null;
+        // 2. Get Recipient (Follows Laravel standard + your fallbacks)
+        $recipient = null;
+
+        if (method_exists($notifiable, 'routeNotificationFor')) {
+            // A. Check for 'whatsapp' string (Standard for User/Lead models)
+            $recipient = $notifiable->routeNotificationFor('whatsapp');
+            
+            // B. If that failed, check for the Class Name (For Anonymous/Command notifications)
+            if (!$recipient) {
+                $recipient = $notifiable->routeNotificationFor(self::class);
+            }
         }
 
         if (!$recipient) {
-            Log::warning("WhatsApp Channel: No phone number found for notification.");
+            $recipient = $notifiable->phone_number ?? $notifiable->primary_phone ?? null;
+        }
+
+        if (!$recipient) {
+            // Use try/catch for getKey() because AnonymousNotifiable doesn't have it
+            $id = method_exists($notifiable, 'getKey') ? $notifiable->getKey() : 'Anonymous';
+            Log::warning("WhatsApp Channel: No recipient phone number found for ID: " . $id);
             return;
         }
 
-        // 3. Get API Key
-        $apiKey = env('SYSTEM_WHATSAPP_KEY'); 
+        // 3. Configuration
+        $apiKey = 'wb_4mBjE3IfwFs_bot'; 
+        $baseUrl = 'https://wabot.adxventure.com/api/user/send-media-message';
 
         if (!$apiKey) {
-            Log::error("WhatsApp Channel: SYSTEM_WHATSAPP_KEY is missing in .env file.");
+            Log::error("WhatsApp Channel: API Key is missing.");
             return;
         }
 
-        // 4. Get the Message Content
-        // Expecting an array: ['message' => 'Your Caption', 'url' => 'http://path.to/image.jpg']
+        // 4. Get Content from Notification
         $data = $notification->toWhatsapp($notifiable);
-        
-        // Ensure data is formatted correctly
         $text = is_array($data) ? ($data['message'] ?? '') : $data;
         $mediaUrl = is_array($data) ? ($data['url'] ?? null) : null;
 
-        if (!$mediaUrl) {
-            Log::warning("WhatsApp Channel: Media URL missing for recipient $recipient");
-            // Optional: fallback to text-only endpoint if needed, or return.
+        // 5. Prepare Query Parameters
+        $queryParams = [
+            'apikey' => env('SYSTEM_WHATSAPP_KEY'),
+            'recipient' => $recipient,
+            'text' => $text,
+        ];
+
+        if ($mediaUrl) {
+            $queryParams['url'] = $mediaUrl;
         }
 
-        // 5. Send Request
+        // 6. Send Request
         try {
-            // Using the send-media-message endpoint
-            $response = Http::timeout(20)->get('https://wabot.adxventure.com/api/user/send-media-message', [
-                'recipient' => $recipient,
-                'apikey'    => $apiKey,
-                'text'      => $text,       // The caption
-                
-            ]);
-
+            $response = Http::timeout(20)->get($baseUrl, $queryParams);
             $body = $response->json();
 
-            // 6. Log Success or Failure based on the specific response provided
-            // Expected: {"message":"Text message sent successfully."}
-            if (isset($body['message']) && $body['message'] === 'Text message sent successfully.') {
-                Log::info("WhatsApp Media sent to $recipient. Response: " . $body['message']);
+            // 7. Check response and Log (UPDATED)
+            if ($response->successful() && isset($body['message'])) {
+                Log::info("WhatsApp sent to $recipient.", [
+                    'message_text' => $text, // <--- Added this
+                    'api_response' => $body
+                ]);
             } else {
-                Log::error("WhatsApp API Error for $recipient: " . json_encode($body));
+                Log::error("WhatsApp API Error for $recipient.", [
+                    'sent_text' => $text,    // <--- Added this to error log too
+                    'response' => $body
+                ]);
             }
 
         } catch (\Exception $e) {

@@ -51,9 +51,7 @@ class User extends Authenticatable
     /**
      * The accessors to append to the model's array form.
      */
-    protected $appends = [
-        'profile_photo_url',
-    ];
+    protected $appends = ['profile_photo_url'];
 
     /**
      * The attributes that should be cast.
@@ -95,21 +93,24 @@ class User extends Authenticatable
      * Encrypt SMTP password before saving
      */
     public function setSmtpPasswordAttribute($value)
-{
-    $this->attributes['smtp_password'] = $value
-        ? encrypt($value)
-        : null;
-}
-
-public function getSmtpPasswordAttribute($value)
-{
-    if (!$value) return null;
-
-    try {
-        return decrypt($value);
-    } catch (\Exception $e) {
-        return $value; // backward compatibility
+    {
+        $this->attributes['smtp_password'] = $value ? encrypt($value) : null;
     }
-}
 
+    public function getSmtpPasswordAttribute($value)
+    {
+        if (!$value) {
+            return null;
+        }
+
+        try {
+            return decrypt($value);
+        } catch (\Exception $e) {
+            return $value; // backward compatibility
+        }
+    }
+    public function routeNotificationForWhatsapp()
+    {
+        return $this->phone_number; // Replace with your actual database column name
+    }
 }
