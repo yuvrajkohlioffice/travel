@@ -35,71 +35,54 @@ class SendTravelReminders extends Command
         }
     }
 
-    protected function processInvoice($invoice)
-    {
-        $this->line('------------------------------------------');
-        $this->info("Invoice #{$invoice->invoice_no} | Client: {$invoice->primary_full_name}");
+protected function processInvoice($invoice)
+{
+    $this->line('------------------------------------------');
+    $this->info("Invoice #{$invoice->invoice_no} | Client: {$invoice->primary_full_name}");
 
-        // 1. Identify the Agent (Sender) - for context inside the notification
-        $agent = $invoice->user;
-        if (!$agent && $invoice->lead) {
-            $agent = $invoice->lead->user;
-        }
+    // 1. Identify Agent
+    $agent = $invoice->user ?? ($invoice->lead->user ?? null);
 
-        // 2. GET EMAIL (Invoice -> Lead fallback)
-        $clientEmail = $invoice->primary_email;
-        if (empty($clientEmail) && $invoice->lead) {
-            $clientEmail = $invoice->lead->email;
-        }
+    // 2. Resolve Contact Info
+    $clientEmail = $invoice->primary_email ?: ($invoice->lead->email ?? null);
+    $clientPhone = $invoice->primary_phone;
+    if (empty($clientPhone) && $invoice->lead) {
+        $code = preg_replace('/[^0-9]/', '', $invoice->lead->phone_code ?? '');
+        $number = preg_replace('/[^0-9]/', '', $invoice->lead->phone_number ?? '');
+        $clientPhone = !empty($number) ? $code . $number : null;
+    }
 
-        // 3. GET PHONE (Invoice -> Lead fallback)
-        $clientPhone = $invoice->primary_phone; // Assuming invoice has direct number
+    if (!$clientPhone && !$clientEmail) {
+        $this->warn('   ⚠️  Skipping: No Email OR Phone found.');
+        return;
+    }
 
-        if (empty($clientPhone) && $invoice->lead) {
-            // Clean and combine Lead phone code + number
-            $code = preg_replace('/[^0-9]/', '', $invoice->lead->phone_code ?? '');
-            $number = preg_replace('/[^0-9]/', '', $invoice->lead->phone_number ?? '');
-            
-            if (!empty($number)) {
-                $clientPhone = $code . $number;
-            }
-        }
+    $results = [];
 
-        // 4. Construct the Recipient (Anonymous Notifiable)
-        // We start an empty route chain
-        $notifiable = null;
-
-        if ($clientEmail) {
-            $notifiable = Notification::route('mail', $clientEmail);
-        }
-
-        if ($clientPhone) {
-            if ($notifiable) {
-                // If we already have email, append WhatsApp route
-                $notifiable->route(WhatsAppChannel::class, $clientPhone);
-            } else {
-                // If no email, start with WhatsApp route
-                $notifiable = Notification::route(WhatsAppChannel::class, $clientPhone);
-            }
-        }
-
-        // 5. Send Notification
-        if ($notifiable) {
-            try {
-                $notifiable->notify(new TravelStartingNotification($invoice, $agent));
-                
-                $channels = [];
-                if ($clientEmail) $channels[] = "Email ($clientEmail)";
-                if ($clientPhone) $channels[] = "WhatsApp ($clientPhone)";
-                
-                $this->info("   ✅ Sent to Client via: " . implode(' & ', $channels));
-
-            } catch (\Exception $e) {
-                $this->error('   ❌ Failed to send: ' . $e->getMessage());
-                Log::error("Travel Reminder Failed for Invoice #{$invoice->id}: " . $e->getMessage());
-            }
-        } else {
-            $this->warn("   ⚠️  Skipping: No Email OR Phone found.");
+    // --- STEP 1: TRY WHATSAPP FIRST ---
+    if ($clientPhone) {
+        try {
+            Notification::route(WhatsAppChannel::class, $clientPhone)
+                ->notify(new TravelStartingNotification($invoice, $agent));
+            $this->info("   ✅ WhatsApp Sent: $clientPhone");
+            $results[] = 'WhatsApp';
+        } catch (\Exception $e) {
+            $this->error("   ❌ WhatsApp Failed: " . $e->getMessage());
+            Log::error("WhatsApp Failed for Invoice #{$invoice->id}: " . $e->getMessage());
         }
     }
+
+    // --- STEP 2: TRY EMAIL SECOND ---
+    if ($clientEmail) {
+        try {
+            Notification::route('mail', $clientEmail)
+                ->notify(new TravelStartingNotification($invoice, $agent));
+            $this->info("   ✅ Email Sent: $clientEmail");
+            $results[] = 'Email';
+        } catch (\Exception $e) {
+            $this->error("   ❌ Email Failed: " . $e->getMessage());
+            Log::error("Email Failed for Invoice #{$invoice->id}: " . $e->getMessage());
+        }
+    }
+}
 }
