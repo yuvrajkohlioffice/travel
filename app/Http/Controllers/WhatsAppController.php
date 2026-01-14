@@ -15,7 +15,54 @@ class WhatsAppController extends Controller
     {
         return auth()->user()->whatsapp_api_key ?? null;
     }
+// -------------------------
+    // 🧪 QUICK TEST CONNECTION
+    // -------------------------
+    public function testConnection(Request $request)
+    {
+        // 1. Get Recipient from URL (e.g., ?recipient=919876543210)
+        $recipient = $request->query('recipient');
 
+        if (!$recipient) {
+            return response()->json([
+                'status' => 'error', 
+                'message' => 'Missing recipient! Add ?recipient=PHONE_NUMBER to the URL.'
+            ], 400);
+        }
+
+        // 2. Get API Key
+        $apiKey = $this->getApiKey();
+
+        if (!$apiKey) {
+            return response()->json([
+                'status' => 'error', 
+                'message' => 'User has no WhatsApp API Key configured.'
+            ], 422);
+        }
+
+        // 3. Send Test Message
+        $text = "✅ *Connection Successful!*\n\nHello from Laravel. If you are reading this, your WhatsApp API integration is working perfectly.\n\n📅 Time: " . now()->toDateTimeString();
+
+        try {
+            $response = Http::timeout(10)->get('https://wabot.adxventure.com/api/user/send-message', [
+                'recipient' => $recipient,
+                'apikey'    => $apiKey,
+                'text'      => $text,
+            ]);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Request sent to API',
+                'api_response' => $response->json()
+            ]);
+
+        } catch (\Throwable $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Connection Failed: ' . $e->getMessage()
+            ], 500);
+        }
+    }
     // -------------------------
     // SEND TEXT MESSAGE
     // -------------------------

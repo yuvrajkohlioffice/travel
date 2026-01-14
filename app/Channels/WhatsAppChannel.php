@@ -10,49 +10,42 @@ class WhatsAppChannel
 {
     public function send($notifiable, Notification $notification)
     {
-        // 1. Check if the notification has the WhatsApp method
+        // 1. Check if the notification has the WhatsApp message method
         if (!method_exists($notification, 'toWhatsapp')) {
             return;
         }
 
-        // 2. Get the message and recipient
-        $message = $notification->toWhatsapp($notifiable);
+        // 2. Get Recipient Phone
+        // Tries to get it from the "route" method first, then falls back to model attributes
+        $recipient = $notifiable->routes[WhatsAppChannel::class] ?? null;
         
-        // Try to find phone number in multiple places
-        $recipient = $notifiable->routes['whatsapp'] 
-                  ?? $notifiable->primary_phone 
-                  ?? $notifiable->phone 
-                  ?? null;
+        if (!$recipient) {
+             $recipient = $notifiable->phone_number ?? $notifiable->primary_phone ?? null;
+        }
 
         if (!$recipient) {
-            Log::warning("WhatsApp Channel: No phone number found for notifiable ID " . $notifiable->id);
+            Log::warning("WhatsApp Channel: No phone number found for notification.");
             return;
         }
 
         // 3. Determine API Key
-        // Since this runs in background, we can't use auth()->user().
-        // We try to get the API key from the invoice's creator (User) if available.
-        $apiKey = null;
+        // Priority: 1. The Agent/User passed in the notification -> 2. System Fallback
+        $apiKey = env('SYSTEM_WHATSAPP_KEY'); 
 
-        if (isset($notifiable->user) && $notifiable->user->whatsapp_api_key) {
-             // If the invoice belongs to a user, use their key
-            $apiKey = $notifiable->user->whatsapp_api_key;
-        } elseif (isset($notifiable->lead) && $notifiable->lead->user && $notifiable->lead->user->whatsapp_api_key) {
-             // If attached to a lead -> user
-             $apiKey = $notifiable->lead->user->whatsapp_api_key;
-        } else {
-            // FALLBACK: Use a system-wide key from .env
-            $apiKey = env('SYSTEM_WHATSAPP_KEY'); 
+        if (isset($notification->senderUser) && $notification->senderUser->whatsapp_api_key) {
+            $apiKey = $notification->senderUser->whatsapp_api_key;
         }
 
         if (!$apiKey) {
-            Log::error("WhatsApp Channel: No API Key found for recipient $recipient");
+            Log::error("WhatsApp Channel: No API Key available for recipient $recipient");
             return;
         }
 
-        // 4. Send the Request (Replicating your Controller logic)
+        // 4. Get the Message Content
+        $message = $notification->toWhatsapp($notifiable);
+        
+        // 5. Send Request (Using your confirmed working API Endpoint)
         try {
-            // Using the same endpoint as your sendText method
             $response = Http::timeout(15)->get('https://wabot.adxventure.com/api/user/send-message', [
                 'recipient' => $recipient,
                 'apikey'    => $apiKey,
@@ -61,15 +54,17 @@ class WhatsAppChannel
 
             $body = $response->json();
 
-            // 5. Log Result
+            // Log Success or Failure
             if (isset($body['success']) && $body['success'] == true) {
-                 Log::info("WhatsApp sent successfully to $recipient");
+                // Success logic
+                Log::info("WhatsApp sent to $recipient. ID: " . ($body['data']['id'] ?? 'unknown'));
             } else {
-                 Log::error("WhatsApp API Error: " . json_encode($body));
+                // API returned an error
+                Log::error("WhatsApp API Error for $recipient: " . json_encode($body));
             }
 
-        } catch (\Throwable $e) {
-            Log::error("WhatsApp Exception: " . $e->getMessage());
+        } catch (\Exception $e) {
+            Log::error("WhatsApp Exception for $recipient: " . $e->getMessage());
         }
     }
 }

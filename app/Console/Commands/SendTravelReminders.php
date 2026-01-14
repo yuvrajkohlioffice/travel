@@ -4,73 +4,115 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use App\Models\Invoice;
+use App\Models\User; // Import User
 use App\Notifications\TravelStartingNotification;
+use App\Channels\WhatsAppChannel;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
 
 class SendTravelReminders extends Command
 {
-    /**
-     * The name and signature of the console command.
-     */
     protected $signature = 'travel:send-reminders';
+    protected $description = 'Send reminders with correct Agent/User API keys';
 
-    /**
-     * The console command description.
-     */
-    protected $description = 'Check for travel_start_date matching today and send Email/WhatsApp';
-
-    /**
-     * Execute the console command.
-     */
     public function handle()
     {
         $today = Carbon::today()->format('Y-m-d');
-        
-        $this->info("Checking for trips starting on: $today");
+        $this->info("📅 Checking trips for: $today");
 
-        // Use chunking to handle large datasets efficiently
-        Invoice::with('lead') // Eager load the lead relationship
+        // Load Invoice AND the related User (Agent)
+        $invoices = Invoice::with(['user', 'lead.user'])
             ->whereDate('travel_start_date', $today)
-            ->chunk(100, function ($invoices) {
-                
-                foreach ($invoices as $invoice) {
-                    try {
-                        $this->processInvoice($invoice);
-                    } catch (\Exception $e) {
-                        Log::error("Failed to send reminder for Invoice ID {$invoice->id}: " . $e->getMessage());
-                    }
-                }
-            });
+            ->get();
 
-        $this->info('All reminders processed.');
+        if ($invoices->isEmpty()) {
+            $this->info('✅ No trips starting today.');
+            return;
+        }
+
+        foreach ($invoices as $invoice) {
+            $this->processInvoice($invoice);
+        }
     }
 
     protected function processInvoice($invoice)
     {
-        // 1. Validate Data
-        if (empty($invoice->primary_email) && empty($invoice->primary_phone)) {
-            Log::warning("Skipping Invoice {$invoice->id}: No contact info found.");
+        // ---------------------------------------------------------
+        // 1. Identify the Agent (Sender) for API Keys
+        // ---------------------------------------------------------
+        // Priority: 1. User assigned to Invoice -> 2. User assigned to Lead -> 3. Null (System)
+        $agent = $invoice->user;
+
+        if (!$agent && $invoice->lead) {
+            // If invoice has no user, check the Lead's user
+            $agent = $invoice->lead->user;
+        }
+
+        // ---------------------------------------------------------
+        // 2. Identify Recipient Contact Info
+        // ---------------------------------------------------------
+        $email = $invoice->lead->email;
+        $phone = $invoice->phone_number;
+        if (empty($phone) && $invoice->lead) {
+            $code = $invoice->lead->phone_code ?? ''; // e.g. "91" or "+91"
+            $number = $invoice->lead->phone_number ?? ''; // e.g. "9876543210"
+
+            if (!empty($number)) {
+                // Remove '+' from code if present, just to be safe for API
+                $cleanCode = str_replace('+', '', $code);
+                $phone = $cleanCode . $number;
+            }
+        }
+
+        // If neither exists, we skip this invoice entirely
+        if (empty($email) && empty($phone)) {
+            $this->warn("⚠️  Skipping Invoice #{$invoice->invoice_no}: No contact info found.");
             return;
         }
 
-        // 2. Notify
-        // We use the Notification facade or the notify method on the user/invoice model.
-        // Since Invoice is not usually "Notifiable", we can send it "On Demand" or via the User/Lead.
-        
-        // Option A: If Invoice belongs to a User
-        // $invoice->user->notify(new TravelStartingNotification($invoice));
+        // ---------------------------------------------------------
+        // 3. Build the Notification Route (Email / WhatsApp / Both)
+        // ---------------------------------------------------------
+        $notifiable = null;
 
-        // Option B: On-Demand Notification (Send directly to the email/phone in the invoice)
-        $route = \Illuminate\Support\Facades\Notification::route('mail', $invoice->primary_email);
-        
-        if ($invoice->primary_phone) {
-            // Add WhatsApp routing here (depends on your provider)
-            // $route->route('whatsapp', $invoice->primary_phone);
+        if ($email && $phone) {
+            // Case A: BOTH Email and Phone exist
+            $notifiable = Notification::route('mail', $email)->route(WhatsAppChannel::class, $phone);
+        } elseif ($email) {
+            // Case B: ONLY Email exists
+            $notifiable = Notification::route('mail', $email);
+        } elseif ($phone) {
+            // Case C: ONLY Phone exists (Email is empty/null)
+            $notifiable = Notification::route(WhatsAppChannel::class, $phone);
         }
 
-        $route->notify(new TravelStartingNotification($invoice));
+        // ---------------------------------------------------------
+        // 4. Send the Notification
+        // ---------------------------------------------------------
+        $this->line('------------------------------------------');
+        $this->info("Invoice #{$invoice->invoice_no} | Client: {$invoice->primary_full_name}");
 
-        $this->info("Sent notification for Invoice: {$invoice->invoice_no}");
+        // Log who is sending it (for debugging)
+        if ($agent) {
+            $this->info("   👤 Sender (Agent): {$agent->name} (ID: {$agent->id})");
+        } else {
+            $this->warn('   🤖 Sender: System (No specific agent found)');
+        }
+
+        try {
+            // We pass the $agent to the Notification so it knows which WhatsApp API Key to use
+            $notifiable->notify(new TravelStartingNotification($invoice, $agent));
+
+            if ($email) {
+                $this->info("   ✅ Email queued for: $email");
+            }
+            if ($phone) {
+                $this->info("   ✅ WhatsApp queued for: $phone");
+            }
+        } catch (\Exception $e) {
+            $this->error('   ❌ Failed to send: ' . $e->getMessage());
+            Log::error("Travel Reminder Failed (Invoice ID: {$invoice->id}): " . $e->getMessage());
+        }
     }
 }

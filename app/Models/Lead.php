@@ -107,4 +107,12 @@ public function invoice()
     {
         return optional($this->lastFollowup)->created_at;
     }
+    /**
+     * The User who owns/created this lead.
+     * Required for: lead.user eager loading
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
 }
