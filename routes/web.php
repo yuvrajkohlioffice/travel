@@ -12,11 +12,7 @@ use Symfony\Component\Process\Process;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Illuminate\Support\Facades\Artisan;
 
-Route::get('/link-storage', function () {
-    Artisan::call('storage:link');
-    $output = Artisan::output();
-    return back()->with('success', "Storage linked successfully! \n$output");
-});
+
 // Guest / Client Portal Routes
 Route::prefix('portal')->group(function () {
     // 1. Show Login Page or Redirect to Form if logged in
@@ -31,32 +27,6 @@ Route::prefix('portal')->group(function () {
     // 4. Update Details (Save)
     Route::post('/update/{lead_id}', [App\Http\Controllers\GuestInvoiceController::class, 'updateDetails'])->name('guest.update');
 });
-Route::get('/deploy', function () {
-    $messages = [];
-
-    $npm = new Process(['npm', 'run', 'build']);
-    $npm->run();
-
-    if (!$npm->isSuccessful()) {
-        throw new ProcessFailedException($npm);
-    }
-    $messages[] = 'NPM build completed successfully.';
-
-    // 2. Run optimize
-    Artisan::call('optimize');
-    $messages[] = 'Artisan optimize executed successfully.';
-
-    // 3. Run migrate
-    Artisan::call('migrate', ['--force' => true]);
-    $messages[] = 'Database migrations executed successfully.';
-
-    // 4. Run storage link
-    Artisan::call('storage:link');
-    $messages[] = 'Storage linked successfully.';
-
-    // Join all messages into one flash message
-    return back()->with('success', implode(' | ', $messages));
-})->middleware('auth');
 
 /*
 |--------------------------------------------------------------------------
@@ -146,16 +116,8 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
         }
 
         return back()->with('success', "✅ Composer dump-autoload executed successfully! \n" . $process->getOutput());
-    });
-    Route::get('/test-mail', function () {
-        setUserMailConfig(auth()->user());
-
-        Mail::raw('SMTP test successful!', function ($message) {
-            $message->to('yuvrajkohli8090ylt@gmail.com')->subject('SMTP Test');
-        });
-
-        return 'Mail sent';
-    });
+    })->name('composer.dump');
+    
     Route::patch('/leads/{lead}/status', [LeadController::class, 'updateStatus'])->name('leads.updateStatus');
 
     Route::get('/leads/data', [LeadController::class, 'getLeadsData'])->name('leads.data');
@@ -244,7 +206,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
         Route::get('{package}/edit-relations', [PackageController::class, 'editRelations'])->name('packages.edit-relations');
         Route::post('{package}/update-relations', [PackageController::class, 'updateRelations'])->name('packages.update-relations');
 
-        Route::get('/{package}/json', [PackageController::class, 'apiShow']);
+        Route::get('/{package}/json', [PackageController::class, 'apiShow'])->name('packages.json');
     });
 
     Route::post('/leads/send-package-email', [PackageController::class, 'sendPackageEmail'])->name('leads.sendPackageEmail');
