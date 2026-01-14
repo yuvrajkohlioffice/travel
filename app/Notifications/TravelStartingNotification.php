@@ -73,6 +73,10 @@ class TravelStartingNotification extends Notification implements ShouldQueue
         $message = "Hello {$this->invoice->primary_full_name}, your trip starts today! 🌍✈️\n\n";
         $message .= "Invoice: #{$this->invoice->invoice_no}\n";
         $message .= "Have a wonderful journey!";
+        $message .=  "\n\n";
+
+        // Optional: Link to the PDF or Invoice View
+        $message .=  url('/portal/invoices/' . $this->invoice->id);
 
         // Optional: Link to the PDF or Invoice View
         // $url = url('/storage/invoices/' . $this->invoice->invoice_no . '.pdf');
@@ -92,7 +96,7 @@ class TravelStartingNotification extends Notification implements ShouldQueue
             'invoice_id' => $this->invoice->id,
             'title'      => 'Trip Starting Today',
             'message'    => "Client {$this->invoice->primary_full_name} starts travel today.",
-            'link'       => url('/invoices/' . $this->invoice->id),
+            'link'       => url('/portal/invoices/' . $this->invoice->id),
         ];
     }
 }
