@@ -26,7 +26,11 @@
 
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/lucide@latest"></script>
 
+     <meta name="description" content="Manage leads, build itineraries, send WhatsApp updates and track payments.">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
     <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
