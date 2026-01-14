@@ -6,27 +6,20 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
-use App\Models\Invoice;
-use App\Models\User;
-use App\Channels\WhatsAppChannel; // Don't forget to import this
+use App\Channels\WhatsAppChannel;
+use App\Models\User; // Import User model
 
 class TravelStartingNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
     public $invoice;
-    public $senderUser; // We store the agent here to access their API Key in the Channel
+    public $agent;
 
-    /**
-     * Create a new notification instance.
-     *
-     * @param Invoice $invoice
-     * @param User|null $senderUser
-     */
-    public function __construct(Invoice $invoice, ?User $senderUser = null)
+    public function __construct($invoice, $agent)
     {
         $this->invoice = $invoice;
-        $this->senderUser = $senderUser;
+        $this->agent = $agent;
     }
 
     /**
@@ -34,6 +27,13 @@ class TravelStartingNotification extends Notification implements ShouldQueue
      */
     public function via($notifiable)
     {
+        // 1. If the recipient is a USER (The Agent), send Email and In-App (Database)
+        if ($notifiable instanceof User) {
+            return ['mail', 'database'];
+        }
+
+        // 2. If the recipient is a CLIENT (Anonymous route), send Email and WhatsApp
+        // This checks if we are using Notification::route()
         return ['mail', WhatsAppChannel::class];
     }
 
@@ -42,36 +42,33 @@ class TravelStartingNotification extends Notification implements ShouldQueue
      */
     public function toMail($notifiable)
     {
-        $mail = (new MailMessage)
-            ->subject('Bon Voyage! Your Trip Starts Today - ' . $this->invoice->package_name)
-            ->greeting('Hello ' . $this->invoice->primary_full_name . ',')
-            ->line('We are excited to inform you that your trip for **' . $this->invoice->package_name . '** starts today!')
-            ->line('**Travel Details:**')
-            ->line('📅 Start Date: ' . $this->invoice->travel_start_date)
-            ->line('👥 Travelers: ' . $this->invoice->total_travelers)
-            ->action('View Itinerary', url('/invoices/' . $this->invoice->id))
-            ->line('Have a safe and wonderful journey!');
-
-        // If specific agent is sending, set Reply-To
-        if ($this->senderUser && $this->senderUser->email) {
-            $mail->replyTo($this->senderUser->email, $this->senderUser->name);
+        $subject = "Travel Reminder: Invoice #{$this->invoice->invoice_no}";
+        
+        // You can customize the message based on who receives it
+        if ($notifiable instanceof User) {
+             return (new MailMessage)
+                ->subject("Reminder for Client: " . $subject)
+                ->line("Your client {$this->invoice->primary_full_name} is starting their travel today.")
+                ->action('View Invoice', url('/admin/invoices/' . $this->invoice->id));
         }
 
-        return $mail;
+        // Standard Client Email
+        return (new MailMessage)
+                    ->subject($subject)
+                    ->line('Your trip is starting soon!')
+                    ->line('Please find your details attached.');
     }
 
     /**
-     * Get the WhatsApp representation of the notification.
+     * Get the array representation of the notification (For Database/In-App).
      */
-    public function toWhatsapp($notifiable)
+    public function toArray($notifiable)
     {
-        // Formatting the WhatsApp Message
-        $msg  = "🌟 *Bon Voyage {$this->invoice->primary_full_name}!*\n\n";
-        $msg .= "Your trip to *{$this->invoice->package_name}* starts today! ✈️\n\n";
-        $msg .= "📅 Date: {$this->invoice->travel_start_date}\n";
-        $msg .= "👥 Travelers: {$this->invoice->total_travelers}\n\n";
-        $msg .= "Have a safe and wonderful journey!";
-
-        return $msg;
+        return [
+            'invoice_id' => $this->invoice->id,
+            'title'      => 'Trip Starting Today',
+            'message'    => "Client {$this->invoice->primary_full_name} starts travel today.",
+            'link'       => url('/invoices/' . $this->invoice->id),
+        ];
     }
 }

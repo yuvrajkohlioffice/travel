@@ -11,7 +11,52 @@
                     </div>
                     <!-- Navigation Links -->
                 </div>
+<div class="hidden sm:flex sm:items-center sm:ms-6">
 
+                <div class="ms-3 relative">
+                    <x-dropdown align="right" width="80">
+                        <x-slot name="trigger">
+                            <button type="button" class="relative inline-flex items-center p-2 text-sm font-medium text-center text-gray-500 hover:text-gray-700 focus:outline-none dark:text-gray-400 dark:hover:text-white transition duration-150 ease-in-out">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
+                                </svg>
+
+                                @if(isset($unreadNotifications) && $unreadNotifications->count() > 0)
+                                    <div class="absolute inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-500 border-2 border-white rounded-full -top-1 -end-1 dark:border-gray-900">
+                                        {{ $unreadNotifications->count() }}
+                                    </div>
+                                @endif
+                            </button>
+                        </x-slot>
+
+                        <x-slot name="content">
+                            <div class="block px-4 py-2 text-xs text-gray-400">
+                                {{ __('Notifications') }}
+                            </div>
+
+                            @if(isset($unreadNotifications) && $unreadNotifications->count() > 0)
+                                <div class="max-h-64 overflow-y-auto"> @foreach($unreadNotifications as $notification)
+                                        <x-dropdown-link href="{{ route('notifications.read', $notification->id) }}">
+                                            <div class="flex flex-col">
+                                                <span class="font-semibold">{{ $notification->data['title'] ?? 'Notification' }}</span>
+                                                <span class="text-xs text-gray-500">{{ $notification->data['message'] }}</span>
+                                                <span class="text-[10px] text-gray-400 mt-1">{{ $notification->created_at->diffForHumans() }}</span>
+                                            </div>
+                                        </x-dropdown-link>
+                                    @endforeach
+                                </div>
+                                <div class="border-t border-gray-200 dark:border-gray-600"></div>
+                                <x-dropdown-link href="{{ route('notifications.readAll') }}" class="text-center font-bold text-blue-500">
+                                    Mark all as Read
+                                </x-dropdown-link>
+                            @else
+                                <div class="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">
+                                    No new notifications.
+                                </div>
+                            @endif
+                        </x-slot>
+                    </x-dropdown>
+                </div>
                 <div class="hidden sm:flex sm:items-center sm:ms-6 ml-auto">
                     <!-- Teams Dropdown -->
                     @if (Laravel\Jetstream\Jetstream::hasTeamFeatures())

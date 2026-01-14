@@ -8,6 +8,8 @@ use App\Models\User;
 use App\Mail\FollowupReminderMail;
 use Illuminate\Support\Facades\Mail;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\View;
+use Illuminate\Support\Facades\Auth;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -24,6 +26,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        View::composer('*', function ($view) {
+            if (Auth::check()) {
+                $view->with('unreadNotifications', Auth::user()->unreadNotifications);
+            }
+        });
         // if (!app()->runningInConsole() && !session()->has('followup_reminder_checked')) {
         //     // Only run on web requests and once per session
         //     session(['followup_reminder_checked' => true]);

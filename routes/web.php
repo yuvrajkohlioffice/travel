@@ -5,13 +5,12 @@ use Laravel\Fortify\Features;
 
 // Controllers
 use App\Http\Controllers\RoleRouteController;
-use App\Http\Controllers\{CompanyController, SystemCommandController, FollowupReportController, PaymentMethodController, PickupPointController, FollowupReasonController, LeadStatusController, MessageTemplateController, CarController, DashboardController, UserController, InvoiceController, PackageTypeController, PackageCategoryController, DifficultyTypeController, HotelController, RoleController, PackageController, LeadController, FollowupController, PaymentController, WhatsAppController};
+use App\Http\Controllers\{CompanyController, NotificationController, SystemCommandController, FollowupReportController, PaymentMethodController, PickupPointController, FollowupReasonController, LeadStatusController, MessageTemplateController, CarController, DashboardController, UserController, InvoiceController, PackageTypeController, PackageCategoryController, DifficultyTypeController, HotelController, RoleController, PackageController, LeadController, FollowupController, PaymentController, WhatsAppController};
 use Livewire\Volt\Volt;
 
 use Symfony\Component\Process\Process;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Illuminate\Support\Facades\Artisan;
-
 
 // Guest / Client Portal Routes
 Route::prefix('portal')->group(function () {
@@ -86,9 +85,12 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
         | Lead Management
         |--------------------------------------------------------------------------
         */
-        Route::get('/test-whatsapp', [WhatsAppController::class, 'testConnection']);
-        Route::get('/system/run-daily-reminders', [SystemCommandController::class, 'runDailyReminders'])
-    ->name('system.run.daily');
+
+    Route::get('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::get('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.readAll');
+
+    Route::get('/test-whatsapp', [WhatsAppController::class, 'testConnection']);
+    Route::get('/system/run-daily-reminders', [SystemCommandController::class, 'runDailyReminders'])->name('system.run.daily');
     Route::post('/leads/send-access/{lead_id}', [App\Http\Controllers\GuestInvoiceController::class, 'sendAccessLink'])->name('leads.send_access');
     Route::prefix('system')
         ->name('system.')
@@ -120,7 +122,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
 
         return back()->with('success', "✅ Composer dump-autoload executed successfully! \n" . $process->getOutput());
     })->name('composer.dump');
-    
+
     Route::patch('/leads/{lead}/status', [LeadController::class, 'updateStatus'])->name('leads.updateStatus');
 
     Route::get('/leads/data', [LeadController::class, 'getLeadsData'])->name('leads.data');
