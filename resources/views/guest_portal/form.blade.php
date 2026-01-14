@@ -21,7 +21,12 @@
                     </div>
                 </div>
             @endif
-
+@if($invoice)
+        <a href="{{ route('guest.show', $invoice->id) }}" 
+           class="inline-flex items-center px-5 py-2.5 bg-white border border-gray-300 rounded-lg font-semibold text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600 shadow-sm transition-all duration-200">
+            <i class="fas fa-eye mr-2"></i> View Invoice
+        </a>
+    @endif
             <div class="bg-white shadow-xl rounded-2xl overflow-hidden">
                 
                 {{-- Form Start --}}

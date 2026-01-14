@@ -41,11 +41,11 @@ Route::get('/deploy', function () {
 // Guest / Client Portal Routes
 Route::prefix('portal')->group(function () {
     // 1. Show Login Page or Redirect to Form if logged in
+    
     Route::get('/login/{lead_id}', [App\Http\Controllers\GuestInvoiceController::class, 'showLogin'])->name('guest.login');
-
     // 2. Verify Password
     Route::post('/verify', [App\Http\Controllers\GuestInvoiceController::class, 'verifyPassword'])->name('guest.verify');
-
+    Route::get('/invoice/{id}', [App\Http\Controllers\GuestInvoiceController::class, 'show'])->name('guest.show');
     // 3. The Main Form (Protected by Session)
     Route::get('/form/{lead_id}', [App\Http\Controllers\GuestInvoiceController::class, 'showForm'])->name('guest.form');
 

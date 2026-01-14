@@ -16,7 +16,7 @@ class GuestInvoiceController extends Controller
     /**
      * 1. Show the Password/Login Screen
      */
-public function sendAccessLink(Request $request, $lead_id)
+    public function sendAccessLink(Request $request, $lead_id)
     {
         // 1. ✅ Get Logged-in User & Configure SMTP
         $user = auth()->user();
@@ -50,24 +50,26 @@ public function sendAccessLink(Request $request, $lead_id)
         // 5. Attempt to Send Email (User SMTP)
         try {
             Mail::to($lead->email)->send(new GuestAccessMail($lead, $url));
-            
+
             // Log success for debugging
             Log::info("Guest Access Link sent to {$lead->email} by User ID: {$user->id}");
 
             return response()->json([
-                'success' => true, 
+                'success' => true,
                 'message' => "Access link sent successfully to {$lead->email}!",
-                'lead_id' => $lead->id
+                'lead_id' => $lead->id,
             ]);
-
         } catch (\Exception $e) {
             // Log error
             Log::error("Failed to send Guest Access Email. User: {$user->id}. Error: " . $e->getMessage());
 
-            return response()->json([
-                'success' => false, 
-                'message' => 'Email failed: ' . $e->getMessage()
-            ], 500);
+            return response()->json(
+                [
+                    'success' => false,
+                    'message' => 'Email failed: ' . $e->getMessage(),
+                ],
+                500,
+            );
         }
     }
     public function showLogin($lead_id)
@@ -194,5 +196,20 @@ public function sendAccessLink(Request $request, $lead_id)
         }
 
         return back()->with('success', 'Details updated successfully!');
+    }
+    public function show($id)
+    {
+        // 1. Fetch Invoice first to get the Lead ID
+        $invoice = Invoice::with(['lead.createdBy.company', 'package', 'payments'])->findOrFail($id);
+        $lead_id = $invoice->lead_id;
+
+        // 2. ✅ Security Check: Does the user have access to THIS lead?
+        if (!Session::has('client_access_' . $lead_id)) {
+            return redirect()
+                ->route('guest.login', ['lead_id' => $lead_id])
+                ->with('error', 'Please login to view this invoice.');
+        }
+
+        return view('guest_portal.show', compact('invoice'));
     }
 }

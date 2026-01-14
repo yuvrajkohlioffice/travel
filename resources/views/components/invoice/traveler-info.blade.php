@@ -3,7 +3,7 @@
         <i class="fas fa-user-tag mr-3 text-blue-500 bg-blue-100 p-2 rounded-full"></i> Traveler Information
     </h3>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+    <div class="grid grid-cols-2 md:grid-cols-2 gap-8">
 
         {{-- Primary Traveler --}}
         <div class="bg-gradient-to-br from-blue-50 to-white rounded-2xl p-6 shadow-sm border border-blue-100">
