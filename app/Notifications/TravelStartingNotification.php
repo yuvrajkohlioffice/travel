@@ -28,14 +28,8 @@ class TravelStartingNotification extends Notification implements ShouldQueue
      */
     public function via($notifiable)
     {
-        // 1. If sending to the AGENT (System User)
-        if ($notifiable instanceof User) {
-            return ['mail', 'database'];
-        }
-
-        // 2. If sending to the CLIENT (Anonymous from Command)
-        // This will automatically use whatever routes (mail/whatsapp) we set in the Command
-        return ['mail', WhatsAppChannel::class];
+        // Send via Email AND save to Database (for the dashboard)
+        return ['mail', 'database'];
     }
 
     /**
@@ -43,25 +37,18 @@ class TravelStartingNotification extends Notification implements ShouldQueue
      */
     public function toMail($notifiable)
     {
-        $subject = "Trip Reminder: Invoice #{$this->invoice->invoice_no}";
+        $leadName = $this->followup->lead->name ?? 'Unknown Lead';
+        $agentName = $this->followup->user->name ?? 'Unknown Agent';
 
-        // Email for Agent
-        if ($notifiable instanceof User) {
-             return (new MailMessage)
-                ->subject("Reminder: Client Trip Starts Today")
-                ->line("Your client {$this->invoice->primary_full_name} is starting their travel today.")
-                ->action('View Invoice', url('/admin/invoices/' . $this->invoice->id));
-        }
-
-        // Email for Client
         return (new MailMessage)
-            ->subject("Bon Voyage! Your Trip Starts Today")
-            ->greeting("Hello {$this->invoice->primary_full_name},")
-            ->line("We are excited to remind you that your trip starts today!")
-            ->line("Invoice Reference: #{$this->invoice->invoice_no}")
-            ->line("Please find your travel details attached or via the link below.")
-            // ->action('View Itinerary', url('/invoices/view/' . $this->invoice->id)) // Optional Link
-            ->line('Have a safe and wonderful journey!');
+                    ->subject("📅 Follow-up Reminder: $leadName")
+                    ->greeting("Hello " . $notifiable->name . ",")
+                    ->line("This is a reminder for a scheduled follow-up today.")
+                    ->line("**Lead Name:** " . $leadName)
+                    ->line("**Assigned Agent:** " . $agentName)
+                    ->line("**Follow-up Remarks:** " . $this->followup->remarks)
+                    ->action('View Follow-up', url('/admin/leads/' . $this->followup->lead_id))
+                    ->line('Please ensure this is actioned today.');
     }
 
     /**
@@ -93,10 +80,11 @@ class TravelStartingNotification extends Notification implements ShouldQueue
     public function toArray($notifiable)
     {
         return [
-            'invoice_id' => $this->invoice->id,
-            'title'      => 'Trip Starting Today',
-            'message'    => "Client {$this->invoice->primary_full_name} starts travel today.",
-            'link'       => url('/portal/invoices/' . $this->invoice->id),
+            'followup_id' => $this->followup->id,
+            'lead_id'     => $this->followup->lead_id,
+            'title'       => 'Follow-up Due Today',
+            'message'     => 'Lead: ' . ($this->followup->lead->name ?? 'N/A'),
+            'link'        => url('/admin/leads/' . $this->followup->lead_id),
         ];
     }
 }

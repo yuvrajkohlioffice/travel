@@ -2,31 +2,24 @@
 
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schedule;
 use App\Models\Followup;
 use App\Models\User;
-use App\Mail\FollowupReminderMail;
 use Carbon\Carbon;
+// IMPORT THE NOTIFICATION CLASS
+use App\Notifications\FollowupReminderNotification; 
 
 /*
 |--------------------------------------------------------------------------
 | Console Routes
 |--------------------------------------------------------------------------
-|
-| This file is where you may define all of your Closure based console
-| commands. Each Closure is bound to a command instance allowing a
-| simple approach to interacting with each command's IO methods.
-|
 */
 
-// 1. Inspire Command
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-// 2. Follow-up Reminders Command Definition
-// 2. Follow-up Reminders Command Definition
+// --- UPDATED FOLLOW-UP COMMAND START ---
 Artisan::command('followups:remind', function () {
     // 1. Set Date
     $today = Carbon::today('Asia/Kolkata');
@@ -41,7 +34,7 @@ Artisan::command('followups:remind', function () {
     $this->info("🔍 Found {$count} followups scheduled for today.");
 
     if ($count === 0) {
-        $this->error("❌ No followups found in DB for this date. Check your database 'next_followup_date' column.");
+        $this->error("❌ No followups found.");
         return;
     }
 
@@ -54,58 +47,52 @@ Artisan::command('followups:remind', function () {
         $this->line("------------------------------------------------");
         $this->info("Processing Followup ID: {$followup->id}");
 
-        // --- SEND TO ADMINS ---
+        // --- A. SEND TO ADMINS ---
         foreach ($superAdmins as $admin) {
-            if ($admin->email) {
+            try {
+                // CHANGED: Use notify() instead of Mail::to()
+                // This triggers 'via' => ['mail', 'database']
+                $admin->notify(new FollowupReminderNotification($followup));
+                $this->info("   ✅ Notified Admin (DB+Mail): {$admin->email}");
+            } catch (\Exception $e) {
+                $this->error("   ❌ Failed Admin {$admin->email}: " . $e->getMessage());
+            }
+        }
+
+        // --- B. SEND TO AGENT (USER) ---
+        if ($followup->user) {
+            // Prevent duplicate if Agent is also an Admin
+            if (!$superAdmins->contains('id', $followup->user->id)) {
                 try {
-                    Mail::to($admin->email)->send(new FollowupReminderMail($followup));
-                    $this->info("   ✅ Sent to Admin: {$admin->email}");
+                    // CHANGED: Use notify() here too
+                    $followup->user->notify(new FollowupReminderNotification($followup));
+                    $this->info("   ✅ Notified Agent (DB+Mail): {$followup->user->email}");
                 } catch (\Exception $e) {
-                    $this->error("   ❌ Failed sending to Admin ({$admin->email}): " . $e->getMessage());
+                    $this->error("   ❌ Failed Agent {$followup->user->email}: " . $e->getMessage());
                 }
             } else {
-                $this->warn("   ⚠️ Admin (ID: {$admin->id}) has no email.");
-            }
-        }
-
-        // --- SEND TO AGENT (USER) ---
-        // Check if user exists
-        if (!$followup->user) {
-            $this->error("   ⚠️ Skipping Agent: No User assigned to this followup (user_id is null or invalid).");
-            continue;
-        }
-
-        if ($followup->user->email) {
-            try {
-                Mail::to($followup->user->email)->send(new FollowupReminderMail($followup));
-                $this->info("   ✅ Sent to Agent: {$followup->user->email}");
-            } catch (\Exception $e) {
-                $this->error("   ❌ Failed sending to Agent ({$followup->user->email}): " . $e->getMessage());
+                $this->info("   ℹ️ Agent is also Admin (Skipping duplicate).");
             }
         } else {
-            $this->warn("   ⚠️ Agent (ID: {$followup->user->id}) has no email address.");
+            $this->warn("   ⚠️ No User assigned to this followup.");
         }
     }
 
     $this->info("\n✅ Process Completed.");
 
-})->describe('Send follow-up reminders for today');
+})->describe('Send follow-up reminders (Mail + DB) for today');
+// --- UPDATED FOLLOW-UP COMMAND END ---
+
 /*
 |--------------------------------------------------------------------------
 | Scheduler
 |--------------------------------------------------------------------------
-|
-| Here we schedule both the Closure command defined above AND the 
-| class-based command defined separately.
-|
 */
 
-// Schedule Follow-ups for 10:00 AM
 Schedule::command('followups:remind')
-    ->dailyAt('10:15')
+    ->dailyAt('10:30')
     ->timezone('Asia/Kolkata');
 
-// Schedule Travel Reminders for 10:00 AM
 Schedule::command('travel:send-reminders')
-    ->dailyAt('10:15')
+    ->dailyAt('10:30')
     ->timezone('Asia/Kolkata');
