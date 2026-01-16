@@ -1,206 +1,228 @@
 <x-app-layout>
     {{-- Main Container --}}
     <div x-data="leadModals()" x-cloak class="min-h-screen ">
-    <div class="min-h-screen bg-gray-100 dark:bg-gray-900 p-6 ml-64">
-        
-        {{-- 1. HEADER SECTION --}}
-        <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-            <div class="flex items-center gap-3">
-                <div class="bg-white dark:bg-gray-800 p-3 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700">
-                    <i class="fa-solid fa-people-group text-xl text-blue-600 dark:text-blue-400"></i>
-                </div>
-                <div>
-                    <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">Leads Management</h1>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Track, filter, and assign your leads efficiently.</p>
-                </div>
-            </div>
+        <div class="min-h-screen bg-gray-100 dark:bg-gray-900 p-6 ml-64">
 
-            <div class="flex flex-wrap items-center gap-3">
-                {{-- Import Actions --}}
-                <div class="flex items-center gap-2">
-                    <a href="/Example-Import-Leads.xlsx"
-                        class="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 transition shadow-sm"
-                        title="Download Template">
-                        <i class="fa-regular fa-file-excel mr-1"></i> Template
-                    </a>
-                    
-                    <form action="{{ route('leads.import') }}" method="POST" enctype="multipart/form-data" class="flex items-center">
-                        @csrf
-                        <label class="cursor-pointer px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-l-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 border-r-0 transition shadow-sm">
-                            <i class="fa-solid fa-upload mr-1"></i> Choose
-                            <input type="file" name="file" accept=".xlsx,.csv" class="hidden" onchange="this.form.submit()">
-                        </label>
-                        <button class="px-3 py-2 bg-gray-800 dark:bg-gray-700 text-white text-sm rounded-r-lg hover:bg-black transition shadow-sm">
-                            Import
-                        </button>
-                    </form>
-                </div>
-
-                {{-- Add Lead --}}
-                <a href="{{ route('leads.create') }}"
-                    class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 shadow-md transition transform hover:scale-105">
-                    <i class="fa-solid fa-plus"></i> Add Lead
-                </a>
-            </div>
-        </header>
-
-        {{-- 2. KPI CARDS (Status Counts) --}}
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-4 mb-6">
-            @foreach ($statusOthersCounts as $status => $data)
-                <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex items-center gap-3 transition hover:shadow-md">
-                    <div class="w-10 h-10 flex items-center justify-center rounded-full text-white shadow-sm {{ $data['color'] }}">
-                        <i class="fa-solid {{ $data['icon'] }} text-sm"></i>
+            {{-- 1. HEADER SECTION --}}
+            <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+                <div class="flex items-center gap-3">
+                    <div
+                        class="bg-white dark:bg-gray-800 p-3 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700">
+                        <i class="fa-solid fa-people-group text-xl text-blue-600 dark:text-blue-400"></i>
                     </div>
                     <div>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold tracking-wider">{{ $status }}</p>
-                        <p class="text-lg font-bold text-gray-800 dark:text-gray-100">{{ $data['count'] }}</p>
+                        <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">Leads Management</h1>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Track, filter, and assign your leads
+                            efficiently.</p>
                     </div>
                 </div>
-            @endforeach
-        </div>
 
-        {{-- 3. FILTERS & TABLE CONTAINER --}}
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-5">
-            
-            {{-- Search Inputs --}}
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                <div class="relative">
-                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-gray-400"></i>
-                    <input type="text" id="filter-id" placeholder="ID" 
-                        class="w-full pl-10 rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-white focus:ring-blue-500 focus:border-blue-500 transition">
+                <div class="flex flex-wrap items-center gap-3">
+                    {{-- Import Actions --}}
+                    <div class="flex items-center gap-2">
+                        <a href="/Example-Import-Leads.xlsx"
+                            class="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 transition shadow-sm"
+                            title="Download Template">
+                            <i class="fa-regular fa-file-excel mr-1"></i> Template
+                        </a>
+
+                        <form action="{{ route('leads.import') }}" method="POST" enctype="multipart/form-data"
+                            class="flex items-center">
+                            @csrf
+                            <label
+                                class="cursor-pointer px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-l-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 border-r-0 transition shadow-sm">
+                                <i class="fa-solid fa-upload mr-1"></i> Choose
+                                <input type="file" name="file" accept=".xlsx,.csv" class="hidden"
+                                    onchange="this.form.submit()">
+                            </label>
+                            <button
+                                class="px-3 py-2 bg-gray-800 dark:bg-gray-700 text-white text-sm rounded-r-lg hover:bg-black transition shadow-sm">
+                                Import
+                            </button>
+                        </form>
+                    </div>
+
+                    {{-- Add Lead --}}
+                    <a href="{{ route('leads.create') }}"
+                        class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 shadow-md transition transform hover:scale-105">
+                        <i class="fa-solid fa-plus"></i> Add Lead
+                    </a>
                 </div>
-                <div class="relative">
-                    <i class="fa-solid fa-user absolute left-3 top-3 text-gray-400"></i>
-                    <input type="text" id="filter-client" placeholder="Client Name, Email, Phone" 
-                        class="w-full pl-10 rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-white focus:ring-blue-500 focus:border-blue-500 transition">
-                </div>
-                <div class="relative">
-                    <i class="fa-solid fa-location-dot absolute left-3 top-3 text-gray-400"></i>
-                    <input type="text" id="filter-location" placeholder="City, District, Country" 
-                        class="w-full pl-10 rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-white focus:ring-blue-500 focus:border-blue-500 transition">
-                </div>
-                <div class="relative">
-                    <i class="fa-solid fa-user-tag absolute left-3 top-3 text-gray-400"></i>
-                    <select id="filter-assigned" class="w-full pl-10 rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-white focus:ring-blue-500 focus:border-blue-500 transition">
-                        <option value="">All Assigned Users</option>
-                        @foreach ($users as $u)
-                            <option value="{{ $u->name }}">{{ $u->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
+            </header>
+
+            {{-- 2. KPI CARDS (Status Counts) --}}
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-4 mb-6">
+                @foreach ($statusOthersCounts as $status => $data)
+                    <div
+                        class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex items-center gap-3 transition hover:shadow-md">
+                        <div
+                            class="w-10 h-10 flex items-center justify-center rounded-full text-white shadow-sm {{ $data['color'] }}">
+                            <i class="fa-solid {{ $data['icon'] }} text-sm"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold tracking-wider">
+                                {{ $status }}</p>
+                            <p class="text-lg font-bold text-gray-800 dark:text-gray-100">{{ $data['count'] }}</p>
+                        </div>
+                    </div>
+                @endforeach
             </div>
 
-            <div class="flex flex-col gap-4 mb-6">
-                
-                {{-- Dynamic Status Tabs --}}
-                <div class="flex flex-wrap gap-2 mb-4">
-    {{-- "All Status" Button (Default Active) --}}
-    <button data-value="" 
-        class="status-btn px-5 py-2 rounded-full text-sm font-semibold border shadow-md transition-all duration-200 
+            {{-- 3. FILTERS & TABLE CONTAINER --}}
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-5">
+
+                {{-- Search Inputs --}}
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    <div class="relative">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-gray-400"></i>
+                        <input type="text" id="filter-id" placeholder="ID"
+                            class="w-full pl-10 rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-white focus:ring-blue-500 focus:border-blue-500 transition">
+                    </div>
+                    <div class="relative">
+                        <i class="fa-solid fa-user absolute left-3 top-3 text-gray-400"></i>
+                        <input type="text" id="filter-client" placeholder="Client Name, Email, Phone"
+                            class="w-full pl-10 rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-white focus:ring-blue-500 focus:border-blue-500 transition">
+                    </div>
+                    <div class="relative">
+                        <i class="fa-solid fa-location-dot absolute left-3 top-3 text-gray-400"></i>
+                        <input type="text" id="filter-location" placeholder="City, District, Country"
+                            class="w-full pl-10 rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-white focus:ring-blue-500 focus:border-blue-500 transition">
+                    </div>
+                    <div class="relative">
+                        <i class="fa-solid fa-user-tag absolute left-3 top-3 text-gray-400"></i>
+                        <select id="filter-assigned"
+                            class="w-full pl-10 rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-white focus:ring-blue-500 focus:border-blue-500 transition">
+                            <option value="">All Assigned Users</option>
+                            @foreach ($users as $u)
+                                <option value="{{ $u->name }}">{{ $u->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-4 mb-6">
+
+                    {{-- Dynamic Status Tabs --}}
+                    <div class="flex flex-wrap gap-2 mb-4">
+                        {{-- "All Status" Button (Default Active) --}}
+                        <button data-value=""
+                            class="status-btn px-5 py-2 rounded-full text-sm font-semibold border shadow-md transition-all duration-200 
                bg-blue-600 text-white border-blue-600 hover:shadow-lg transform active:scale-95">
-        All Status
-    </button>
-
-    {{-- Dynamic Status Buttons (Default Inactive) --}}
-    @foreach ($leadStatuses as $status)
-        <button data-value="{{ $status->name }}" 
-            class="status-btn px-5 py-2 rounded-full text-sm font-medium border transition-all duration-200 
-                   bg-white text-gray-600 border-gray-300 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transform active:scale-95">
-            {{ $status->name }}
-        </button>
-    @endforeach
-</div>
-
-                {{-- Categories & Date Range --}}
-                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    {{-- Categories --}}
-                    <div class="flex flex-wrap gap-2">
-                        <button data-value="" class="category-btn px-3 py-1.5 rounded-lg border text-xs font-semibold uppercase tracking-wide transition bg-gray-800 text-white border-gray-800">
-                            All Types
+                            All Status
                         </button>
-                        @foreach (['Hot', 'Warm', 'Cold'] as $cat)
-                            <button data-value="{{ $cat }}" class="category-btn px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-600 text-xs font-semibold uppercase tracking-wide hover:bg-gray-50 transition">
-                                {{ $cat }}
+
+                        {{-- Dynamic Status Buttons (Default Inactive) --}}
+                        @foreach ($leadStatuses as $status)
+                            <button data-value="{{ $status->name }}"
+                                class="status-btn px-5 py-2 rounded-full text-sm font-medium border transition-all duration-200 
+                   bg-white text-gray-600 border-gray-300 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transform active:scale-95">
+                                {{ $status->name }}
                             </button>
                         @endforeach
                     </div>
 
-                    {{-- Date Ranges with Live Counts --}}
-                    <div class="flex flex-wrap gap-1 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
-                        @foreach(['all' => 'All Time', 'today' => 'Today', 'yesterday' => 'Yesterday', 'week' => 'This Week', 'month' => 'This Month'] as $key => $label)
-                            <button data-value="{{ $key }}" class="date-range-btn flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition {{ $loop->first ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">
-                                {{ $label }}
-                                <span id="count-{{ $key }}" class="bg-gray-200 text-gray-700 text-xs px-1.5 py-0.5 rounded-full">0</span>
+                    {{-- Categories & Date Range --}}
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        {{-- Categories --}}
+                        <div class="flex flex-wrap gap-2">
+                            <button data-value=""
+                                class="category-btn px-3 py-1.5 rounded-lg border text-xs font-semibold uppercase tracking-wide transition bg-gray-800 text-white border-gray-800">
+                                All Types
                             </button>
-                        @endforeach
+                            @foreach (['Hot', 'Warm', 'Cold'] as $cat)
+                                <button data-value="{{ $cat }}"
+                                    class="category-btn px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-600 text-xs font-semibold uppercase tracking-wide hover:bg-gray-50 transition">
+                                    {{ $cat }}
+                                </button>
+                            @endforeach
+                        </div>
+
+                        {{-- Date Ranges with Live Counts --}}
+                        <div class="flex flex-wrap gap-1 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
+                            @foreach (['all' => 'All Time', 'today' => 'Today', 'yesterday' => 'Yesterday', 'week' => 'This Week', 'month' => 'This Month'] as $key => $label)
+                                <button data-value="{{ $key }}"
+                                    class="date-range-btn flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition {{ $loop->first ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">
+                                    {{ $label }}
+                                    <span id="count-{{ $key }}"
+                                        class="bg-gray-200 text-gray-700 text-xs px-1.5 py-0.5 rounded-full">0</span>
+                                </button>
+                            @endforeach
+                        </div>
                     </div>
                 </div>
+
+                {{-- Bulk Actions Bar --}}
+                <div id="bulkBar"
+                    class="hidden animate-fade-in-down mb-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 p-3 rounded-lg flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <span class="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-1 rounded">BULK ACTION</span>
+                        <span id="selectedCount" class="text-sm text-gray-700 dark:text-gray-300 font-medium">0 leads
+                            selected</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <select id="bulkAssignUser"
+                            class="text-sm rounded border-gray-300 dark:bg-gray-800 dark:border-gray-600">
+                            <option value="">Select User to Assign...</option>
+                            @foreach ($users as $user)
+                                <option value="{{ $user->id }}">{{ $user->name }}</option>
+                            @endforeach
+                        </select>
+                        <button id="bulkAssignBtn"
+                            class="px-3 py-1.5 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                            Apply Assignment
+                        </button>
+                    </div>
+                </div>
+
+                {{-- Data Table --}}
+                <div class="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
+                    <table id="Leads-table" class="w-full text-sm text-left">
+                        <thead
+                            class="bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-300 font-semibold uppercase text-xs">
+                            <tr>
+                                <th class="w-10 p-4 text-center">
+                                    <input type="checkbox" id="selectAll"
+                                        class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer">
+                                </th>
+                                <th class="p-3">Client Details</th>
+                                <th class="p-3">Location</th>
+                                <th class="p-3">Last Activity</th>
+                                <th class="p-3">Inquiry</th>
+                                <th class="p-3">Proposal</th>
+                                <th class="p-3">Status</th>
+                                <th class="p-3">Assigned To</th>
+                                <th class="p-3 text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100 dark:divide-gray-700 bg-white dark:bg-gray-800">
+                            {{-- DataTables loads here --}}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
-            {{-- Bulk Actions Bar --}}
-            <div id="bulkBar" class="hidden animate-fade-in-down mb-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 p-3 rounded-lg flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <span class="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-1 rounded">BULK ACTION</span>
-                    <span id="selectedCount" class="text-sm text-gray-700 dark:text-gray-300 font-medium">0 leads selected</span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <select id="bulkAssignUser" class="text-sm rounded border-gray-300 dark:bg-gray-800 dark:border-gray-600">
-                        <option value="">Select User to Assign...</option>
-                        @foreach ($users as $user)
-                            <option value="{{ $user->id }}">{{ $user->name }}</option>
-                        @endforeach
-                    </select>
-                    <button id="bulkAssignBtn" class="px-3 py-1.5 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
-                        Apply Assignment
-                    </button>
-                </div>
-            </div>
-
-            {{-- Data Table --}}
-            <div class="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
-                <table id="Leads-table" class="w-full text-sm text-left">
-                    <thead class="bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-300 font-semibold uppercase text-xs">
-                        <tr>
-                            <th class="w-10 p-4 text-center">
-                                <input type="checkbox" id="selectAll" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer">
-                            </th>
-                            <th class="p-3">Client Details</th>
-                            <th class="p-3">Location</th>
-                            <th class="p-3">Last Activity</th>
-                            <th class="p-3">Inquiry</th>
-                            <th class="p-3">Proposal</th>
-                            <th class="p-3">Status</th>
-                            <th class="p-3">Assigned To</th>
-                            <th class="p-3 text-center">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100 dark:divide-gray-700 bg-white dark:bg-gray-800">
-                        {{-- DataTables loads here --}}
-                    </tbody>
-                </table>
-            </div>
+            <x-edit-lead />
+            <x-followup-modal :packages="$packages" />
+            <x-share-modal :packages="$packages" />
+            <x-invoice-modal :packages="$packages" />
+            <x-payment-modal />
         </div>
-  
-        <x-edit-lead />
-        <x-followup-modal :packages="$packages" />
-        <x-share-modal :packages="$packages" />
-        <x-invoice-modal :packages="$packages" />
-        <x-payment-modal />
-    </div>
     </div>
     <script>
-        const activeClasses   = ['bg-blue-600', 'text-white', 'border-blue-600', 'shadow-md', 'font-semibold'];
-const inactiveClasses = ['bg-white', 'text-gray-600', 'border-gray-300', 'hover:bg-blue-50', 'hover:text-blue-600', 'hover:border-blue-400', 'font-medium'];
+        const activeClasses = ['bg-blue-600', 'text-white', 'border-blue-600', 'shadow-md', 'font-semibold'];
+        const inactiveClasses = ['bg-white', 'text-gray-600', 'border-gray-300', 'hover:bg-blue-50', 'hover:text-blue-600',
+            'hover:border-blue-400', 'font-medium'
+        ];
 
-// Helper function to toggle button styles
-function toggleButtonState(buttons, activeButton) {
-    buttons.forEach(btn => {
-        btn.classList.remove(...activeClasses);
-        btn.classList.add(...inactiveClasses);
-    });
-    activeButton.classList.remove(...inactiveClasses);
-    activeButton.classList.add(...activeClasses);
-}
+        // Helper function to toggle button styles
+        function toggleButtonState(buttons, activeButton) {
+            buttons.forEach(btn => {
+                btn.classList.remove(...activeClasses);
+                btn.classList.add(...inactiveClasses);
+            });
+            activeButton.classList.remove(...inactiveClasses);
+            activeButton.classList.add(...activeClasses);
+        }
         document.addEventListener('DOMContentLoaded', () => {
             // ---------- state ----------
             const selectedIds = new Set(); // persists across pages
@@ -378,64 +400,66 @@ function toggleButtonState(buttons, activeButton) {
                     datatable.page(0).draw(false);
                 });
             });
-document.querySelectorAll('.status-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-        // UI: Toggle Styles
-        toggleButtonState(document.querySelectorAll('.status-btn'), this);
+            document.querySelectorAll('.status-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    // UI: Toggle Styles
+                    toggleButtonState(document.querySelectorAll('.status-btn'), this);
 
-        const value = this.dataset.value || '';
+                    const value = this.dataset.value || '';
 
-        // Logic: Special handling for "Follow-up Taken"
-        if (value === 'Follow-up Taken') { 
-            // Note: Ensure this string matches your DB value exactly, or use the slug 'followup_taken'
-            selectedStatus = 'Follow-up Taken';
-            
-            // Force "Today" logic when switching to Follow-ups
-            selectedDateRange = 'today'; 
+                    // Logic: Special handling for "Follow-up Taken"
+                    if (value === 'Follow-up Taken') {
+                        // Note: Ensure this string matches your DB value exactly, or use the slug 'followup_taken'
+                        selectedStatus = 'Follow-up Taken';
 
-            // UI: Sync Date Range Buttons visually to "Today"
-            const todayBtn = document.querySelector('.date-range-btn[data-value="today"]');
-            if (todayBtn) {
-                toggleButtonState(document.querySelectorAll('.date-range-btn'), todayBtn);
-            }
-        } else {
-            selectedStatus = value;
-        }
+                        // Force "Today" logic when switching to Follow-ups
+                        selectedDateRange = 'today';
 
-        // Refresh Table
-        datatable.page(0).draw(false);
-        // loadCounts(); // Uncomment if you have the count function
-    });
-});
+                        // UI: Sync Date Range Buttons visually to "Today"
+                        const todayBtn = document.querySelector(
+                            '.date-range-btn[data-value="today"]');
+                        if (todayBtn) {
+                            toggleButtonState(document.querySelectorAll('.date-range-btn'),
+                                todayBtn);
+                        }
+                    } else {
+                        selectedStatus = value;
+                    }
 
-// 3. Handling Category Buttons (Hot/Warm/Cold)
-document.querySelectorAll('.category-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-        // UI: Toggle Styles
-        toggleButtonState(document.querySelectorAll('.category-btn'), this);
+                    // Refresh Table
+                    datatable.page(0).draw(false);
+                    // loadCounts(); // Uncomment if you have the count function
+                });
+            });
 
-        // Update Variable
-        selectedLeadStatus = this.dataset.value || '';
+            // 3. Handling Category Buttons (Hot/Warm/Cold)
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    // UI: Toggle Styles
+                    toggleButtonState(document.querySelectorAll('.category-btn'), this);
 
-        // Refresh Table
-        datatable.page(0).draw(false);
-        // loadCounts(); 
-    });
-});
+                    // Update Variable
+                    selectedLeadStatus = this.dataset.value || '';
 
-// 4. Handling Date Range Buttons
-document.querySelectorAll('.date-range-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-        // UI: Toggle Styles
-        toggleButtonState(document.querySelectorAll('.date-range-btn'), this);
+                    // Refresh Table
+                    datatable.page(0).draw(false);
+                    // loadCounts(); 
+                });
+            });
 
-        // Update Variable
-        selectedDateRange = this.dataset.value || 'all';
+            // 4. Handling Date Range Buttons
+            document.querySelectorAll('.date-range-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    // UI: Toggle Styles
+                    toggleButtonState(document.querySelectorAll('.date-range-btn'), this);
 
-        // Refresh Table
-        datatable.page(0).draw(false);
-    });
-});
+                    // Update Variable
+                    selectedDateRange = this.dataset.value || 'all';
+
+                    // Refresh Table
+                    datatable.page(0).draw(false);
+                });
+            });
 
             // ---------- Select All on current page ----------
             selectAllCheckbox.addEventListener('change', function() {
