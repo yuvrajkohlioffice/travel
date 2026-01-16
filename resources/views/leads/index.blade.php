@@ -53,13 +53,14 @@
             {{-- 2. KPI CARDS (Status Counts) --}}
             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-4 mb-6">
                 @foreach ($statusOthersCounts as $status => $data)
-                    <div
-                        class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex items-center gap-3 transition hover:shadow-md">
+                    <div data-value="{{ $status }}"
+                               
+                        class=" status-btn bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex items-center gap-3 transition hover:shadow-md" style="background: white !important">
                         <div
                             class="w-10 h-10 flex items-center justify-center rounded-full text-white shadow-sm {{ $data['color'] }}">
                             <i class="fa-solid {{ $data['icon'] }} text-sm"></i>
                         </div>
-                        <div>
+                        <div >
                             <p class="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold tracking-wider">
                                 {{ $status }}</p>
                             <p class="text-lg font-bold text-gray-800 dark:text-gray-100">{{ $data['count'] }}</p>

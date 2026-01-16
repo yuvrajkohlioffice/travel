@@ -116,102 +116,150 @@ class LeadController extends Controller
      * Display the main Leads Dashboard (Index).
      */
     public function index(Request $request)
-    {
-        $user = auth()->user();
-        $companyId = $user->company_id;
+{
+    $user = auth()->user();
+    $companyId = $user->company_id;
 
-        // 1. Fetch Statuses (Global + Company Specific)
-        // Using the logic from your LeadStatus model scope essentially
-        $leadStatuses = LeadStatus::where('is_active', true)
-            ->where(fn($q) => $q->where('company_id', $companyId)->orWhereNull('company_id'))
-            ->orderByRaw('company_id IS NULL') // Prefer company specific
-            ->orderBy('order_by', 'asc')
-            ->get()
-            ->unique('name')
-            ->values();
+    // 1. Fetch Defined Statuses (Name, Color, Icon)
+    // We keyBy('name') to make looking up colors easier later
+    $leadStatuses = LeadStatus::where('is_active', true)
+        ->where(fn($q) => $q->where('company_id', $companyId)->orWhereNull('company_id'))
+        ->orderBy('order_by', 'asc')
+        ->get();
 
-        // 2. Fetch Dependencies
-        $users = User::select('id', 'name')->get();
-        $packages = Package::select('id', 'package_name')->orderBy('package_name')->get();
-        
-        // 3. Prepare Filters for View
-        $filters = $request->only(['country', 'district', 'city', 'lead_status', 'status', 'package_id', 'user_id', 'assigned_to', 'time']);
-        $filters['time'] = $filters['time'] ?? 'all';
+    $users = User::select('id', 'name')->get();
+    $packages = Package::select('id', 'package_name')->orderBy('package_name')->get();
 
-        // 4. Initial Load (Server Side Rendered Table)
-        // Note: The AJAX 'getLeadsData' will handle the heavy lifting later.
-        $leads = $this->getBaseQuery()
-            ->with(['package:id,package_name', 'latestAssignedUser.user:id,name', 'createdBy:id,name'])
-            ->orderByDesc('created_at')
-            ->paginate(50);
+    // 2. Prepare Filters
+    $filters = $request->only(['country', 'district', 'city', 'lead_status', 'status', 'package_id', 'user_id', 'assigned_to', 'time']);
+    $filters['time'] = $filters['time'] ?? 'all';
 
-        // 5. Initial Counts (Placeholder or Basic)
-        // We will load the precise counts via AJAX to speed up page load
-        $timeCounts = ['all' => 0, 'today' => 0, 'week' => 0, 'month' => 0]; 
-        $statusOthersCounts = []; 
+    // 3. Get Base Query (Permissions only)
+    $baseQuery = $this->getBaseQuery();
+    
+    // Apply filters to the base query so the top cards reflect the search results
+    // (Optional: If you want cards to always show total database counts, remove the next line)
+    $filteredQuery = $this->applyFilters(clone $baseQuery, $request);
 
-        return view('leads.index', compact('leads', 'packages', 'users', 'filters', 'statusOthersCounts', 'timeCounts', 'leadStatuses'));
+    // 4. Time Counts (For the date tabs)
+    // We use the filtered query for this to respect other filters like 'City' or 'User'
+    // Note: This logic assumes 'created_at' for standard leads. 
+    $timeCounts = [
+        'all'   => (clone $filteredQuery)->count(),
+        'today' => (clone $filteredQuery)->whereDate('created_at', today())->count(),
+        'week'  => (clone $filteredQuery)->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->count(),
+        'month' => (clone $filteredQuery)->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->count(),
+    ];
+
+    // 5. Status Counts (The Array you asked for)
+    // OPTIMIZATION: Group by status in SQL to get all counts in 1 query
+    $statusCountsRaw = (clone $filteredQuery)
+        ->select('status', DB::raw('COUNT(*) as total'))
+        ->groupBy('status')
+        ->pluck('total', 'status')
+        ->toArray();
+
+    $statusOthersCounts = [];
+
+    // A. Add "All" Card
+    $statusOthersCounts['All'] = [
+        'count' => $timeCounts['all'],
+        'color' => 'bg-gray-500 text-white', // Default Gray
+        'icon'  => 'fa-layer-group', // Default Icon
+    ];
+
+    // B. Add Dynamic Status Cards
+    foreach ($leadStatuses as $status) {
+        $count = $statusCountsRaw[$status->name] ?? 0; // Get count or 0 if none
+
+        // Determine Icon based on status name (Since icon isn't in DB, we map it here)
+        $icon = match($status->name) {
+            'Pending'         => 'fa-hourglass-start',
+            'Approved'        => 'fa-check-double',
+            'Quotation Sent'  => 'fa-file-invoice-dollar',
+            'Follow-up Taken' => 'fa-phone-volume',
+            'Converted'       => 'fa-thumbs-up',
+            'Lost'            => 'fa-thumbs-down',
+            'On Hold'         => 'fa-pause-circle',
+            'Rejected'        => 'fa-ban',
+            default           => 'fa-circle-info'
+        };
+
+        $statusOthersCounts[$status->name] = [
+            'count' => $count,
+            'color' => $status->color ?? 'bg-blue-500 text-white', // Use DB color
+            'icon'  => $icon,
+        ];
     }
+
+    // 6. Fetch Table Data (Pagination)
+    $leads = $filteredQuery
+        ->with(['package:id,package_name', 'latestAssignedUser.user:id,name', 'createdBy:id,name'])
+        ->orderByDesc('created_at')
+        ->paginate(50)
+        ->withQueryString();
+
+    return view('leads.index', compact('leads', 'packages', 'users', 'filters', 'statusOthersCounts', 'timeCounts', 'leadStatuses'));
+}
 
     /**
      * AJAX: Get Data for DataTables.
      */
-    public function getLeadsData(Request $request)
+   public function getLeadsData(Request $request)
     {
         $user = auth()->user();
         $companyId = $user->company_id;
 
-        // Fetch statuses for the dropdown inside the table
+        // Fetch statuses for dropdown
         $leadStatuses = LeadStatus::where('is_active', true)
             ->where(fn($q) => $q->where('company_id', $companyId)->orWhereNull('company_id'))
             ->orderBy('order_by', 'asc')
             ->get()->unique('name');
 
-        // 1. Start with Base Query
+        // 1. Base Query & Relationships
         $query = $this->getBaseQuery();
         
-        // 2. Eager Load Relationships (Optimized)
         $query->with([
             'package:id,package_name', 
             'latestAssignedUser.user:id,name', 
             'latestAssignedUser.assignedBy:id,name', 
             'createdBy:id,name', 
-            'lastFollowup.user:id,name' // Assuming 'lastFollowup' relation exists on Lead model
+            'lastFollowup.user:id,name' 
         ]);
 
-        // 3. Apply Standard Filters
+        // 2. Apply Standard Filters (Search, Location, etc.)
         $query = $this->applyFilters($query, $request);
 
-        // 4. Apply Date Logic (The Critical Part)
-        // If status is 'Follow-up Taken', we filter by the next_followup_date.
-        // Otherwise, we filter by created_at.
-        
+        // 3. Conditional Logic: Follow-up vs Standard
         if ($request->status === 'Follow-up Taken') {
-            // Filter using the Related Followup Model
-            $query->whereHas('lastFollowup', function ($q) use ($request) {
-                match ($request->date_range) {
-                    'today'     => $q->whereDate('next_followup_date', today()),
-                    'yesterday' => $q->whereDate('next_followup_date', today()->subDay()),
-                    'week'      => $q->whereBetween('next_followup_date', [now()->startOfWeek(), now()->endOfWeek()]),
-                    'month'     => $q->whereMonth('next_followup_date', now()->month)->whereYear('next_followup_date', now()->year),
-                    default     => null,
-                };
-            });
-            // If viewing follow-ups, usually better to sort by the followup date
-            // But we can stick to created_at or sort by followup date if needed:
-            // $query->join(...)->orderBy('next_followup_date');
-        } elseif ($request->filled('date_range')) {
-            // Standard Date Filter (Created At)
-            match ($request->date_range) {
-                'today'     => $query->whereDate('created_at', today()),
-                'yesterday' => $query->whereDate('created_at', today()->subDay()),
-                'week'      => $query->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]),
-                'month'     => $query->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year),
-                default     => null,
-            };
-        }
+            
+            // JOIN: We join followups to allow Sorting & Filtering by 'next_followup_date'
+            $query->join('followups', 'leads.id', '=', 'followups.lead_id');
+            
+            // SELECT: Avoid column collisions (id, created_at) by selecting only leads.*
+            $query->select('leads.*');
 
-        $query->orderByDesc('created_at');
+            // DATE FILTER: Apply to 'followups.next_followup_date'
+            if ($request->filled('date_range')) {
+                $this->applyDateScope($query, $request->date_range, 'followups.next_followup_date');
+            }
+
+            // SORTING: Show upcoming/overdue tasks FIRST (Ascending)
+            $query->orderBy('followups.next_followup_date', 'asc');
+
+            // DISTINCT: Ensure lead only appears once even if date range matches multiple follow-ups
+            $query->distinct();
+
+        } else {
+            
+            // STANDARD MODE: Filter by Lead Creation Date
+            if ($request->filled('date_range')) {
+                $this->applyDateScope($query, $request->date_range, 'leads.created_at');
+            }
+
+            // SORTING: Show newest leads FIRST (Descending)
+            $query->orderByDesc('leads.created_at');
+        }
 
         return DataTables::of($query)
             ->addIndexColumn()
@@ -229,49 +277,65 @@ class LeadController extends Controller
     }
 
     /**
+     * Helper to keep code DRY: Applies date filters to a specific column.
+     */
+    private function applyDateScope($query, $range, $column)
+    {
+        match ($range) {
+            'today'     => $query->whereDate($column, today()),
+            'yesterday' => $query->whereDate($column, today()->subDay()),
+            'week'      => $query->whereBetween($column, [now()->startOfWeek(), now()->endOfWeek()]),
+            'month'     => $query->whereMonth($column, now()->month)->whereYear($column, now()->year),
+            default     => null,
+        };
+    }
+
+    /**
      * AJAX: Get Counts (Optimized Single Query).
      */
-    public function getLeadsCounts(Request $request)
-    {
-        $baseQuery = $this->getBaseQuery();
-        $baseQuery = $this->applyFilters($baseQuery, $request);
+   public function getLeadsCounts(Request $request)
+{
+    // 1. Get Base Query & Apply Standard Filters
+    $baseQuery = $this->getBaseQuery();
+    $baseQuery = $this->applyFilters($baseQuery, $request);
 
-        // Determine which date column to count against
-        $isFollowUpMode = ($request->status === 'Follow-up Taken');
+    // 2. Check Mode
+    $isFollowUpMode = ($request->status === 'Follow-up Taken');
 
-        if ($isFollowUpMode) {
-            // Join is necessary for SQL aggregation on a related column
-            // Assuming table name is 'followups' or 'lead_followups'. Based on convention, checking 'lead_followups'.
-            // Also need to ensure we only join the LATEST followup if multiple exist.
-            $baseQuery->whereHas('lastFollowup'); 
-            
-            // For accurate counting on the 'latest' date, we usually use a subquery join or window function.
-            // Simplified approach: Join the table.
-            $baseQuery->join('followups', 'leads.id', '=', 'followups.lead_id'); 
-            // Add condition to only look at latest if needed, but for filtering 'next_followup_date', usually just valid ones match.
-            
-            $dateCol = 'followups.next_followup_date';
-        } else {
-            $dateCol = 'leads.created_at';
-        }
+    if ($isFollowUpMode) {
+        // A. Join followups to check dates
+        // We use inner join because if status is 'Follow-up Taken', a followup MUST exist.
+        $baseQuery->join('followups', 'leads.id', '=', 'followups.lead_id');
 
-        // Single DB Query for all time buckets
-        $counts = $baseQuery->selectRaw("
-            COUNT(*) as all_count,
-            SUM(CASE WHEN DATE($dateCol) = CURDATE() THEN 1 ELSE 0 END) as today_count,
-            SUM(CASE WHEN DATE($dateCol) = SUBDATE(CURDATE(), 1) THEN 1 ELSE 0 END) as yesterday_count,
-            SUM(CASE WHEN YEARWEEK($dateCol, 1) = YEARWEEK(CURDATE(), 1) THEN 1 ELSE 0 END) as week_count,
-            SUM(CASE WHEN MONTH($dateCol) = MONTH(CURDATE()) AND YEAR($dateCol) = YEAR(CURDATE()) THEN 1 ELSE 0 END) as month_count
-        ")->first();
+        // REMOVED: $baseQuery->whereRaw(...) 
+        // We removed the 'max(id)' filter. 
+        // This allows us to see ALL follow-ups so we don't miss "Today" 
+        // just because you created a "Tomorrow" follow-up afterwards.
 
-        return response()->json([
-            'all'       => $counts->all_count ?? 0,
-            'today'     => $counts->today_count ?? 0,
-            'yesterday' => $counts->yesterday_count ?? 0,
-            'week'      => $counts->week_count ?? 0,
-            'month'     => $counts->month_count ?? 0,
-        ]);
+        $dateCol = 'followups.next_followup_date';
+    } else {
+        $dateCol = 'leads.created_at';
     }
+
+    // 3. Aggregation
+    // COUNT(DISTINCT leads.id) is the magic here.
+    // It ensures that even if a lead matches the date 5 times, it is only counted ONCE.
+    $counts = $baseQuery->selectRaw("
+        COUNT(DISTINCT leads.id) as all_count,
+        COUNT(DISTINCT CASE WHEN DATE($dateCol) = CURDATE() THEN leads.id END) as today_count,
+        COUNT(DISTINCT CASE WHEN DATE($dateCol) = SUBDATE(CURDATE(), 1) THEN leads.id END) as yesterday_count,
+        COUNT(DISTINCT CASE WHEN YEARWEEK($dateCol, 1) = YEARWEEK(CURDATE(), 1) THEN leads.id END) as week_count,
+        COUNT(DISTINCT CASE WHEN MONTH($dateCol) = MONTH(CURDATE()) AND YEAR($dateCol) = YEAR(CURDATE()) THEN leads.id END) as month_count
+    ")->first();
+
+    return response()->json([
+        'all'       => $counts->all_count ?? 0,
+        'today'     => $counts->today_count ?? 0,
+        'yesterday' => $counts->yesterday_count ?? 0,
+        'week'      => $counts->week_count ?? 0,
+        'month'     => $counts->month_count ?? 0,
+    ]);
+}
 
     // =========================================================================
     // CRUD OPERATIONS
