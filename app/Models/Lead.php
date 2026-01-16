@@ -11,26 +11,7 @@ class Lead extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $fillable = [
-        'name',
-        'company_name',
-        'email',
-        'district',
-        'country',
-        'phone_code',
-        'phone_number',
-        'city',
-        'client_category',
-        'lead_status',
-        'lead_source',
-        'website',
-        'package_id',
-        'inquiry_text',
-        'status',
-        'user_id',
-        'people_count',
-        'child_count',
-    ];
+    protected $fillable = ['name', 'company_name', 'email', 'district', 'country', 'phone_code', 'phone_number', 'city', 'client_category', 'lead_status', 'lead_source', 'website', 'package_id', 'inquiry_text', 'status', 'user_id', 'people_count', 'child_count'];
 
     protected $casts = [
         'created_at' => 'datetime',
@@ -91,16 +72,15 @@ class Lead extends Model
         return $this->views()->count();
     }
 
+    public function latestFollowup()
+    {
+        return $this->hasOne(Followup::class)->latest('next_followup_date');
+    }
 
-public function latestFollowup()
-{
-    return $this->hasOne(Followup::class)->latest('next_followup_date');
-}
-
-public function invoice()
-{
-    return $this->hasOne(Invoice::class);
-}
+    public function invoice()
+    {
+        return $this->hasOne(Invoice::class)->latest();
+    }
 
     // Example for last followup date
     public function getLastFollowupDateAttribute()

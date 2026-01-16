@@ -7,122 +7,153 @@ use App\Models\Lead;
 use App\Models\Package;
 use App\Models\PackageItem;
 use Illuminate\Http\Request;
-
-use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
-use Yajra\DataTables\Facades\DataTables;
+use Yajra\DataTables\DataTables;
+use Illuminate\Support\Str; 
+use Carbon\Carbon;
+
 
 class InvoiceController extends Controller
 {
     public function index(Request $request)
-{
-    if ($request->ajax()) {
-        // Eager load relationships and sum payments in one go
-        $query = Invoice::with(['lead', 'package'])
-            ->withSum('payments as total_paid', 'paid_amount')
-            ->latest();
+    {
+        if ($request->ajax()) {
+            // Eager load relationships and sum payments in one go
+            $query = Invoice::with(['lead', 'package'])
+                ->withSum('payments as total_paid', 'paid_amount')
+                ->latest();
 
-        return DataTables::of($query)
-            ->addIndexColumn() // Optional: Adds DT_RowIndex
-            
-            ->editColumn('invoice_no', function($row) {
-                return '<span class="font-mono text-gray-700">#' . $row->invoice_no . '</span>';
-            })
+            return DataTables::of($query)
+                ->addIndexColumn() // Optional: Adds DT_RowIndex
 
-            ->addColumn('user', function ($row) {
-                $name = $row->lead->name ?? 'N/A';
-                $email = $row->lead->email ?? '—';
-                return '
+                ->editColumn('invoice_no', function ($row) {
+                    return '<span class="font-mono text-gray-700">#' . $row->invoice_no . '</span>';
+                })
+
+                ->addColumn('user', function ($row) {
+                    $name = $row->lead->name ?? 'N/A';
+                    $email = $row->lead->email ?? '—';
+                    return '
                     <div class="flex items-center gap-2">
                         <div class="p-2 bg-gray-100 rounded-full text-gray-400">
                             <i class="fas fa-user"></i>
                         </div>
                         <div>
-                            <div class="font-semibold text-gray-800">'. $name .'</div>
-                            <div class="text-xs text-gray-500">'. $email .'</div>
+                            <div class="font-semibold text-gray-800">' . htmlspecialchars($name) . '</div>
+                            <div class="text-xs text-gray-500">' . htmlspecialchars($email) . '</div>
                         </div>
                     </div>';
-            })
+                })
 
-            ->addColumn('package_name', function ($row) {
-                $pkgName = $row->package->package_name ?? ($row->package_name ?? 'N/A');
-                return '<span class="flex items-center gap-2"><i class="fas fa-box text-blue-400"></i> ' . $pkgName . '</span>';
-            })
+                ->addColumn('package_name', function ($row) {
+                    $pkgName = $row->package->package_name ?? ($row->package_name ?? 'N/A');
+                    return '<span class="flex items-center gap-2"><i class="fas fa-box text-blue-400"></i> ' . htmlspecialchars($pkgName) . '</span>';
+                })
 
-            // FIX: Added this column because your View requests it
-            ->addColumn('package_type', function ($row) {
-                // Assuming 'package_type' exists on the package model, or is a static string
-                return '<span class="px-2 py-1 text-xs bg-gray-100 rounded">' . ($row->package->package_type ?? 'Standard') . '</span>';
-            })
+                // FIX: Added this column because your View requests it
+                ->addColumn('package_type', function ($row) {
+                    // Assuming 'package_type' exists on the package model, or is a static string
+                    return '<span class="px-2 py-1 text-xs bg-gray-100 rounded">' . ($row->package->package_type ?? 'Standard') . '</span>';
+                })
 
-            ->addColumn('travelers', function ($row) {
-                return '
+                ->addColumn('travelers', function ($row) {
+                    return '
                     <div class="text-sm">
-                        <div class="flex justify-between w-24"><span>Adults:</span> <strong>'. $row->adult_count .'</strong></div>
-                        <div class="flex justify-between w-24"><span>Child:</span> <strong>'. $row->child_count .'</strong></div>
-                        <div class="border-t mt-1 pt-1 flex justify-between w-24 text-xs text-gray-500"><span>Total:</span> <strong>'. $row->total_travelers .'</strong></div>
+                        <div class="flex justify-between w-24"><span>Adults:</span> <strong>' .
+                        $row->adult_count .
+                        '</strong></div>
+                        <div class="flex justify-between w-24"><span>Child:</span> <strong>' .
+                        $row->child_count .
+                        '</strong></div>
+                        <div class="border-t mt-1 pt-1 flex justify-between w-24 text-xs text-gray-500"><span>Total:</span> <strong>' .
+                        $row->total_travelers .
+                        '</strong></div>
                     </div>';
-            })
+                })
 
-            ->addColumn('dates', function ($row) {
-                return '
+                ->addColumn('dates', function ($row) {
+                    return '
                     <div class="text-xs">
-                        <div class="mb-1"><span class="text-gray-500">Issued:</span> <br><strong>'. $row->issued_date .'</strong></div>
-                        <div><span class="text-gray-500">Travel:</span> <br><strong>'. $row->travel_start_date .'</strong></div>
+                        <div class="mb-1"><span class="text-gray-500">Issued:</span> <br><strong>' .
+                        $row->issued_date .
+                        '</strong></div>
+                        <div><span class="text-gray-500">Travel:</span> <br><strong>' .
+                        $row->travel_start_date .
+                        '</strong></div>
                     </div>';
-            })
+                })
 
-            ->addColumn('amount', function ($row) {
-                $paid = $row->total_paid ?? 0;
-                $due = $row->final_price - $paid;
-                
-                return '
+                ->addColumn('amount', function ($row) {
+                    $paid = $row->total_paid ?? 0;
+                    $due = $row->final_price - $paid;
+
+                    return '
                     <div class="text-sm min-w-[100px]">
-                        <div class="flex justify-between"><span>Final:</span> <strong>₹'. number_format($row->final_price, 2) .'</strong></div>
-                        <div class="flex justify-between text-green-600"><span>Paid:</span> <span>₹'. number_format($paid, 2) .'</span></div>
-                        <div class="flex justify-between text-red-600 border-t mt-1 pt-1"><span>Due:</span> <strong>₹'. number_format($due, 2) .'</strong></div>
+                        <div class="flex justify-between"><span>Final:</span> <strong>₹' .
+                        number_format($row->final_price, 2) .
+                        '</strong></div>
+                        <div class="flex justify-between text-green-600"><span>Paid:</span> <span>₹' .
+                        number_format($paid, 2) .
+                        '</span></div>
+                        <div class="flex justify-between text-red-600 border-t mt-1 pt-1"><span>Due:</span> <strong>₹' .
+                        number_format($due, 2) .
+                        '</strong></div>
                     </div>';
-            })
+                })
 
-            ->addColumn('status', function ($row) {
-                $paid = $row->total_paid ?? 0;
-                $final = $row->final_price;
+                ->addColumn('status', function ($row) {
+                    $paid = $row->total_paid ?? 0;
+                    $final = $row->final_price;
 
-                if ($paid >= $final && $final > 0) {
-                    return '<span class="px-3 py-1 text-xs rounded-full bg-green-100 text-green-700 font-semibold border border-green-200">Paid</span>';
-                }
-                if ($paid > 0) {
-                    return '<span class="px-3 py-1 text-xs rounded-full bg-yellow-100 text-yellow-700 font-semibold border border-yellow-200">Partial</span>';
-                }
-                return '<span class="px-3 py-1 text-xs rounded-full bg-red-100 text-red-700 font-semibold border border-red-200">Pending</span>';
-            })
+                    if ($paid >= $final && $final > 0) {
+                        return '<span class="px-3 py-1 text-xs rounded-full bg-green-100 text-green-700 font-semibold border border-green-200">Paid</span>';
+                    }
+                    if ($paid > 0) {
+                        return '<span class="px-3 py-1 text-xs rounded-full bg-yellow-100 text-yellow-700 font-semibold border border-yellow-200">Partial</span>';
+                    }
+                    return '<span class="px-3 py-1 text-xs rounded-full bg-red-100 text-red-700 font-semibold border border-red-200">Pending</span>';
+                })
 
-            ->addColumn('action', function ($row) {
-                return '
-                    <a href="' . route('invoices.show', $row->id) . '" class="inline-flex items-center px-3 py-1 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-md transition text-sm">
-                        <i class="fas fa-eye mr-1"></i> View
-                    </a>';
-            })
+                ->addColumn('action', function ($row) {
+                    $viewUrl = route('invoices.show', $row->id);
+                    $deleteUrl = route('invoices.destroy', $row->id);
+                    $csrf = csrf_token();
 
-            // OPTIMIZATION: Allow searching on related columns
-            ->filterColumn('user', function($query, $keyword) {
-                $query->whereHas('lead', function($q) use ($keyword) {
-                    $q->where('name', 'like', "%{$keyword}%")
-                      ->orWhere('email', 'like', "%{$keyword}%");
-                });
-            })
-            ->filterColumn('package_name', function($query, $keyword) {
-                $query->whereHas('package', function($q) use ($keyword) {
-                    $q->where('package_name', 'like', "%{$keyword}%");
-                });
-            })
+                    return '
+                    <div class="flex items-center gap-2">
+                        <a href="' . $viewUrl . '" class="inline-flex items-center px-3 py-1 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-md transition text-sm" title="View">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        
+                        <form action="' . $deleteUrl . '" method="POST" onsubmit="return confirm(\'Are you sure you want to delete this invoice?\');" class="inline-block">
+                            <input type="hidden" name="_method" value="DELETE">
+                            <input type="hidden" name="_token" value="' . $csrf . '">
+                            <button type="submit" class="inline-flex items-center px-3 py-1 bg-red-50 text-red-600 hover:bg-red-100 rounded-md transition text-sm" title="Delete">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    </div>';
+                })
 
-            ->rawColumns(['invoice_no', 'user', 'package_name', 'package_type', 'travelers', 'dates', 'amount', 'status', 'action'])
-            ->make(true);
+                // OPTIMIZATION: Allow searching on related columns
+                ->filterColumn('user', function ($query, $keyword) {
+                    $query->whereHas('lead', function ($q) use ($keyword) {
+                        $q->where('name', 'like', "%{$keyword}%")->orWhere('email', 'like', "%{$keyword}%");
+                    });
+                })
+                ->filterColumn('package_name', function ($query, $keyword) {
+                    $query->whereHas('package', function ($q) use ($keyword) {
+                        $q->where('package_name', 'like', "%{$keyword}%");
+                    });
+                })
+
+                ->rawColumns(['invoice_no', 'user', 'package_name', 'package_type', 'travelers', 'dates', 'amount', 'status', 'action'])
+                ->make(true);
+        }
+
+        return view('invoices.index');
     }
-
-    return view('invoices.index');
-}
 
     /**
      * Generate invoice number e.g. TRAV-2023-0876
@@ -188,8 +219,8 @@ class InvoiceController extends Controller
     public function store(Request $request)
     {
         // 1️⃣ Validate incoming request
-        $request->validate([
-            'lead_id' => 'nullable|exists:leads,id',
+        $validated = $request->validate([
+            'lead_id' => 'required|exists:leads,id', // Changed to required as strictly checking lead_id
             'package_id' => 'required|exists:packages,id',
             'package_items_id' => 'nullable|exists:package_items,id',
             'primary_full_name' => 'required|string|max:255',
@@ -201,7 +232,6 @@ class InvoiceController extends Controller
             'adult_count' => 'required|integer|min:1',
             'child_count' => 'nullable|integer|min:0',
             'additional_travelers' => 'nullable|string',
-            'total_travelers' => 'required|integer|min:1',
             'package_name' => 'nullable|string|max:255',
             'package_type' => 'nullable|string|max:100',
             'price_per_person' => 'required|numeric|min:0',
@@ -216,7 +246,7 @@ class InvoiceController extends Controller
             try {
                 $additionalTravelers = json_decode($request->additional_travelers, true);
             } catch (\Exception $e) {
-                $additionalTravelers = null; // fallback if JSON invalid
+                $additionalTravelers = null;
             }
         }
 
@@ -224,52 +254,92 @@ class InvoiceController extends Controller
         $adultCount = $request->adult_count;
         $childCount = $request->child_count ?? 0;
         $pricePerPerson = $request->price_per_person;
+        $totalTravelers = $adultCount + $childCount;
 
-        // Subtotal calculation: adult full price + child half price
-        $subtotal = $adultCount * $pricePerPerson + $childCount * ($pricePerPerson / 2);
-
+        // Subtotal: adult full price + child half price (Logic from previous code)
+        $subtotal = ($adultCount * $pricePerPerson) + ($childCount * ($pricePerPerson / 2));
         $discount = $request->discount_amount ?? 0;
         $tax = $request->tax_amount ?? 0;
-
         $finalPrice = max(0, $subtotal - $discount + $tax);
 
-        // 4️⃣ Create the invoice
-        $invoice = Invoice::create([
-            'invoice_no' => $this->generateInvoiceNo(),
-            'user_id' => Auth::id(),
+        // 4️⃣ Check for Existing Invoice (Lead + Package Match)
+        $invoice = Invoice::where('lead_id', $request->lead_id)
+            ->where('package_id', $request->package_id)
+            ->first();
 
-            'lead_id' => $request->lead_id,
-            'package_id' => $request->package_id,
-            'package_items_id' => $request->package_items_id,
+        DB::beginTransaction(); // Start transaction for safety
+        try {
+            if ($invoice) {
+                // === UPDATE EXISTING ===
+                $invoice->update([
+                    // Don't update invoice_no or user_id (keep original owner/number)
+                    'package_items_id' => $request->package_items_id,
+                    'issued_date' => $request->issued_date,
+                    'travel_start_date' => $request->travel_start_date,
+                    'primary_full_name' => $request->primary_full_name,
+                    'primary_email' => $request->primary_email,
+                    'primary_phone' => $request->primary_phone,
+                    'primary_address' => $request->primary_address,
+                    'additional_travelers' => $additionalTravelers,
+                    'adult_count' => $adultCount,
+                    'child_count' => $childCount,
+                    'total_travelers' => $totalTravelers,
+                    'package_name' => $request->package_name,
+                    'package_type' => $request->package_type,
+                    'price_per_person' => $pricePerPerson,
+                    'subtotal_price' => $subtotal,
+                    'discount_amount' => $discount,
+                    'tax_amount' => $tax,
+                    'final_price' => $finalPrice,
+                    'additional_details' => $request->additional_details,
+                ]);
 
-            'issued_date' => $request->issued_date,
-            'travel_start_date' => $request->travel_start_date,
+                $message = 'Invoice updated successfully.';
+            } else {
+                // === CREATE NEW ===
+                $invoice = Invoice::create([
+                    'invoice_no' => $this->generateInvoiceNo(),
+                    'user_id' => Auth::id(),
+                    'lead_id' => $request->lead_id,
+                    'package_id' => $request->package_id,
+                    'package_items_id' => $request->package_items_id,
+                    'issued_date' => $request->issued_date,
+                    'travel_start_date' => $request->travel_start_date,
+                    'primary_full_name' => $request->primary_full_name,
+                    'primary_email' => $request->primary_email,
+                    'primary_phone' => $request->primary_phone,
+                    'primary_address' => $request->primary_address,
+                    'additional_travelers' => $additionalTravelers,
+                    'adult_count' => $adultCount,
+                    'child_count' => $childCount,
+                    'total_travelers' => $totalTravelers,
+                    'package_name' => $request->package_name,
+                    'package_type' => $request->package_type,
+                    'price_per_person' => $pricePerPerson,
+                    'subtotal_price' => $subtotal,
+                    'discount_amount' => $discount,
+                    'tax_amount' => $tax,
+                    'final_price' => $finalPrice,
+                    'additional_details' => $request->additional_details,
+                ]);
 
-            'primary_full_name' => $request->primary_full_name,
-            'primary_email' => $request->primary_email,
-            'primary_phone' => $request->primary_phone,
-            'primary_address' => $request->primary_address,
+                $message = 'Invoice created successfully.';
+            }
 
-            'additional_travelers' => $additionalTravelers,
+            // 5️⃣ CLEANUP: Delete ANY other invoices for this Lead
+            // We keep the one we just processed ($invoice->id) and delete the rest.
+            Invoice::where('lead_id', $request->lead_id)
+                ->where('id', '!=', $invoice->id)
+                ->delete();
 
-            'adult_count' => $adultCount,
-            'child_count' => $childCount,
-            'total_travelers' => $adultCount + $childCount,
+            DB::commit();
 
-            'package_name' => $request->package_name,
-            'package_type' => $request->package_type,
-            'price_per_person' => $pricePerPerson,
+            return redirect()->route('invoices.show', $invoice->id)->with('success', $message);
 
-            'subtotal_price' => $subtotal,
-            'discount_amount' => $discount,
-            'tax_amount' => $tax,
-            'final_price' => $finalPrice,
-
-            'additional_details' => $request->additional_details,
-        ]);
-
-        // 5️⃣ Redirect to the invoice page
-        return redirect()->route('invoices.show', $invoice->id)->with('success', 'Invoice created successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Error processing invoice: ' . $e->getMessage())->withInput();
+        }
     }
 
     /**
@@ -278,11 +348,7 @@ class InvoiceController extends Controller
     public function show($id)
     {
         // deeply load lead -> createdBy -> company to get logo, bank, scanner, etc.
-        $invoice = Invoice::with([
-            'lead.createdBy.company', 
-            'package', 
-            'payments'
-        ])->findOrFail($id);
+        $invoice = Invoice::with(['lead.createdBy.company', 'package', 'payments'])->findOrFail($id);
 
         return view('invoices.show', compact('invoice'));
     }

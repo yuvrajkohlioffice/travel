@@ -35,52 +35,52 @@
             </div>
 
             {{-- Removed hard mt-[150px] as it breaks mobile flow. Used responsive margin. --}}
-              <div class="px-4 sm:px-0">
+            <div class="px-4 sm:px-0">
                 <div
-                class=" border-t border-blue-100 bg-gradient-to-r from-blue-50/50 to-cyan-50/50 px-4 md:p-8 lg:p-10 print:px-4 print:py-2 print:mt-2 print:border-t-0">
-                <div class="max-w-4xl">
-                    <h4 class="font-bold text-gray-900 text-lg md:text-xl mb-4 print:mb-2 flex items-center">
-                        <span class="bg-yellow-100 p-2 rounded-lg mr-3 print:p-1">
-                            <i class="fas fa-star text-yellow-600 text-sm md:text-base"></i>
-                        </span>
-                        Special Instructions
-                    </h4>
+                    class=" border-t border-blue-100 bg-gradient-to-r from-blue-50/50 to-cyan-50/50 px-4 md:p-8 lg:p-10 print:px-4 print:py-2 print:mt-2 print:border-t-0">
+                    <div class="max-w-4xl">
+                        <h4 class="font-bold text-gray-900 text-lg md:text-xl mb-4 print:mb-2 flex items-center">
+                            <span class="bg-yellow-100 p-2 rounded-lg mr-3 print:p-1">
+                                <i class="fas fa-star text-yellow-600 text-sm md:text-base"></i>
+                            </span>
+                            Special Instructions
+                        </h4>
 
-                    <div
-                        class="bg-white p-5 md:p-6 rounded-2xl border border-blue-100 shadow-sm print:shadow-none print:p-2 print:border-0">
-                        <ul class="space-y-4 print:space-y-1">
-                            @forelse($invoice->special_instructions ?? [] as $instruction)
-                                <li class="flex items-start">
-                                    <i
-                                        class="fas fa-check-circle text-blue-400 mt-1 mr-3 flex-shrink-0 text-xs print:mr-1"></i>
-                                    <span class="text-gray-700 text-sm md:text-base leading-relaxed">
-                                        {{ $instruction }}
-                                    </span>
-                                </li>
-                            @empty
-                                <li class="flex items-start">
-                                    <i class="fas fa-heart text-pink-400 mt-1 mr-3 flex-shrink-0 text-xs"></i>
-                                    <span class="text-gray-600 italic text-sm md:text-base">
-                                        Enjoy your trip! All arrangements have been made according to your booking.
-                                    </span>
-                                </li>
-                            @endforelse
+                        <div
+                            class="bg-white p-5 md:p-6 rounded-2xl border border-blue-100 shadow-sm print:shadow-none print:p-2 print:border-0">
+                            <ul class="space-y-4 print:space-y-1">
+                                @forelse($invoice->special_instructions ?? [] as $instruction)
+                                    <li class="flex items-start">
+                                        <i
+                                            class="fas fa-check-circle text-blue-400 mt-1 mr-3 flex-shrink-0 text-xs print:mr-1"></i>
+                                        <span class="text-gray-700 text-sm md:text-base leading-relaxed">
+                                            {{ $instruction }}
+                                        </span>
+                                    </li>
+                                @empty
+                                    <li class="flex items-start">
+                                        <i class="fas fa-heart text-pink-400 mt-1 mr-3 flex-shrink-0 text-xs"></i>
+                                        <span class="text-gray-600 italic text-sm md:text-base">
+                                            Enjoy your trip! All arrangements have been made according to your booking.
+                                        </span>
+                                    </li>
+                                @endforelse
 
-                            @if ($invoice->additional_details)
-                                <li class="pt-4 border-t border-gray-50 flex items-start print:pt-1 print:mt-1">
-                                    <i
-                                        class="fas fa-info-circle text-cyan-500 mt-1 mr-3 flex-shrink-0 text-xs print:mr-1"></i>
-                                    <span class="font-medium text-gray-800 text-sm md:text-base leading-relaxed">
-                                        {{ $invoice->additional_details }}
-                                    </span>
-                                </li>
-                            @endif
-                        </ul>
+                                @if ($invoice->additional_details)
+                                    <li class="pt-4 border-t border-gray-50 flex items-start print:pt-1 print:mt-1">
+                                        <i
+                                            class="fas fa-info-circle text-cyan-500 mt-1 mr-3 flex-shrink-0 text-xs print:mr-1"></i>
+                                        <span class="font-medium text-gray-800 text-sm md:text-base leading-relaxed">
+                                            {{ $invoice->additional_details }}
+                                        </span>
+                                    </li>
+                                @endif
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
-            </div>
-            
+
 
 
             {{-- Summary --}}

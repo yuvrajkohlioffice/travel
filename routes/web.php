@@ -217,11 +217,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
         | Invoice
         |--------------------------------------------------------------------------
         */
-    Route::get('/invoices', [InvoiceController::class, 'index'])->name('invoices.index');
-    Route::get('/invoices/create', [InvoiceController::class, 'create'])->name('invoices.create');
-    Route::post('/invoices', [InvoiceController::class, 'store'])->name('invoices.store');
-    Route::get('/invoices/{id}', [InvoiceController::class, 'show'])->name('invoices.show');
-    Route::delete('/invoices/{id}', [InvoiceController::class, 'destroy'])->name('invoices.destroy');
+    Route::resource('invoices', InvoiceController::class);
 
     /*
         |--------------------------------------------------------------------------
