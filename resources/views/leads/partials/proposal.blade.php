@@ -53,7 +53,7 @@
             $paymentButton = <<<HTML
             <button
                 @click='openPaymentModal({$invoiceJson})'
-                class="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700 ml-1"
+                class="group px-2 py-1.5 bg-green-600 text-white rounded-md text-xs font-medium hover:bg-green-700 shadow-sm transition-all flex items-center gap-1"
             >
                 <i class="fa-solid fa-money-bill-wave"></i> Add Payment
             </button>
@@ -61,7 +61,8 @@
         }
     }
 @endphp
-<button class="px-3 py-1 border border-gray-400 rounded text-gray-700 hover:bg-gray-200 transition text-sm"
+<div class="flex items-center justify-start gap-2 whitespace-nowrap">
+<button class="group p-1.5 border border-gray-300 dark:border-gray-600 rounded-md text-gray-600 dark:text-gray-300 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-gray-700 transition-colors shadow-sm"
     data-id="{{ $leadData['id'] }}" data-name="{{ $leadData['name'] }}" data-email="{{ $leadData['email'] }}"
     data-phone-code="{{ $leadData['phone_code'] }}" data-phone-number="{{ $leadData['phone_number'] }}"
     data-package-id="{{ $leadData['package_id'] }}" data-people-count="{{ $leadData['people_count'] }}"
@@ -71,8 +72,9 @@
 
 <button
     @click="openInvoiceModal({{ $lead->id }}, '{{ $lead->name }}', '{{ $lead->people_count }}', '{{ $lead->child_count }}', '{{ $packageId }}', '{{ $lead->email }}')"
-    class="px-3 py-1 border border-gray-400 rounded text-gray-700 hover:bg-gray-200 transition text-sm ml-1">
+   class="group p-1.5 border border-gray-300 dark:border-gray-600 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors shadow-sm">
     <i class="fa-solid fa-file-invoice"></i>
 </button>
 
 {!! $paymentButton !!}
+</div>

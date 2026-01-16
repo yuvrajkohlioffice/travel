@@ -176,7 +176,7 @@
                 </div>
 
                 {{-- Data Table --}}
-                <div class="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
+                <div class=" rounded-lg border border-gray-200 dark:border-gray-700">
                     <table id="Leads-table" class="w-full text-sm text-left">
                         <thead
                             class="bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-300 font-semibold uppercase text-xs">
