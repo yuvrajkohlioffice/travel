@@ -58,7 +58,7 @@ class UserController extends Controller
         $roles = Role::accessible()->get();
 
         // ✅ Only Admins (Role 1) need to see the list of companies
-        $companies = (Auth::user()->role_id == 1) ? Company::all() : [];
+        $companies = Company::get();
 
         return view('users.create', compact('roles', 'companies'));
     }
@@ -103,7 +103,7 @@ class UserController extends Controller
         $roles = Role::accessible()->get();
         
         // ✅ Fetch companies only if Admin
-        $companies = (Auth::user()->role_id == 1) ? Company::all() : [];
+        $companies = Company::get();
 
         return view('users.edit', compact('user', 'roles', 'companies'));
     }
