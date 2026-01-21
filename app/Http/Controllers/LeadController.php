@@ -361,8 +361,8 @@ class LeadController extends Controller
         $validated = $request->validate([
             'name'         => 'required|max:255',
             'email'        => 'nullable|email',
-            'phone_number' => 'nullable|numeric|digits_between:7,15',
-            'phone_code'   => 'nullable|numeric',
+            'phone_number' => 'required|numeric|digits_between:7,15',
+            'phone_code'   => 'required|numeric',
         ]);
 
         // 3. Prepare & Save
@@ -410,7 +410,8 @@ class LeadController extends Controller
         $validated = $request->validate([
             'name'         => 'required|max:255',
             'email'        => 'nullable|email',
-            'phone_number' => 'nullable|max:15',
+            'phone_number' => 'required|max:15',
+            'phone_code'   => 'required|numeric',
         ]);
 
         $lead->update(array_merge(
