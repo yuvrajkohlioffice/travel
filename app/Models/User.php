@@ -72,6 +72,13 @@ class User extends Authenticatable
     /**
      * User belongs to a Company
      */
+    // In App\Models\User.php
+
+    public function leads()
+    {
+        // Assuming 'user_id' is the foreign key in the leads table
+        return $this->hasMany(Lead::class, 'user_id');
+    }
     public function company()
     {
         return $this->belongsTo(Company::class);
