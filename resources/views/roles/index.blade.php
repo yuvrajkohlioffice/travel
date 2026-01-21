@@ -25,19 +25,24 @@
                 </a>
             </header>
 
-            {{-- Success --}}
-            @if (session('success'))
-                <div
-                    class="flex items-start gap-3 bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-700 rounded-lg p-4 text-sm md:text-base shadow-sm mb-4">
-                    <div class="text-green-600 dark:text-green-400 mt-0.5">
-                        <i class="fa-solid fa-circle-check"></i>
-                    </div>
-                    <div class="text-gray-800 dark:text-gray-200">{{ session('success') }}</div>
-                    <button onclick="this.parentElement.remove()"
-                        class="ml-auto text-gray-400 dark:text-gray-300 hover:text-gray-600 dark:hover:text-gray-100 focus:outline-none"
-                        aria-label="Dismiss">
-                        <i class="fa-solid fa-xmark"></i>
-                    </button>
+            {{-- Success & Error Messages --}}
+            @if (session('success') || session('error'))
+                <div class="mb-4">
+                    @if(session('success'))
+                        <div class="flex items-start gap-3 bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-700 rounded-lg p-4 text-sm md:text-base shadow-sm">
+                            <div class="text-green-600 dark:text-green-400 mt-0.5"><i class="fa-solid fa-circle-check"></i></div>
+                            <div class="text-gray-800 dark:text-gray-200">{{ session('success') }}</div>
+                            <button onclick="this.parentElement.remove()" class="ml-auto text-gray-400 hover:text-gray-600 focus:outline-none"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                    @endif
+                    
+                    @if(session('error'))
+                        <div class="flex items-start gap-3 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-700 rounded-lg p-4 text-sm md:text-base shadow-sm mt-2">
+                            <div class="text-red-600 dark:text-red-400 mt-0.5"><i class="fa-solid fa-circle-exclamation"></i></div>
+                            <div class="text-gray-800 dark:text-gray-200">{{ session('error') }}</div>
+                            <button onclick="this.parentElement.remove()" class="ml-auto text-gray-400 hover:text-gray-600 focus:outline-none"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                    @endif
                 </div>
             @endif
 
@@ -46,9 +51,10 @@
                 <div class="p-4 md:p-6">
                     <div class="overflow-x-auto">
 
+                        {{-- CHANGED: 'ID' header to 'SL No' --}}
                         <x-data-table 
                             id="roles-table"
-                            :headers="['ID', 'Name', 'Action']"
+                            :headers="['SL No', 'Name', 'Action']"
                             :excel="true"
                             :print="true"
                             title="Roles List"
@@ -57,9 +63,9 @@
                             @foreach ($roles as $role)
                                 <tr class="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
 
-                                    {{-- ID --}}
+                                    {{-- CHANGED: Use $loop->iteration for Serial Number --}}
                                     <td class="p-3 text-center text-sm text-gray-800 dark:text-gray-200 font-medium">
-                                        {{ $role->id }}
+                                        {{ $loop->iteration }}
                                     </td>
 
                                     {{-- Name --}}
@@ -83,22 +89,25 @@
                                             </a>
 
                                             {{-- Delete --}}
-                                            <form action="{{ route('roles.destroy', $role->id) }}"
-                                                  method="POST"
-                                                  class="inline"
-                                                  onsubmit="return confirm('Delete this role?')">
-                                                @csrf
-                                                @method('DELETE')
+                                            {{-- Prevent showing delete button for ID 1 (Admin) explicitly in View as well --}}
+                                            @if($role->id !== 1)
+                                                <form action="{{ route('roles.destroy', $role->id) }}"
+                                                      method="POST"
+                                                      class="inline"
+                                                      onsubmit="return confirm('Delete this role?')">
+                                                    @csrf
+                                                    @method('DELETE')
 
-                                                <button type="submit"
-                                                    class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg 
-                                                           bg-red-600 text-white hover:bg-red-700
-                                                           dark:bg-red-500 dark:hover:bg-red-700
-                                                           transition text-sm shadow-sm">
-                                                    <i class="fa-solid fa-trash"></i>
-                                                    <span class="hidden sm:inline">Delete</span>
-                                                </button>
-                                            </form>
+                                                    <button type="submit"
+                                                        class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg 
+                                                               bg-red-600 text-white hover:bg-red-700
+                                                               dark:bg-red-500 dark:hover:bg-red-700
+                                                               transition text-sm shadow-sm">
+                                                        <i class="fa-solid fa-trash"></i>
+                                                        <span class="hidden sm:inline">Delete</span>
+                                                    </button>
+                                                </form>
+                                            @endif
 
                                         </div>
                                     </td>

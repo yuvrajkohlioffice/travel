@@ -8,116 +8,71 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Jetstream\HasProfilePhoto;
 use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Support\Facades\Auth;
 
 class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, HasProfilePhoto, Notifiable, TwoFactorAuthenticatable;
 
-    /**
-     * The attributes that are mass assignable.
-     */
     protected $fillable = [
-        'name',
-        'email',
-        'password',
-        'role_id',
-        'company_id',
-        'whatsapp_api_key',
-        'status',
-
-        // ✅ SMTP fields
-        'smtp_host',
-        'smtp_port',
-        'smtp_encryption',
-        'smtp_username',
-        'smtp_password',
-        'smtp_from_email',
-        'smtp_from_name',
+        'name', 'email', 'password', 'role_id', 'company_id', 
+        'whatsapp_api_key', 'status',
+        'smtp_host', 'smtp_port', 'smtp_encryption', 
+        'smtp_username', 'smtp_password', 'smtp_from_email', 'smtp_from_name'
     ];
 
-    /**
-     * The attributes that should be hidden for arrays.
-     */
     protected $hidden = [
-        'password',
-        'remember_token',
-        'two_factor_recovery_codes',
-        'two_factor_secret',
-
-        // 🔐 hide sensitive smtp password
-        'smtp_password',
+        'password', 'remember_token', 'two_factor_recovery_codes', 
+        'two_factor_secret', 'smtp_password'
     ];
 
-    /**
-     * The accessors to append to the model's array form.
-     */
     protected $appends = ['profile_photo_url'];
 
-    /**
-     * The attributes that should be cast.
-     */
     protected $casts = [
         'email_verified_at' => 'datetime',
         'created_at' => 'datetime',
         'password' => 'hashed',
-
-        // ✅ SMTP casts
         'smtp_port' => 'integer',
     ];
 
     /* -----------------------------------------------------------------
-     | Relationships
-     |------------------------------------------------------------------*/
+     |  🚨 REMOVED GLOBAL SCOPE TO PREVENT RECURSION
+     |  ✅ ADDED LOCAL SCOPE BELOW
+     | ----------------------------------------------------------------- */
 
     /**
-     * User belongs to a Company
+     * Scope the query to only include users accessible by the current user.
+     * Usage: User::accessible()->get();
      */
-    // In App\Models\User.php
+    public function scopeAccessible($query)
+    {
+        if (Auth::check()) {
+            $user = Auth::user();
 
-    public function leads()
-    {
-        // Assuming 'user_id' is the foreign key in the leads table
-        return $this->hasMany(Lead::class, 'user_id');
-    }
-    public function company()
-    {
-        return $this->belongsTo(Company::class);
-    }
-
-    /**
-     * User belongs to a Role
-     */
-    public function role()
-    {
-        return $this->belongsTo(Role::class);
+            // If NOT Admin (Role 1), filter by Company
+            if ($user->role_id !== 1 && $user->company_id) {
+                return $query->where('company_id', $user->company_id);
+            }
+        }
+        return $query;
     }
 
     /* -----------------------------------------------------------------
-     | 🔐 SMTP Password Encryption / Decryption
-     |------------------------------------------------------------------*/
+     |  RELATIONSHIPS
+     | ----------------------------------------------------------------- */
+    public function company() { return $this->belongsTo(Company::class); }
+    public function role() { return $this->belongsTo(Role::class); }
+    public function leads() { return $this->hasMany(Lead::class, 'user_id'); }
 
-    /**
-     * Encrypt SMTP password before saving
-     */
-    public function setSmtpPasswordAttribute($value)
-    {
-        $this->attributes['smtp_password'] = $value ? encrypt($value) : null;
+    /* -----------------------------------------------------------------
+     |  ACCESSORS
+     | ----------------------------------------------------------------- */
+    public function setSmtpPasswordAttribute($value) { $this->attributes['smtp_password'] = $value ? encrypt($value) : null; }
+    
+    public function getSmtpPasswordAttribute($value) {
+        if (!$value) return null;
+        try { return decrypt($value); } catch (\Exception $e) { return $value; }
     }
 
-    public function getSmtpPasswordAttribute($value)
-    {
-        if (!$value) {
-            return null;
-        }
-
-        try {
-            return decrypt($value);
-        } catch (\Exception $e) {
-            return $value; // backward compatibility
-        }
-    }
-    public function routeNotificationForWhatsapp()
-    {
-        return $this->phone_number; // Replace with your actual database column name
-    }
+    public function routeNotificationForWhatsapp() { return $this->phone_number; }
 }

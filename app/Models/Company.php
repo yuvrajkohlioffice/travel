@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Database\Eloquent\Builder;
 
 class Company extends Model
 {
@@ -17,17 +19,41 @@ class Company extends Model
         'scanner_details',
         'bank_details',
         'whatsapp_api_key',
-        'email',        // NEW
-        'phone',        // NEW
+        'email',
+        'phone',
     ];
 
-    /**
-     * Attribute Casting
-     */
     protected $casts = [
         'scanner_details' => 'array',
         'bank_details'    => 'array',
     ];
+
+    /**
+     * -----------------------------------------------------------------
+     * 🔒 GLOBAL SCOPE (The Magic Part)
+     * -----------------------------------------------------------------
+     * This automatically filters queries.
+     * * Admin (Role 1) -> See All Companies
+     * Others         -> See Only Their Own Company
+     */
+    protected static function booted()
+    {
+        static::addGlobalScope('authorized_company', function (Builder $builder) {
+            // Check if user is logged in
+            if (Auth::check()) {
+                $user = Auth::user();
+
+                // If NOT Admin, restrict to their specific company ID
+                if ($user->role_id !== 1) {
+                    $builder->where('id', $user->company_id);
+                }
+            }
+        });
+    }
+
+    /* -----------------------------------------------------------------
+     |  RELATIONSHIPS
+     | ----------------------------------------------------------------- */
 
     public function owner()
     {
@@ -39,9 +65,10 @@ class Company extends Model
         return $this->hasMany(User::class);
     }
 
-    /**
-     * Accessor for logo URL
-     */
+    /* -----------------------------------------------------------------
+     |  ACCESSORS
+     | ----------------------------------------------------------------- */
+
     public function getLogoAttribute($value)
     {
         if (!$value) return null;
@@ -51,9 +78,6 @@ class Company extends Model
             : asset('storage/' . $value);
     }
 
-    /**
-     * Accessor for scanner_details (auto image URL conversion)
-     */
     public function getScannerDetailsAttribute($value)
     {
         if (!$value) return [];
@@ -63,8 +87,6 @@ class Company extends Model
         if (!is_array($details)) return [];
 
         if (!empty($details['image'])) {
-
-            // Convert storage path to full URL if needed
             if (!filter_var($details['image'], FILTER_VALIDATE_URL)) {
                 $details['image'] = asset('storage/' . $details['image']);
             }
