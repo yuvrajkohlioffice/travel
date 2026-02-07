@@ -47,7 +47,15 @@ class PaymentMethod extends Model
     {
         return $query->where('is_active', 1);
     }
-
+    protected static function booted()
+    {
+        static::addGlobalScope('company', function ($builder) {
+            // Check if a user is logged in and has a company_id
+            if (auth()->check() && auth()->user()->company_id) {
+                $builder->where('company_id', auth()->user()->company_id);
+            }
+        });
+    }
     /* =============================
        RELATIONSHIPS
     ============================== */
