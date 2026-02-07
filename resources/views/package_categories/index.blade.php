@@ -49,15 +49,16 @@
             <section class="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden">
                 <div class="p-4 md:p-6">
                     <div class="overflow-x-auto">
-                        <table id="package-categories-table" class="min-w-full border border-gray-300 rounded-lg">
-                            <thead class="bg-gray-100 dark:bg-gray-700">
-                                <tr>
-                                    <th class="px-4 py-2 text-left">ID</th>
-                                    <th class="px-4 py-2 text-left">Name</th>
-                                    <th class="px-4 py-2 text-center">Action</th>
-                                </tr>
-                            </thead>
-                        </table>
+                           <table id="categories-table"  class="min-w-full border border-gray-300 rounded-lg">
+                <thead>
+                    <tr class="border-b border-gray-100 bg-gray-50">
+                        <th class="p-4 text-sm font-semibold text-gray-600">ID</th>
+                        <th class="p-4 text-sm font-semibold text-gray-600">Category Name</th>
+                        <th class="p-4 text-sm font-semibold text-gray-600">Company / Type</th>
+                        <th class="p-4 text-sm font-semibold text-gray-600">Actions</th>
+                    </tr>
+                </thead>
+            </table>
                     </div>
                 </div>
             </section>
@@ -66,20 +67,23 @@
     </div>
 
     {{-- DataTable Script --}}
-    <script>
-        $(function() {
-            $('#package-categories-table').DataTable({
+   <script>
+        $(document).ready(function() {
+            $('#categories-table').DataTable({
                 processing: true,
                 serverSide: true,
                 ajax: "{{ route('package-categories.index') }}",
                 columns: [
                     { data: 'id', name: 'id' },
                     { data: 'name', name: 'name' },
+                    { data: 'company_name', name: 'company_name' },
                     { data: 'action', name: 'action', orderable: false, searchable: false }
                 ],
-                pageLength: 25,
-                lengthMenu: [10, 25, 50, 100],
-                order: [[0, 'desc']],
+                // Tailwind styling for DataTable
+                language: {
+                    search: "_INPUT_",
+                    searchPlaceholder: "Search categories...",
+                }
             });
         });
     </script>
