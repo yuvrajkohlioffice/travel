@@ -78,18 +78,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 | User Settings (Volt)
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth'])->group(function () {
-    Route::redirect('settings', 'settings/profile');
-    
 
-    Volt::route('settings/profile', 'settings.profile')->name('profile.edit');
-    Volt::route('settings/password', 'settings.password')->name('user-password.edit');
-    Volt::route('settings/appearance', 'settings.appearance')->name('appearance.edit');
-
-    Volt::route('settings/two-factor', 'settings.two-factor')
-        ->middleware(when(Features::canManageTwoFactorAuthentication() && Features::optionEnabled(Features::twoFactorAuthentication(), 'confirmPassword'), ['password.confirm'], []))
-        ->name('two-factor.show');
-});
 
 /*
 |--------------------------------------------------------------------------
@@ -115,7 +104,16 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
         | Lead Management
         |--------------------------------------------------------------------------
         */
+Route::redirect('settings', 'settings/profile');
+    
 
+    Volt::route('settings/profile', 'settings.profile')->name('profile.edit');
+    Volt::route('settings/password', 'settings.password')->name('user-password.edit');
+    Volt::route('settings/appearance', 'settings.appearance')->name('appearance.edit');
+
+    Volt::route('settings/two-factor', 'settings.two-factor')
+        ->middleware(when(Features::canManageTwoFactorAuthentication() && Features::optionEnabled(Features::twoFactorAuthentication(), 'confirmPassword'), ['password.confirm'], []))
+        ->name('two-factor.show');
     Route::get('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
     Route::get('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.readAll');
 
