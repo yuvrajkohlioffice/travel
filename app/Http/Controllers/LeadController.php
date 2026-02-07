@@ -231,27 +231,30 @@ class LeadController extends Controller
         $query = $this->applyFilters($query, $request);
 
         // 3. Conditional Logic: Follow-up vs Standard
-        if ($request->status === 'Follow-up Taken') {
+        // ... inside getLeadsData function ...
+
+if ($request->status === 'Follow-up Taken') {
             
-            // JOIN: We join followups to allow Sorting & Filtering by 'next_followup_date'
-            $query->join('followups', 'leads.id', '=', 'followups.lead_id');
-            
-            // SELECT: Avoid column collisions (id, created_at) by selecting only leads.*
-            $query->select('leads.*');
+    // JOIN: We join followups
+    $query->join('followups', 'leads.id', '=', 'followups.lead_id');
+    
+    // ▼▼▼ CHANGE THIS LINE ▼▼▼
+    // Old: $query->select('leads.*');
+    // New: Include the column you are sorting by
+    $query->select('leads.*', 'followups.next_followup_date'); 
+    
+    // DATE FILTER
+    if ($request->filled('date_range')) {
+        $this->applyDateScope($query, $request->date_range, 'followups.next_followup_date');
+    }
 
-            // DATE FILTER: Apply to 'followups.next_followup_date'
-            if ($request->filled('date_range')) {
-                $this->applyDateScope($query, $request->date_range, 'followups.next_followup_date');
-            }
+    // SORTING
+    $query->orderBy('followups.next_followup_date', 'asc');
 
-            // SORTING: Show upcoming/overdue tasks FIRST (Ascending)
-            $query->orderBy('followups.next_followup_date', 'asc');
+    // DISTINCT
+    $query->distinct();
 
-            // DISTINCT: Ensure lead only appears once even if date range matches multiple follow-ups
-            $query->distinct();
-
-        } else {
-            
+} else {
             // STANDARD MODE: Filter by Lead Creation Date
             if ($request->filled('date_range')) {
                 $this->applyDateScope($query, $request->date_range, 'leads.created_at');

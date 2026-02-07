@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 
+
 class WhatsAppController extends Controller
 {
     private function getApiKey()
@@ -152,6 +153,8 @@ class WhatsAppController extends Controller
         }
     }
 
+
+
     public function sendMediaJson(Request $request)
     {
         $request->validate([
@@ -160,18 +163,7 @@ class WhatsAppController extends Controller
             'media_type' => 'required|string|in:template,banner,docs',
         ]);
 
-        // --- 1. CLEANUP (Garbage Collection) ---
-        // Deletes temp files older than 1 hour to keep server clean
-        // You can also move this to a Cron Job later if you prefer
-        $files = Storage::disk('public')->files('temp_whatsapp');
-        foreach ($files as $file) {
-            $lastModified = Storage::disk('public')->lastModified($file);
-            if (Carbon::createFromTimestamp($lastModified)->lt(Carbon::now()->subHour())) {
-                Storage::disk('public')->delete($file);
-            }
-        }
-
-        // --- 2. GET DATA ---
+        // --- 1. GET DATA ---
         $package = Package::findOrFail($request->package_id);
         $template = MessageTemplate::where('package_id', $package->id)->first();
 
@@ -187,7 +179,7 @@ class WhatsAppController extends Controller
                 break;
             case 'docs':
                 $docs = $package->package_docs;
-                $storagePath = is_array($docs) ? $docs[0] ?? null : $docs;
+                $storagePath = is_array($docs) ? ($docs[0] ?? null) : $docs;
                 break;
         }
 
@@ -195,28 +187,27 @@ class WhatsAppController extends Controller
             return response()->json(['status' => 'error', 'message' => 'Original file not found.'], 422);
         }
 
-        // --- 3. CREATE TEMP FILE WITH FRIENDLY NAME ---
-
-        // Get extension (pdf, jpg, etc)
+        // --- 2. CREATE TEMP FILE (Unique Name) ---
+        // Add a timestamp to filename to prevent conflicts if two people send same package at same time
         $extension = pathinfo($storagePath, PATHINFO_EXTENSION) ?: 'pdf';
+        $timestamp = time();
+        $cleanName = Str::slug($package->package_name) . ".{$extension}";
 
-        // Create clean name: "Chopta-Tungnath-Package.pdf"
-        $cleanName = Str::slug($package->package_name) . '.' . $extension;
+        // We store it as "temp_whatsapp/17098234_package-name.pdf" internally to avoid collisions,
+        // but we send "package-name.pdf" as the filename to the API.
+        $tempFilename = "{$timestamp}_{$cleanName}";
+        $tempPath = "temp_whatsapp/{$tempFilename}";
 
-        // Define temp path
-        $tempPath = "temp_whatsapp/{$cleanName}";
-
-        // Copy original to temp (overwrite if exists to ensure latest version)
-        // We use copy() so we don't move/delete the original
+        // Copy original to temp
         Storage::disk('public')->put($tempPath, Storage::disk('public')->get($storagePath));
 
-        // --- 4. SEND API REQUEST ---
-
-        // Generate URL for the RENAMED file
+        // --- 3. SEND & DELETE ---
         $fileUrl = Storage::disk('public')->url($tempPath);
         $apiKey = auth()->user()->whatsapp_api_key;
 
         if (!$apiKey) {
+            // Clean up before exiting
+            Storage::disk('public')->delete($tempPath);
             return response()->json(['status' => 'error', 'message' => 'API Key missing'], 422);
         }
 
@@ -225,20 +216,27 @@ class WhatsAppController extends Controller
         try {
             $response = Http::timeout(30)->get($apiUrl, [
                 'recipient' => $request->recipient,
-                'apikey' => $apiKey,
-                'text' => $text,
-                'file' => $fileUrl, // Now sending .../temp_whatsapp/Chopta-Tungnath.pdf
-                'filename' => $cleanName,
+                'apikey'    => $apiKey,
+                'text'      => $text,
+                'file'      => $fileUrl,
+                'filename'  => $cleanName, // The neat name the user sees (e.g., Chopta-Trek.pdf)
             ]);
 
             return response()->json([
                 'status' => 'success',
                 'sent_as' => $cleanName,
-                'temp_url_used' => $fileUrl,
                 'api_response' => $response->json(),
             ]);
         } catch (\Throwable $e) {
             return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+        } finally {
+            // --- 4. IMMEDIATE CLEANUP ---
+            // This block runs ALWAYS, whether the try succeeded or failed.
+            // We sleep for 1 second just to ensure the external server started the download.
+            sleep(1);
+            if (Storage::disk('public')->exists($tempPath)) {
+                Storage::disk('public')->delete($tempPath);
+            }
         }
     }
 }
