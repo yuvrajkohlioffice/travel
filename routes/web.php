@@ -80,7 +80,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 */
 Route::middleware(['auth'])->group(function () {
     Route::redirect('settings', 'settings/profile');
-    Route::resource('templates', MessageTemplateController::class);
+    
 
     Volt::route('settings/profile', 'settings.profile')->name('profile.edit');
     Volt::route('settings/password', 'settings.password')->name('user-password.edit');
@@ -154,7 +154,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     })->name('composer.dump');
 
     Route::patch('/leads/{lead}/status', [LeadController::class, 'updateStatus'])->name('leads.updateStatus');
-
+Route::resource('templates', MessageTemplateController::class);
     Route::get('/leads/data', [LeadController::class, 'getLeadsData'])->name('leads.data');
     Route::get('/leads/counts', [LeadController::class, 'getLeadsCounts'])->name('leads.counts');
 
